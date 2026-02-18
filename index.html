@@ -148,9 +148,8 @@
 <script>
     const { createApp, ref, onMounted } = Vue;
 
-    // 設定：填入您的 Cloudflare Worker 網址
+    // 您提供的資料
     const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/'; 
-    // 設定：填入您的 LIFF ID
     const LIFF_ID = '2008786875-7COWtgtL';
 
     createApp({
@@ -161,7 +160,7 @@
             const error = ref('');
             const courses = ref([]);
             const userProfile = ref(null);
-            const idToken = ref('');
+            // const idToken = ref(''); // 移除 Token，我們現在不需要它來驗證
             const selectedCourse = ref(null);
             const successMessage = ref('');
             const orderResult = ref({});
@@ -184,7 +183,7 @@
                     
                     const profile = await liff.getProfile();
                     userProfile.value = profile;
-                    idToken.value = liff.getIDToken();
+                    // idToken.value = liff.getIDToken(); // 不需要了
                     
                     // LIFF 準備好後，撈取課程
                     await fetchCourses();
@@ -197,11 +196,11 @@
             // 呼叫後端 API (透過 Cloudflare Worker)
             const fetchCourses = async () => {
                 try {
+                    // 修改處：移除 idToken，GET_COURSES 不需要使用者資料
                     const res = await fetch(API_ENDPOINT, {
                         method: 'POST',
                         body: JSON.stringify({
-                            action: 'GET_COURSES',
-                            idToken: idToken.value // 傳送 Token 驗證身分
+                            action: 'GET_COURSES'
                         })
                     });
                     const json = await res.json();
@@ -222,22 +221,31 @@
                 selectedCourse.value = course;
                 view.value = 'form';
                 // 預填姓名
-                form.value.name = userProfile.value.displayName;
+                if(userProfile.value) {
+                    form.value.name = userProfile.value.displayName;
+                }
             };
 
             const submitRegistration = async () => {
                 isSubmitting.value = true;
                 try {
+                    // 修改處：移除 idToken，改傳 userProfile 物件
+                    // 這是後端現在預期的結構
+                    const requestBody = {
+                        action: 'REGISTER',
+                        userProfile: {
+                            userId: userProfile.value.userId,
+                            displayName: userProfile.value.displayName
+                        },
+                        payload: {
+                            courseId: selectedCourse.value.id,
+                            ...form.value
+                        }
+                    };
+
                     const res = await fetch(API_ENDPOINT, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            action: 'REGISTER',
-                            idToken: idToken.value,
-                            payload: {
-                                courseId: selectedCourse.value.id,
-                                ...form.value
-                            }
-                        })
+                        body: JSON.stringify(requestBody)
                     });
                     const json = await res.json();
 
