@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竹北運動中心 - 管理員後台</title>
+    <!-- Vue 3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        [v-cloak] { display: none; }
+        .sidebar-link { @apply block py-3 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white cursor-pointer; }
+        .sidebar-link.active { @apply bg-blue-600 text-white shadow-lg; }
+        .status-badge { @apply px-2 py-1 rounded text-xs font-bold; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+<div id="app" v-cloak class="min-h-screen flex flex-col">
+
+    <!-- Login View -->
+    <div v-if="!isLoggedIn" class="flex-grow flex items-center justify-center bg-gray-800">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">管理員登入</h2>
+            <form @submit.prevent="login">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">管理密碼</label>
+                    <input v-model="password" type="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="請輸入密碼">
+                </div>
+                <button :disabled="isLoading" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition">
+                    {{ isLoading ? '登入中...' : '登入' }}
+                </button>
+                <p v-if="error" class="text-red-500 text-xs italic mt-4 text-center">{{ error }}</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div v-else class="flex flex-grow h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-900 text-gray-400 flex flex-col">
+            <div class="p-4 bg-gray-800 font-bold text-white text-lg flex items-center">
+                <i class="fas fa-dumbbell mr-2 text-blue-500"></i> 營隊管理系統
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a @click="currentTab = 'courses'" :class="{'active': currentTab === 'courses'}" class="sidebar-link">
+                    <i class="fas fa-chalkboard-teacher mr-2 w-5 text-center"></i> 課程管理
+                </a>
+                <a @click="currentTab = 'orders'" :class="{'active': currentTab === 'orders'}" class="sidebar-link">
+                    <i class="fas fa-file-invoice-dollar mr-2 w-5 text-center"></i> 訂單管理
+                </a>
+            </nav>
+            <div class="p-4 border-t border-gray-800">
+                <button @click="logout" class="text-sm hover:text-white"><i class="fas fa-sign-out-alt mr-1"></i> 登出</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-grow flex flex-col overflow-hidden">
+            <!-- Topbar -->
+            <header class="bg-white shadow p-4 flex justify-between items-center z-10">
+                <h2 class="text-xl font-bold text-gray-800">{{ tabName }}</h2>
+                <button @click="fetchData" class="text-blue-600 hover:text-blue-800 text-sm">
+                    <i class="fas fa-sync-alt" :class="{'fa-spin': isLoading}"></i> 重新整理
+                </button>
+            </header>
+
+            <!-- Content Scroll Area -->
+            <div class="flex-grow overflow-auto p-6">
+                
+                <!-- Tab: Courses -->
+                <div v-if="currentTab === 'courses'">
+                    <div class="mb-6 flex justify-between items-center">
+                        <div class="flex space-x-4">
+                            <div class="bg-white p-4 rounded shadow w-48">
+                                <div class="text-gray-500 text-xs">總課程數</div>
+                                <div class="text-2xl font-bold">{{ courses.length }}</div>
+                            </div>
+                            <div class="bg-white p-4 rounded shadow w-48">
+                                <div class="text-gray-500 text-xs">總報名數</div>
+                                <div class="text-2xl font-bold text-blue-600">{{ totalEnrolled }}</div>
+                            </div>
+                        </div>
+                        <button @click="showAddCourseModal = true" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+                            <i class="fas fa-plus mr-1"></i> 新增課程
+                        </button>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <table class="min-w-full leading-normal">
+                            <thead>
+                                <tr>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">課程代碼</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">課程名稱</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">日期</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">價格</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">報名狀況</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="c in courses" :key="c.id">
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-mono">{{ c.id }}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-bold">{{ c.name }}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ formatDate(c.date) }}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-green-600 font-bold">${{ c.price }}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div class="flex items-center">
+                                            <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                                                <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: (c.enrolled/c.capacity*100) + '%' }"></div>
+                                            </div>
+                                            <span>{{ c.enrolled }}/{{ c.capacity }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab: Orders -->
+                <div v-if="currentTab === 'orders'">
+                    <div class="mb-4 flex space-x-2">
+                        <input v-model="searchTerm" placeholder="搜尋姓名、電話或身分證..." class="p-2 border rounded w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select v-model="filterStatus" class="p-2 border rounded focus:outline-none">
+                            <option value="">所有狀態</option>
+                            <option value="PENDING">待付款</option>
+                            <option value="PAID">已付款</option>
+                            <option value="CANCELLED">已取消</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <table class="min-w-full leading-normal">
+                            <thead>
+                                <tr>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">訂單時間</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">學員資料</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">課程/金額</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">狀態</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="o in filteredOrders" :key="o.orderId">
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div>{{ formatTime(o.createdAt) }}</div>
+                                        <div class="text-xs text-gray-400 font-mono">{{ o.orderId.slice(0,8) }}</div>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div class="font-bold">{{ o.name }}</div>
+                                        <div class="text-xs text-gray-500">{{ o.phone }}</div>
+                                        <div class="text-xs text-gray-500">{{ o.nationalId }}</div>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div>{{ o.courseId }}</div>
+                                        <div class="text-red-600 font-bold">${{ o.amount }}</div>
+                                        <div v-if="o.groupId" class="text-xs bg-yellow-100 px-1 rounded inline-block">團報: {{ o.groupId }}</div>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <span :class="getStatusClass(o.status)" class="status-badge">
+                                            {{ getStatusLabel(o.status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div class="flex space-x-1">
+                                            <button v-if="o.status === 'PENDING'" @click="updateStatus(o.orderId, 'PAID')" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200">
+                                                收款
+                                            </button>
+                                            <button v-if="o.status !== 'CANCELLED'" @click="updateStatus(o.orderId, 'CANCELLED')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">
+                                                取消
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: 新增課程 -->
+    <div v-if="showAddCourseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+            <h3 class="text-lg font-bold mb-4">新增課程</h3>
+            <form @submit.prevent="submitCourse">
+                <div class="mb-3">
+                    <label class="block text-xs font-bold mb-1">課程代碼</label>
+                    <input v-model="newCourse.id" required placeholder="例如: CAMP_003" class="w-full border p-2 rounded text-sm">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-bold mb-1">課程名稱</label>
+                    <input v-model="newCourse.name" required class="w-full border p-2 rounded text-sm">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-bold mb-1">開課日期</label>
+                    <input v-model="newCourse.date" type="date" required class="w-full border p-2 rounded text-sm">
+                </div>
+                <div class="flex space-x-2 mb-3">
+                    <div class="w-1/2">
+                        <label class="block text-xs font-bold mb-1">價格</label>
+                        <input v-model="newCourse.price" type="number" required class="w-full border p-2 rounded text-sm">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-xs font-bold mb-1">名額</label>
+                        <input v-model="newCourse.capacity" type="number" required class="w-full border p-2 rounded text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" @click="showAddCourseModal = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">建立</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp, ref, computed, onMounted } = Vue;
+    // 您的 Cloudflare Worker 網址
+    const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/'; 
+
+    createApp({
+        setup() {
+            const isLoggedIn = ref(false);
+            const password = ref('');
+            const error = ref('');
+            const isLoading = ref(false);
+            const currentTab = ref('courses');
+            
+            const courses = ref([]);
+            const orders = ref([]);
+            
+            // Filters
+            const searchTerm = ref('');
+            const filterStatus = ref('');
+
+            // Modals
+            const showAddCourseModal = ref(false);
+            const newCourse = ref({ id: '', name: '', date: '', price: 0, capacity: 0 });
+
+            const tabName = computed(() => currentTab.value === 'courses' ? '課程管理' : '訂單管理');
+            const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + c.enrolled, 0));
+
+            const filteredOrders = computed(() => {
+                return orders.value.filter(o => {
+                    const matchSearch = (o.name + o.phone + o.nationalId).toLowerCase().includes(searchTerm.value.toLowerCase());
+                    const matchStatus = filterStatus.value ? o.status === filterStatus.value : true;
+                    return matchSearch && matchStatus;
+                });
+            });
+
+            // Login
+            const login = async () => {
+                isLoading.value = true;
+                error.value = '';
+                try {
+                    const res = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'ADMIN_LOGIN', payload: { password: password.value } })
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        isLoggedIn.value = true;
+                        fetchData();
+                    } else {
+                        error.value = '密碼錯誤';
+                    }
+                } catch (e) {
+                    error.value = '連線錯誤';
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            const logout = () => {
+                isLoggedIn.value = false;
+                password.value = '';
+                courses.value = [];
+                orders.value = [];
+            };
+
+            // Fetch Data
+            const fetchData = async () => {
+                isLoading.value = true;
+                try {
+                    const res = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'ADMIN_GET_DATA', payload: { password: password.value } })
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        courses.value = json.data.courses;
+                        // 訂單倒序排列 (最新的在上面)
+                        orders.value = json.data.orders.reverse();
+                    }
+                } catch (e) {
+                    alert('資料載入失敗');
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            // Update Status
+            const updateStatus = async (orderId, newStatus) => {
+                if (!confirm(`確定要將訂單變更為 ${newStatus} 嗎？`)) return;
+                
+                try {
+                    const res = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            action: 'ADMIN_UPDATE_ORDER', 
+                            payload: { password: password.value, orderId, newStatus } 
+                        })
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        // 本地更新 UI
+                        const order = orders.value.find(o => o.orderId === orderId);
+                        if (order) order.status = newStatus;
+                        // 若是取消，重新撈資料以更新庫存顯示
+                        if (newStatus === 'CANCELLED') fetchData();
+                    } else {
+                        alert('更新失敗: ' + json.message);
+                    }
+                } catch (e) {
+                    alert('操作失敗');
+                }
+            };
+
+            // Add Course
+            const submitCourse = async () => {
+                try {
+                    const res = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            action: 'ADMIN_ADD_COURSE', 
+                            payload: { password: password.value, ...newCourse.value } 
+                        })
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        alert('課程新增成功');
+                        showAddCourseModal.value = false;
+                        newCourse.value = { id: '', name: '', date: '', price: 0, capacity: 0 };
+                        fetchData();
+                    } else {
+                        alert('新增失敗: ' + json.message);
+                    }
+                } catch (e) {
+                    alert('操作失敗');
+                }
+            };
+
+            // Helpers
+            const formatDate = (d) => new Date(d).toLocaleDateString('zh-TW');
+            const formatTime = (d) => new Date(d).toLocaleString('zh-TW', { hour12: false });
+            
+            const getStatusLabel = (s) => {
+                const map = { 'PENDING': '待付款', 'PAID': '已付款', 'CANCELLED': '已取消' };
+                return map[s] || s;
+            };
+            const getStatusClass = (s) => {
+                const map = { 
+                    'PENDING': 'bg-yellow-100 text-yellow-800', 
+                    'PAID': 'bg-green-100 text-green-800', 
+                    'CANCELLED': 'bg-gray-200 text-gray-500' 
+                };
+                return map[s] || 'bg-gray-100';
+            };
+
+            return {
+                isLoggedIn, password, error, isLoading, login, logout,
+                currentTab, tabName, courses, totalEnrolled, filteredOrders,
+                fetchData, updateStatus,
+                searchTerm, filterStatus,
+                showAddCourseModal, newCourse, submitCourse,
+                formatDate, formatTime, getStatusLabel, getStatusClass
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
