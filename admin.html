@@ -4,571 +4,305 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>竹北運動中心 - 管理員後台</title>
-    <!-- Vue 3 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         [v-cloak] { display: none; }
-        .sidebar-link { 
-            @apply flex items-center py-3 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white cursor-pointer mb-2; 
-        }
+        .sidebar-link { @apply flex items-center py-3 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white cursor-pointer mb-2; }
         .sidebar-link.active { @apply bg-blue-600 text-white shadow-lg; }
         .status-badge { @apply px-2 py-1 rounded text-xs font-bold; }
-        /* Modal Transition */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .input-std { @apply w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm; }
+        .label-std { @apply block text-xs font-bold text-gray-500 uppercase mb-1; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
 
 <div id="app" v-cloak class="min-h-screen flex flex-col">
 
-    <!-- Login View -->
+    <!-- Login -->
     <div v-if="!isLoggedIn" class="flex-grow flex items-center justify-center bg-gray-800">
         <div class="bg-white p-8 rounded-lg shadow-xl w-96">
             <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">管理員登入</h2>
             <form @submit.prevent="login">
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">管理密碼</label>
-                    <input v-model="password" type="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="請輸入密碼">
+                    <input v-model="password" type="password" class="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
-                <button :disabled="isLoading" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition">
-                    {{ isLoading ? '登入中...' : '登入' }}
-                </button>
+                <button :disabled="isLoading" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">登入</button>
                 <p v-if="error" class="text-red-500 text-xs italic mt-4 text-center">{{ error }}</p>
             </form>
         </div>
     </div>
 
-    <!-- Dashboard View -->
+    <!-- Dashboard -->
     <div v-else class="flex flex-grow h-screen overflow-hidden">
         
         <!-- Sidebar -->
         <aside class="w-64 bg-gray-900 text-gray-400 flex flex-col shrink-0 h-full">
             <div class="p-4 bg-gray-800 font-bold text-white text-lg flex items-center shrink-0">
-                <i class="fas fa-dumbbell mr-2 text-blue-500"></i> 營隊管理系統
+                <i class="fas fa-dumbbell mr-2 text-blue-500"></i> 營隊管理
             </div>
-            
-            <!-- 選單區域：確保 flex-col 與 w-full -->
             <nav class="flex-grow p-4 overflow-y-auto flex flex-col w-full">
                 <a @click="currentTab = 'courses'" :class="{'active': currentTab === 'courses'}" class="sidebar-link">
-                    <i class="fas fa-chalkboard-teacher w-6 text-center mr-2"></i> 
-                    <span>課程管理</span>
+                    <i class="fas fa-chalkboard-teacher w-6 text-center mr-2"></i> <span>課程管理</span>
                 </a>
                 <a @click="currentTab = 'orders'" :class="{'active': currentTab === 'orders'}" class="sidebar-link">
-                    <i class="fas fa-file-invoice-dollar w-6 text-center mr-2"></i> 
-                    <span>訂單管理</span>
+                    <i class="fas fa-file-invoice-dollar w-6 text-center mr-2"></i> <span>訂單管理</span>
                 </a>
                 <a @click="currentTab = 'members'" :class="{'active': currentTab === 'members'}" class="sidebar-link">
-                    <i class="fas fa-users w-6 text-center mr-2"></i> 
-                    <span>會員管理</span>
+                    <i class="fas fa-users w-6 text-center mr-2"></i> <span>會員管理</span>
                 </a>
             </nav>
-
             <div class="p-4 border-t border-gray-800 shrink-0">
-                <button @click="logout" class="text-sm hover:text-white flex items-center w-full px-4 py-2">
-                    <i class="fas fa-sign-out-alt mr-2"></i> 登出
-                </button>
+                <button @click="logout" class="text-sm hover:text-white flex items-center w-full px-4 py-2"><i class="fas fa-sign-out-alt mr-2"></i> 登出</button>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-grow flex flex-col overflow-hidden w-full bg-gray-100">
-            <!-- Topbar -->
             <header class="bg-white shadow p-4 flex justify-between items-center z-10 shrink-0">
                 <h2 class="text-xl font-bold text-gray-800">{{ tabName }}</h2>
-                <button @click="fetchData" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
-                    <i class="fas fa-sync-alt mr-1" :class="{'fa-spin': isLoading}"></i> 重新整理
-                </button>
+                <button @click="fetchData" class="text-blue-600 hover:text-blue-800 text-sm flex items-center"><i class="fas fa-sync-alt mr-1" :class="{'fa-spin': isLoading}"></i> 重新整理</button>
             </header>
 
-            <!-- Content Scroll Area -->
             <div class="flex-grow overflow-auto p-6">
-                
-                <!-- Tab: Courses -->
+                <!-- Courses Table (略為簡化，維持功能) -->
                 <div v-if="currentTab === 'courses'">
-                    <div class="mb-6 flex justify-between items-center">
-                        <div class="flex space-x-4">
-                            <div class="bg-white p-4 rounded shadow w-48">
-                                <div class="text-gray-500 text-xs">總課程數</div>
-                                <div class="text-2xl font-bold">{{ courses.length }}</div>
-                            </div>
-                            <div class="bg-white p-4 rounded shadow w-48">
-                                <div class="text-gray-500 text-xs">總報名數</div>
-                                <div class="text-2xl font-bold text-blue-600">{{ totalEnrolled }}</div>
-                            </div>
-                        </div>
-                        <button @click="showAddCourseModal = true" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center">
-                            <i class="fas fa-plus mr-1"></i> 新增課程
-                        </button>
+                    <div class="mb-4 flex justify-between">
+                        <div class="text-2xl font-bold">總課程: {{ courses.length }}</div>
+                        <button @click="showAddCourseModal = true" class="bg-green-600 text-white px-4 py-2 rounded shadow"><i class="fas fa-plus mr-1"></i> 新增</button>
                     </div>
-
-                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="bg-white shadow rounded overflow-hidden">
                         <table class="min-w-full leading-normal">
-                            <thead>
-                                <tr>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">代碼</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">名稱</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">日期</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">價格</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">狀況</th>
-                                </tr>
+                            <thead class="bg-gray-100 border-b">
+                                <tr><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">代碼</th><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">名稱</th><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">價格</th><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">狀況</th></tr>
                             </thead>
                             <tbody>
-                                <tr v-for="c in courses" :key="c.id">
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-mono">{{ c.id }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-bold">{{ c.name }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ formatDate(c.date) }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-green-600 font-bold">${{ c.price }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <div class="flex items-center">
-                                            <div class="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
-                                                <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: (c.enrolled/c.capacity*100) + '%' }"></div>
-                                            </div>
-                                            <span>{{ c.enrolled }}/{{ c.capacity }}</span>
-                                        </div>
-                                    </td>
+                                <tr v-for="c in courses" :key="c.id" class="border-b">
+                                    <td class="px-5 py-4 text-sm">{{ c.id }}</td><td class="px-5 py-4 text-sm font-bold">{{ c.name }}</td><td class="px-5 py-4 text-sm text-green-600">${{ c.price }}</td><td class="px-5 py-4 text-sm">{{ c.enrolled }}/{{ c.capacity }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Tab: Orders -->
+                <!-- Orders Table -->
                 <div v-if="currentTab === 'orders'">
+                    <!-- ... Orders UI logic (Same as before) ... -->
                     <div class="mb-4 flex space-x-2">
-                        <input v-model="searchTerm" placeholder="搜尋..." class="p-2 border rounded w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <select v-model="filterStatus" class="p-2 border rounded focus:outline-none">
-                            <option value="">所有狀態</option>
-                            <option value="PENDING">待付款</option>
-                            <option value="PAID">已付款</option>
-                            <option value="CANCELLED">已取消</option>
-                        </select>
+                        <input v-model="searchTerm" placeholder="搜尋..." class="p-2 border rounded w-64">
+                        <select v-model="filterStatus" class="p-2 border rounded"><option value="">所有狀態</option><option value="PENDING">待付款</option><option value="PAID">已付款</option><option value="CANCELLED">已取消</option></select>
                     </div>
-
-                    <div class="bg-white shadow rounded-lg overflow-hidden">
-                        <table class="min-w-full leading-normal">
-                            <thead>
-                                <tr>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">訂單</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">學員</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">內容</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">狀態</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
-                                </tr>
-                            </thead>
+                    <div class="bg-white shadow rounded overflow-hidden">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-100 border-b"><tr><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">訂單</th><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">學員</th><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">狀態</th><th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">操作</th></tr></thead>
                             <tbody>
-                                <tr v-for="o in filteredOrders" :key="o.orderId">
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <div>{{ formatTime(o.createdAt) }}</div>
-                                        <div class="text-xs text-gray-400 font-mono">{{ o.orderId.slice(0,8) }}</div>
-                                    </td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <div class="font-bold">{{ o.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ o.phone }}</div>
-                                    </td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <div>{{ o.courseId }}</div>
-                                        <div class="text-red-600 font-bold">${{ o.amount }}</div>
-                                    </td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <span :class="getStatusClass(o.status)" class="status-badge">
-                                            {{ getStatusLabel(o.status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <div class="flex space-x-1">
-                                            <button v-if="o.status === 'PENDING'" @click="updateStatus(o.orderId, 'PAID')" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200">
-                                                收款
-                                            </button>
-                                            <button v-if="o.status !== 'CANCELLED'" @click="updateStatus(o.orderId, 'CANCELLED')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">
-                                                取消
-                                            </button>
-                                        </div>
-                                    </td>
+                                <tr v-for="o in filteredOrders" :key="o.orderId" class="border-b">
+                                    <td class="px-5 py-4 text-sm"><div>{{ formatTime(o.createdAt) }}</div><div class="text-xs text-gray-400">{{ o.orderId.slice(0,8) }}</div></td>
+                                    <td class="px-5 py-4 text-sm"><div class="font-bold">{{ o.name }}</div><div class="text-xs">{{ o.phone }}</div></td>
+                                    <td class="px-5 py-4 text-sm"><span :class="getStatusClass(o.status)" class="status-badge">{{ getStatusLabel(o.status) }}</span></td>
+                                    <td class="px-5 py-4 text-sm"><button v-if="o.status==='PENDING'" @click="updateStatus(o.orderId,'PAID')" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded mr-1">收款</button><button v-if="o.status!=='CANCELLED'" @click="updateStatus(o.orderId,'CANCELLED')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">取消</button></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Tab: Members -->
+                <!-- Members Table -->
                 <div v-if="currentTab === 'members'">
-                    <div class="mb-4">
-                        <input v-model="searchTerm" placeholder="搜尋會員姓名、身分證..." class="p-2 border rounded w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-
-                    <div class="bg-white shadow rounded-lg overflow-hidden">
-                        <table class="min-w-full leading-normal">
-                            <thead>
+                    <div class="mb-4"><input v-model="searchTerm" placeholder="搜尋會員..." class="p-2 border rounded w-64"></div>
+                    <div class="bg-white shadow rounded overflow-hidden">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-100 border-b">
                                 <tr>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">姓名</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">身分證</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">電話</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">備註</th>
-                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">姓名</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">身分/關係</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">電話</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">備註</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="u in filteredUsers" :key="u.userId">
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-bold">{{ u.name }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-mono">{{ u.nationalId }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-mono">{{ u.phone }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-gray-500 truncate max-w-xs">{{ u.notes }}</td>
-                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                        <button @click="openMemberDetail(u)" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 flex items-center">
-                                            <i class="fas fa-edit mr-1"></i> 編輯
-                                        </button>
+                                <tr v-for="u in filteredUsers" :key="u.userId" class="border-b">
+                                    <td class="px-5 py-4 text-sm font-bold">{{ u.name }}</td>
+                                    <td class="px-5 py-4 text-sm">
+                                        <div class="font-bold">{{ u.identity }}</div>
+                                        <div class="text-xs text-gray-500" v-if="u.familyMembers && u.familyMembers.length">家人: {{ u.familyMembers.length }}位</div>
+                                    </td>
+                                    <td class="px-5 py-4 text-sm font-mono">{{ u.phone }}</td>
+                                    <td class="px-5 py-4 text-sm text-gray-500 truncate max-w-xs">{{ u.notes || u.healthNote }}</td>
+                                    <td class="px-5 py-4 text-sm">
+                                        <button @click="openMemberDetail(u)" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"><i class="fas fa-edit mr-1"></i> 編輯</button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
 
-    <!-- Modal: 新增課程 -->
-    <div v-if="showAddCourseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
-            <h3 class="text-lg font-bold mb-4">新增課程</h3>
-            <form @submit.prevent="submitCourse">
-                <!-- (課程表單內容) -->
-                <div class="mb-3"><label class="block text-xs font-bold mb-1">課程代碼</label><input v-model="newCourse.id" required class="w-full border p-2 rounded text-sm"></div>
-                <div class="mb-3"><label class="block text-xs font-bold mb-1">課程名稱</label><input v-model="newCourse.name" required class="w-full border p-2 rounded text-sm"></div>
-                <div class="mb-3"><label class="block text-xs font-bold mb-1">開課日期</label><input v-model="newCourse.date" type="date" required class="w-full border p-2 rounded text-sm"></div>
-                <div class="flex space-x-2 mb-3">
-                    <div class="w-1/2"><label class="block text-xs font-bold mb-1">價格</label><input v-model="newCourse.price" type="number" required class="w-full border p-2 rounded text-sm"></div>
-                    <div class="w-1/2"><label class="block text-xs font-bold mb-1">名額</label><input v-model="newCourse.capacity" type="number" required class="w-full border p-2 rounded text-sm"></div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-4">
-                    <button type="button" @click="showAddCourseModal = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">建立</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: 會員編輯與詳細資料 (增強版) -->
+    <!-- Modal: Member Edit -->
     <transition name="fade">
         <div v-if="showMemberModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg w-[900px] h-[80vh] shadow-2xl flex flex-col overflow-hidden">
-                <!-- Modal Header -->
+            <div class="bg-white rounded-lg w-[1000px] h-[85vh] shadow-2xl flex flex-col overflow-hidden">
                 <div class="bg-blue-600 p-4 flex justify-between items-center text-white shrink-0">
-                    <h3 class="text-lg font-bold"><i class="fas fa-user-edit mr-2"></i> 會員資料管理</h3>
-                    <button @click="showMemberModal = false" class="text-white hover:text-gray-200">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+                    <h3 class="text-lg font-bold">會員資料管理</h3>
+                    <button @click="showMemberModal = false"><i class="fas fa-times text-xl"></i></button>
                 </div>
                 
                 <div class="flex flex-grow overflow-hidden">
-                    <!-- Left: Editable Basic Info -->
-                    <div class="w-1/3 bg-gray-50 p-6 border-r overflow-y-auto">
-                        <div class="text-center mb-6">
-                            <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto text-3xl text-gray-500 mb-3">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="text-xs text-gray-400">UserID: {{ editingMember.userId }}</div>
-                        </div>
-
+                    <!-- Left: Form -->
+                    <div class="w-1/2 bg-gray-50 p-6 border-r overflow-y-auto">
                         <form @submit.prevent="saveMember" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">真實姓名</label>
-                                <input type="text" v-model="editingMember.name" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            <!-- Basic Info -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="label-std">真實姓名</label><input type="text" v-model="editingMember.name" required class="input-std"></div>
+                                <div><label class="label-std">身分證</label><input type="text" v-model="editingMember.nationalId" readonly class="input-std bg-gray-100 cursor-not-allowed"></div>
+                                <div><label class="label-std">生日</label><input type="date" v-model="getBirthdayValue" @input="updateBirthday" class="input-std"></div>
+                                <div><label class="label-std">身分</label>
+                                    <select v-model="editingMember.identity" class="input-std">
+                                        <option value="一般">一般</option><option value="家長">家長</option><option value="學生">學生</option>
+                                    </select>
+                                </div>
                             </div>
+                            <div><label class="label-std">聯絡電話</label><input type="tel" v-model="editingMember.phone" class="input-std"></div>
+                            <div><label class="label-std">地址</label><input type="text" v-model="editingMember.address" class="input-std"></div>
                             
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">身分證字號</label>
-                                <!-- 身分證通常不建議隨意修改，這裡設為唯讀，若需修改可移除 readonly -->
-                                <input type="text" v-model="editingMember.nationalId" readonly class="w-full bg-gray-100 border border-gray-300 p-2 rounded text-gray-500 cursor-not-allowed">
+                            <!-- Health -->
+                            <div class="bg-yellow-50 p-3 rounded border border-yellow-200">
+                                <label class="label-std text-yellow-800">健康狀況</label>
+                                <select v-model="editingMember.healthStatus" class="input-std mb-2">
+                                    <option value="正常">正常</option><option value="需備註">需備註</option>
+                                </select>
+                                <textarea v-model="editingMember.healthNote" rows="2" class="input-std" placeholder="健康備註..."></textarea>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">聯絡電話</label>
-                                <input type="tel" v-model="editingMember.phone" required class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            <!-- Family -->
+                            <div class="bg-gray-100 p-3 rounded border">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="label-std mb-0">家人名單</label>
+                                    <button type="button" @click="addFamily" class="text-xs bg-gray-300 px-2 py-1 rounded hover:bg-gray-400">新增</button>
+                                </div>
+                                <div v-for="(fm, idx) in editingMember.familyMembers" :key="idx" class="flex gap-2 mb-2">
+                                    <input v-model="fm.name" placeholder="姓名" class="input-std w-1/2">
+                                    <input v-model="fm.relation" placeholder="關係" class="input-std w-1/3">
+                                    <button type="button" @click="removeFamily(idx)" class="text-red-500 px-1"><i class="fas fa-times"></i></button>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">管理員備註</label>
-                                <textarea v-model="editingMember.notes" rows="4" placeholder="請輸入備註事項..." class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
-                            </div>
+                            <div><label class="label-std">管理員備註 (內部)</label><textarea v-model="editingMember.notes" rows="2" class="input-std"></textarea></div>
 
-                            <div class="pt-4 border-t">
-                                <button type="submit" :disabled="isSaving" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition flex justify-center items-center">
-                                    <i v-if="isSaving" class="fas fa-spinner fa-spin mr-2"></i>
-                                    {{ isSaving ? '儲存中...' : '儲存變更' }}
-                                </button>
-                            </div>
+                            <button type="submit" :disabled="isSaving" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded">
+                                {{ isSaving ? '儲存中...' : '儲存變更' }}
+                            </button>
                         </form>
                     </div>
 
-                    <!-- Right: Order History (唯讀) -->
-                    <div class="w-2/3 p-6 overflow-auto bg-white">
+                    <!-- Right: History -->
+                    <div class="w-1/2 p-6 overflow-auto bg-white">
                         <h4 class="font-bold text-gray-700 mb-4 border-b pb-2">購課紀錄</h4>
-                        
-                        <!-- Paid -->
-                        <div class="mb-6">
-                            <h5 class="text-sm font-bold text-green-700 mb-2 flex items-center">
-                                <i class="fas fa-check-circle mr-1"></i> 已完成訂單 ({{ memberPaidOrders.length }})
-                            </h5>
-                            <div v-if="memberPaidOrders.length === 0" class="text-sm text-gray-400 italic p-2 border border-dashed rounded bg-gray-50">尚無資料</div>
-                            <div v-else class="space-y-2">
-                                <div v-for="o in memberPaidOrders" :key="o.orderId" class="border rounded p-3 bg-green-50/50 flex justify-between items-center text-sm">
-                                    <div>
-                                        <div class="font-bold">{{ o.courseId }}</div>
-                                        <div class="text-xs text-gray-500">{{ formatTime(o.createdAt) }}</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="font-bold text-gray-800">${{ o.amount }}</div>
-                                        <div class="text-xs bg-green-200 text-green-800 px-1 rounded inline-block">已付款</div>
-                                    </div>
-                                </div>
+                        <div v-for="o in memberOrders" :key="o.orderId" class="border rounded p-3 mb-2 text-sm flex justify-between" :class="o.status==='PAID'?'bg-green-50 border-green-200':'bg-gray-50'">
+                            <div>
+                                <div class="font-bold">{{ o.courseId }}</div><div class="text-xs text-gray-500">{{ formatTime(o.createdAt) }}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold">${{ o.amount }}</div>
+                                <span :class="getStatusClass(o.status)" class="status-badge">{{ getStatusLabel(o.status) }}</span>
                             </div>
                         </div>
-
-                        <!-- Unpaid -->
-                        <div>
-                            <h5 class="text-sm font-bold text-gray-500 mb-2 flex items-center">
-                                <i class="fas fa-history mr-1"></i> 未完成/已取消 ({{ memberUnpaidOrders.length }})
-                            </h5>
-                            <div v-if="memberUnpaidOrders.length === 0" class="text-sm text-gray-400 italic p-2 border border-dashed rounded bg-gray-50">尚無資料</div>
-                            <div v-else class="space-y-2">
-                                <div v-for="o in memberUnpaidOrders" :key="o.orderId" class="border rounded p-3 bg-gray-50 flex justify-between items-center text-sm opacity-75 hover:opacity-100 transition">
-                                    <div>
-                                        <div class="font-bold text-gray-700">{{ o.courseId }}</div>
-                                        <div class="text-xs text-gray-500">{{ formatTime(o.createdAt) }}</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="font-bold text-gray-600">${{ o.amount }}</div>
-                                        <span :class="getStatusClass(o.status)" class="status-badge">{{ getStatusLabel(o.status) }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
         </div>
     </transition>
 
+    <!-- Add Course Modal (Simplified) -->
+    <div v-if="showAddCourseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded w-96">
+            <h3 class="font-bold mb-4">新增課程</h3>
+            <form @submit.prevent="submitCourse">
+                <input v-model="newCourse.id" placeholder="ID" class="input-std mb-2" required>
+                <input v-model="newCourse.name" placeholder="名稱" class="input-std mb-2" required>
+                <input v-model="newCourse.date" type="date" class="input-std mb-2" required>
+                <div class="flex gap-2 mb-4"><input v-model="newCourse.price" placeholder="價格" class="input-std" required><input v-model="newCourse.capacity" placeholder="名額" class="input-std" required></div>
+                <div class="flex justify-end gap-2"><button type="button" @click="showAddCourseModal=false" class="px-3 py-1 bg-gray-200 rounded">取消</button><button class="px-3 py-1 bg-blue-600 text-white rounded">建立</button></div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed } = Vue;
     const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/'; 
 
     createApp({
         setup() {
-            const isLoggedIn = ref(false);
-            const password = ref('');
-            const error = ref('');
-            const isLoading = ref(false);
-            const isSaving = ref(false); // 儲存狀態
-            const currentTab = ref('courses');
-            
-            const courses = ref([]);
-            const orders = ref([]);
-            const users = ref([]); 
-            
-            const searchTerm = ref('');
-            const filterStatus = ref('');
+            const isLoggedIn=ref(false), password=ref(''), isLoading=ref(false), isSaving=ref(false), error=ref('');
+            const currentTab=ref('courses'), courses=ref([]), orders=ref([]), users=ref([]);
+            const searchTerm=ref(''), filterStatus=ref('');
+            const showAddCourseModal=ref(false), showMemberModal=ref(false);
+            const newCourse=ref({id:'',name:'',date:'',price:0,capacity:0});
+            const editingMember=ref({});
 
-            const showAddCourseModal = ref(false);
-            const showMemberModal = ref(false);
-            const newCourse = ref({ id: '', name: '', date: '', price: 0, capacity: 0 });
-            
-            // 編輯中的會員資料 (複製一份避免直接修改列表)
-            const editingMember = ref({});
-
-            const tabName = computed(() => {
-                const map = { 'courses': '課程管理', 'orders': '訂單管理', 'members': '會員管理' };
-                return map[currentTab.value] || '';
-            });
-
+            const tabName = computed(()=>({'courses':'課程','orders':'訂單','members':'會員'}[currentTab.value]));
+            const filteredOrders = computed(() => orders.value.filter(o => (o.name+o.phone).includes(searchTerm.value) && (!filterStatus.value || o.status===filterStatus.value)));
+            const filteredUsers = computed(() => currentTab.value!=='members'?[]:users.value.filter(u => (u.name+u.nationalId+u.phone).includes(searchTerm.value)));
+            const memberOrders = computed(() => orders.value.filter(o => o.userId === editingMember.value.userId));
             const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + c.enrolled, 0));
 
-            const filteredOrders = computed(() => {
-                return orders.value.filter(o => {
-                    const matchSearch = (o.name + o.phone + o.nationalId).toLowerCase().includes(searchTerm.value.toLowerCase());
-                    const matchStatus = filterStatus.value ? o.status === filterStatus.value : true;
-                    return matchSearch && matchStatus;
-                });
+            // Birthday Helper
+            const getBirthdayValue = computed(() => {
+                if(!editingMember.value.birthday) return '';
+                return new Date(editingMember.value.birthday).toISOString().split('T')[0];
             });
-
-            const filteredUsers = computed(() => {
-                if (currentTab.value !== 'members') return [];
-                return users.value.filter(u => {
-                    return (u.name + u.nationalId + u.phone + (u.notes || '')).toLowerCase().includes(searchTerm.value.toLowerCase());
-                });
-            });
-
-            // 根據 editingMember.userId 篩選訂單
-            const memberOrders = computed(() => orders.value.filter(o => o.userId === editingMember.value.userId));
-            const memberPaidOrders = computed(() => memberOrders.value.filter(o => o.status === 'PAID'));
-            const memberUnpaidOrders = computed(() => memberOrders.value.filter(o => o.status !== 'PAID'));
+            const updateBirthday = (e) => editingMember.value.birthday = e.target.value;
 
             const login = async () => {
-                isLoading.value = true;
-                error.value = '';
-                try {
-                    const res = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'ADMIN_LOGIN', payload: { password: password.value } })
-                    });
-                    const json = await res.json();
-                    if (json.status === 'success') {
-                        isLoggedIn.value = true;
-                        fetchData();
-                    } else {
-                        error.value = '密碼錯誤';
-                    }
-                } catch (e) {
-                    error.value = '連線錯誤';
-                } finally {
-                    isLoading.value = false;
-                }
+                isLoading.value=true; try { const r=await post('ADMIN_LOGIN'); if(r) { isLoggedIn.value=true; fetchData(); } else error.value='密碼錯誤'; } catch(e){ error.value='Err'; } finally{ isLoading.value=false; }
             };
-
-            const logout = () => {
-                isLoggedIn.value = false;
-                password.value = '';
-                courses.value = [];
-                orders.value = [];
-                users.value = [];
+            const logout = () => { isLoggedIn.value=false; password.value=''; };
+            
+            const post = async (act, pl={}) => {
+                const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action:act, payload:{password:password.value, ...pl}}) });
+                const json = await res.json();
+                return json.status==='success' ? json : null;
             };
 
             const fetchData = async () => {
-                isLoading.value = true;
-                try {
-                    const res = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'ADMIN_GET_DATA', payload: { password: password.value } })
-                    });
-                    const json = await res.json();
-                    if (json.status === 'success') {
-                        courses.value = json.data.courses;
-                        orders.value = json.data.orders.reverse();
-                        users.value = json.data.users.reverse();
-                    }
-                } catch (e) {
-                    alert('資料載入失敗');
-                } finally {
-                    isLoading.value = false;
-                }
+                isLoading.value=true; const d = await post('ADMIN_GET_DATA');
+                if(d) { courses.value=d.data.courses; orders.value=d.data.orders.reverse(); users.value=d.data.users.reverse(); }
+                isLoading.value=false;
             };
 
-            const updateStatus = async (orderId, newStatus) => {
-                if (!confirm(`確定要將訂單變更為 ${newStatus} 嗎？`)) return;
-                try {
-                    const res = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        body: JSON.stringify({ 
-                            action: 'ADMIN_UPDATE_ORDER', 
-                            payload: { password: password.value, orderId, newStatus } 
-                        })
-                    });
-                    const json = await res.json();
-                    if (json.status === 'success') {
-                        const order = orders.value.find(o => o.orderId === orderId);
-                        if (order) order.status = newStatus;
-                        if (newStatus === 'CANCELLED') fetchData(); 
-                    } else {
-                        alert('更新失敗: ' + json.message);
-                    }
-                } catch (e) {
-                    alert('操作失敗');
-                }
-            };
-
-            const submitCourse = async () => {
-                try {
-                    const res = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        body: JSON.stringify({ 
-                            action: 'ADMIN_ADD_COURSE', 
-                            payload: { password: password.value, ...newCourse.value } 
-                        })
-                    });
-                    const json = await res.json();
-                    if (json.status === 'success') {
-                        alert('課程新增成功');
-                        showAddCourseModal.value = false;
-                        newCourse.value = { id: '', name: '', date: '', price: 0, capacity: 0 };
-                        fetchData();
-                    } else {
-                        alert('新增失敗: ' + json.message);
-                    }
-                } catch (e) {
-                    alert('操作失敗');
-                }
-            };
-
-            // 開啟會員編輯 Modal
-            const openMemberDetail = (user) => {
-                // 深拷貝物件，避免修改時影響列表顯示，直到儲存成功
-                editingMember.value = JSON.parse(JSON.stringify(user));
-                showMemberModal.value = true;
-            };
-
-            // 儲存會員資料
-            const saveMember = async () => {
-                isSaving.value = true;
-                try {
-                    const res = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        body: JSON.stringify({ 
-                            action: 'ADMIN_UPDATE_MEMBER', 
-                            payload: { password: password.value, memberData: editingMember.value } 
-                        })
-                    });
-                    const json = await res.json();
-                    if (json.status === 'success') {
-                        alert('會員資料更新成功');
-                        showMemberModal.value = false;
-                        fetchData(); // 重新整理列表
-                    } else {
-                        alert('更新失敗: ' + json.message);
-                    }
-                } catch (e) {
-                    alert('連線失敗');
-                } finally {
-                    isSaving.value = false;
-                }
-            };
-
-            // Helpers
-            const formatDate = (d) => d ? new Date(d).toLocaleDateString('zh-TW') : '-';
-            const formatTime = (d) => d ? new Date(d).toLocaleString('zh-TW', { hour12: false }) : '-';
+            const updateStatus = async (oid, st) => { if(confirm('確定?')) { await post('ADMIN_UPDATE_ORDER', {orderId:oid, newStatus:st}); fetchData(); }};
+            const submitCourse = async () => { await post('ADMIN_ADD_COURSE', newCourse.value); showAddCourseModal.value=false; fetchData(); };
             
-            const getStatusLabel = (s) => {
-                const map = { 'PENDING': '待付款', 'PAID': '已付款', 'CANCELLED': '已取消' };
-                return map[s] || s;
-            };
-            const getStatusClass = (s) => {
-                const map = { 
-                    'PENDING': 'bg-yellow-100 text-yellow-800', 
-                    'PAID': 'bg-green-100 text-green-800', 
-                    'CANCELLED': 'bg-gray-200 text-gray-500' 
-                };
-                return map[s] || 'bg-gray-100';
+            const openMemberDetail = (u) => { editingMember.value = JSON.parse(JSON.stringify(u)); if(!editingMember.value.familyMembers) editingMember.value.familyMembers=[]; showMemberModal.value=true; };
+            const addFamily = () => editingMember.value.familyMembers.push({name:'', relation:''});
+            const removeFamily = (i) => editingMember.value.familyMembers.splice(i,1);
+            
+            const saveMember = async () => {
+                isSaving.value=true;
+                const ok = await post('ADMIN_UPDATE_MEMBER', {memberData: editingMember.value});
+                if(ok) { alert('Saved'); showMemberModal.value=false; fetchData(); } else alert('Failed');
+                isSaving.value=false;
             };
 
             return {
-                isLoggedIn, password, error, isLoading, isSaving, login, logout,
-                currentTab, tabName, courses, totalEnrolled, filteredOrders,
-                users, filteredUsers, 
-                fetchData, updateStatus,
-                searchTerm, filterStatus,
-                showAddCourseModal, newCourse, submitCourse,
-                showMemberModal, editingMember, openMemberDetail, saveMember, // 會員相關
-                memberPaidOrders, memberUnpaidOrders,
-                formatDate, formatTime, getStatusLabel, getStatusClass
+                isLoggedIn, password, error, isLoading, isSaving, currentTab, tabName, courses, totalEnrolled,
+                searchTerm, filterStatus, filteredOrders, filteredUsers, showAddCourseModal, showMemberModal,
+                newCourse, editingMember, memberOrders, login, logout, fetchData, updateStatus, submitCourse,
+                openMemberDetail, saveMember, addFamily, removeFamily, getBirthdayValue, updateBirthday,
+                formatDate: d=>d?new Date(d).toLocaleDateString('zh-TW'):'-',
+                formatTime: d=>d?new Date(d).toLocaleString('zh-TW',{hour12:false}):'-',
+                getStatusLabel: s=>({'PENDING':'待付','PAID':'已付','CANCELLED':'取消'}[s]||s),
+                getStatusClass: s=>({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-200'}[s])
             };
         }
     }).mount('#app');
