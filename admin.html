@@ -73,7 +73,7 @@
                 <a @click="currentTab='courses'" :class="{'active':currentTab==='courses'}" class="sidebar-item"><i class="fas fa-chalkboard-teacher w-5 text-center mr-3 text-lg"></i> 課程管理</a>
                 <a @click="currentTab='orders'" :class="{'active':currentTab==='orders'}" class="sidebar-item"><i class="fas fa-file-invoice-dollar w-5 text-center mr-3 text-lg"></i> 訂單管理</a>
                 <a @click="currentTab='members'" :class="{'active':currentTab==='members'}" class="sidebar-item"><i class="fas fa-users w-5 text-center mr-3 text-lg"></i> 會員管理</a>
-                <div class="mt-auto px-6 pt-6 pb-2 border-t border-gray-100"><div class="text-xs text-gray-400">System v2.3</div></div>
+                <div class="mt-auto px-6 pt-6 pb-2 border-t border-gray-100"><div class="text-xs text-gray-400">System v2.4</div></div>
             </aside>
 
             <main class="flex-1 bg-[#f5f6f8] overflow-auto p-8">
@@ -103,7 +103,7 @@
                                         </td>
                                         <td class="px-6 py-4 text-xs space-y-1">
                                             <div><i class="far fa-calendar-alt mr-1"></i>{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
-                                            <div v-if="c.startTime"><i class="far fa-clock mr-1"></i>{{ c.startTime }} - {{ c.endTime }}</div>
+                                            <div v-if="c.startTime"><i class="far fa-clock mr-1"></i>{{ formatRawTime(c.startTime) }} - {{ formatRawTime(c.endTime) }}</div>
                                         </td>
                                         <td class="px-6 py-4 text-xs">
                                             <div><i class="fas fa-user-tie mr-1"></i>{{ c.instructor || '未定' }}</div>
@@ -349,7 +349,27 @@
             const formatTime = (d) => {
                 if (!d) return '-';
                 const date = new Date(d);
-                return isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-TW',{hour12:false});
+                return isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-TW', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                });
+            };
+            
+            // NEW: Format HH:mm from raw 1899-12-30T... string
+            const formatRawTime = (val) => {
+                if (!val) return '';
+                // Handle 1899 ISO string
+                if (typeof val === 'string' && val.includes('T')) {
+                    const date = new Date(val);
+                    if (!isNaN(date.getTime())) {
+                        return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    }
+                }
+                // Handle raw HH:mm:ss
+                if (typeof val === 'string' && val.length >= 5) {
+                    return val.substring(0, 5);
+                }
+                return val;
             };
 
             return { 
@@ -358,7 +378,7 @@
                 showMemberModal, editingMember, showCourseModal, isEditingCourse, courseForm,
                 login, logout, fetchData, updateStatus, 
                 openAddCourse, openEditCourse, submitCourse, openMember, saveMember,
-                formatDate, formatTime,
+                formatDate, formatTime, formatRawTime,
                 getStatusLabel: s=>({'PENDING':'待付款','PAID':'已付款','CANCELLED':'已取消'}[s]||s),
                 getStatusClass: s=>({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s])
             };
