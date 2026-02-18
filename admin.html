@@ -9,41 +9,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         [v-cloak] { display: none; }
+        :root { --line-green: #06C755; --line-hover-bg: #f0f9f3; --sidebar-active-text: #06C755; }
+        body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #f5f6f8; }
         
-        /* LINE OA 風格色票 (白底綠字) */
-        :root {
-            --line-green: #06C755;
-            --line-hover-bg: #f0f9f3; 
-            --sidebar-text: #555;
-            --sidebar-active-text: #06C755;
-        }
-
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f5f6f8; }
-
-        /* 側邊欄項目 */
-        .sidebar-item {
-            @apply flex items-center px-6 py-4 text-gray-500 cursor-pointer transition-all duration-200 border-l-4 border-transparent text-sm font-medium;
-        }
-        .sidebar-item:hover {
-            background-color: var(--line-hover-bg);
-            color: var(--sidebar-active-text);
-        }
-        /* 選中狀態: 左側綠線 + 淺綠背景 + 綠字 */
-        .sidebar-item.active {
-            background-color: var(--line-hover-bg);
-            color: var(--sidebar-active-text);
-            border-left-color: var(--line-green);
-            font-weight: bold;
-        }
-
-        /* 介面元件 */
+        .sidebar-item { @apply flex items-center px-6 py-4 text-gray-500 cursor-pointer transition-all duration-200 border-l-4 border-transparent text-sm font-medium; }
+        .sidebar-item:hover { background-color: var(--line-hover-bg); color: var(--sidebar-active-text); }
+        .sidebar-item.active { background-color: var(--line-hover-bg); color: var(--sidebar-active-text); border-left-color: var(--line-green); font-weight: bold; }
+        
         .btn-primary { @apply bg-[#06C755] hover:bg-[#05b34c] text-white px-4 py-2 rounded shadow-sm text-sm font-bold transition duration-150; }
         .btn-outline { @apply border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded text-sm transition; }
         .input-std { @apply w-full border border-gray-300 p-2.5 rounded hover:border-gray-400 focus:border-[#06C755] focus:ring-1 focus:ring-[#06C755] outline-none text-sm transition; }
         .label-std { @apply block text-xs font-bold text-gray-500 mb-1; }
         .status-badge { @apply px-2 py-1 rounded text-xs font-bold inline-block text-center min-w-[60px]; }
-
-        /* Modal */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
@@ -52,130 +29,85 @@
 
 <div id="app" v-cloak class="h-full flex flex-col">
 
-    <!-- 1. 登入畫面 -->
+    <!-- Login -->
     <div v-if="!isLoggedIn" class="flex-grow flex items-center justify-center bg-[#f5f6f8]">
         <div class="bg-white p-10 rounded-lg shadow-xl w-96 border border-gray-200">
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-[#06C755] rounded-xl flex items-center justify-center mx-auto mb-4 text-white text-3xl shadow-md">
-                    <i class="fas fa-running"></i>
-                </div>
+                <div class="w-16 h-16 bg-[#06C755] rounded-xl flex items-center justify-center mx-auto mb-4 text-white text-3xl shadow-md"><i class="fas fa-running"></i></div>
                 <h1 class="text-xl font-bold text-gray-800 mb-1">運動島綜合運動體能館</h1>
                 <p class="text-gray-400 text-xs">管理後台登入</p>
             </div>
             <form @submit.prevent="login">
                 <div class="mb-6">
                     <label class="label-std">管理員密碼</label>
-                    <div class="relative">
-                        <input v-model="password" type="password" class="input-std pl-10" placeholder="請輸入密碼">
-                        <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
-                    </div>
+                    <div class="relative"><input v-model="password" type="password" class="input-std pl-10" placeholder="請輸入密碼"><i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i></div>
                 </div>
                 <button :disabled="isLoading" class="w-full btn-primary py-3 flex justify-center items-center">
-                    <span v-if="isLoading"><i class="fas fa-circle-notch fa-spin mr-2"></i>登入中...</span>
-                    <span v-else>登入系統</span>
+                    <span v-if="isLoading"><i class="fas fa-circle-notch fa-spin mr-2"></i>登入中...</span><span v-else>登入系統</span>
                 </button>
                 <p v-if="error" class="text-red-500 text-xs mt-3 text-center bg-red-50 py-2 rounded">{{ error }}</p>
             </form>
         </div>
     </div>
 
-    <!-- 2. 主畫面 -->
+    <!-- Dashboard -->
     <div v-else class="flex flex-col h-full">
-        
-        <!-- 頂部 Header -->
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
             <div class="flex items-center">
                 <span class="bg-[#06C755] text-white px-2 py-0.5 rounded text-xs font-bold mr-3">LINE OA</span>
                 <h2 class="text-lg font-bold text-gray-800">運動島綜合運動體能館</h2>
             </div>
             <div class="flex items-center gap-4">
-                <div class="flex items-center text-sm text-gray-500">
-                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2 text-gray-600 font-bold">A</div>
-                    管理員
-                </div>
+                <div class="flex items-center text-sm text-gray-500"><div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2 text-gray-600 font-bold">A</div>管理員</div>
                 <button @click="logout" class="text-gray-400 hover:text-gray-800 transition"><i class="fas fa-sign-out-alt text-lg"></i></button>
             </div>
         </header>
 
         <div class="flex flex-1 overflow-hidden">
-            
-            <!-- 左側選單 (白底) -->
             <aside class="w-64 bg-white border-r border-gray-200 flex flex-col py-4 overflow-y-auto shrink-0">
                 <div class="px-6 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">系統選單</div>
-                
-                <a @click="currentTab='courses'" :class="{'active':currentTab==='courses'}" class="sidebar-item">
-                    <i class="fas fa-chalkboard-teacher w-5 text-center mr-3 text-lg"></i> 課程管理
-                </a>
-                
-                <a @click="currentTab='orders'" :class="{'active':currentTab==='orders'}" class="sidebar-item">
-                    <i class="fas fa-file-invoice-dollar w-5 text-center mr-3 text-lg"></i> 訂單管理
-                </a>
-                
-                <a @click="currentTab='members'" :class="{'active':currentTab==='members'}" class="sidebar-item">
-                    <i class="fas fa-users w-5 text-center mr-3 text-lg"></i> 會員管理
-                </a>
-
-                <div class="mt-auto px-6 pt-6 pb-2 border-t border-gray-100">
-                    <div class="text-xs text-gray-400">System v2.0</div>
-                </div>
+                <a @click="currentTab='courses'" :class="{'active':currentTab==='courses'}" class="sidebar-item"><i class="fas fa-chalkboard-teacher w-5 text-center mr-3 text-lg"></i> 課程管理</a>
+                <a @click="currentTab='orders'" :class="{'active':currentTab==='orders'}" class="sidebar-item"><i class="fas fa-file-invoice-dollar w-5 text-center mr-3 text-lg"></i> 訂單管理</a>
+                <a @click="currentTab='members'" :class="{'active':currentTab==='members'}" class="sidebar-item"><i class="fas fa-users w-5 text-center mr-3 text-lg"></i> 會員管理</a>
+                <div class="mt-auto px-6 pt-6 pb-2 border-t border-gray-100"><div class="text-xs text-gray-400">System v2.2 (消去法)</div></div>
             </aside>
 
-            <!-- 右側內容 -->
             <main class="flex-1 bg-[#f5f6f8] overflow-auto p-8">
-                
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">{{ tabName }}</h2>
-                    <button @click="fetchData" class="btn-outline bg-white text-gray-600 hover:text-[#06C755]">
-                        <i class="fas fa-sync-alt mr-1" :class="{'fa-spin':isLoading}"></i> 重新整理
-                    </button>
+                    <button @click="fetchData" class="btn-outline bg-white text-gray-600 hover:text-[#06C755]"><i class="fas fa-sync-alt mr-1" :class="{'fa-spin':isLoading}"></i> 重新整理</button>
                 </div>
 
-                <!-- 課程管理 -->
+                <!-- Courses -->
                 <div v-if="currentTab==='courses'" class="space-y-6">
-                    <div class="grid grid-cols-2 gap-4 max-w-3xl">
-                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
-                            <div>
-                                <div class="text-gray-500 text-xs font-bold uppercase">開設課程</div>
-                                <div class="text-3xl font-bold text-gray-800 mt-1">{{ courses.length }}</div>
-                            </div>
-                            <i class="fas fa-book text-4xl text-gray-200"></i>
-                        </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
-                            <div>
-                                <div class="text-gray-500 text-xs font-bold uppercase">總報名數</div>
-                                <div class="text-3xl font-bold text-[#06C755] mt-1">{{ totalEnrolled }}</div>
-                            </div>
-                            <i class="fas fa-user-check text-4xl text-green-100"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
                         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                             <h3 class="font-bold text-gray-700">課程列表</h3>
-                            <button @click="showAddCourseModal = true" class="btn-primary"><i class="fas fa-plus mr-1"></i> 新增課程</button>
+                            <button @click="openAddCourse" class="btn-primary"><i class="fas fa-plus mr-1"></i> 新增課程</button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left">
                                 <thead class="bg-white text-gray-500 border-b">
-                                    <tr>
-                                        <th class="px-6 py-3 font-medium">代碼</th>
-                                        <th class="px-6 py-3 font-medium">名稱</th>
-                                        <th class="px-6 py-3 font-medium">日期</th>
-                                        <th class="px-6 py-3 font-medium">價格</th>
-                                        <th class="px-6 py-3 font-medium">報名進度</th>
-                                    </tr>
+                                    <tr><th class="px-6 py-3">名稱/地點</th><th class="px-6 py-3">日期/時間</th><th class="px-6 py-3">教練/堂數</th><th class="px-6 py-3">價格</th><th class="px-6 py-3">報名狀況</th></tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
                                     <tr v-for="c in courses" :key="c.id" class="hover:bg-gray-50 transition">
-                                        <td class="px-6 py-4 font-mono text-gray-600">{{ c.id }}</td>
-                                        <td class="px-6 py-4 font-bold text-gray-800">{{ c.name }}</td>
-                                        <td class="px-6 py-4">{{ formatDate(c.date) }}</td>
-                                        <td class="px-6 py-4 text-[#06C755] font-bold">${{ c.price }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="font-bold text-gray-800">{{ c.name }}</div>
+                                            <div class="text-xs text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>{{ c.location || '未定' }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs">
+                                            <div>起: {{ formatDate(c.startDate) }}</div>
+                                            <div>迄: {{ formatDate(c.endDate) }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs">
+                                            <div><i class="fas fa-user-tie mr-1"></i>{{ c.instructor || '未定' }}</div>
+                                            <div class="mt-1 bg-gray-100 inline-block px-1 rounded">共 {{ c.totalSessions }} 堂</div>
+                                        </td>
+                                        <td class="px-6 py-4 font-bold text-[#06C755]">${{ c.price }}</td>
                                         <td class="px-6 py-4 w-48">
                                             <div class="flex items-center">
-                                                <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
-                                                    <div class="bg-[#06C755] h-2 rounded-full" :style="{width: Math.min((c.enrolled/c.capacity)*100, 100) + '%'}"></div>
-                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2 mr-2"><div class="bg-[#06C755] h-2 rounded-full" :style="{width: Math.min((c.enrolled/c.capacity)*100, 100) + '%'}"></div></div>
                                                 <span class="text-xs text-gray-500">{{ c.enrolled }}/{{ c.capacity }}</span>
                                             </div>
                                         </td>
@@ -186,182 +118,109 @@
                     </div>
                 </div>
 
-                <!-- 訂單管理 -->
+                <!-- Orders -->
                 <div v-if="currentTab==='orders'" class="space-y-4">
                     <div class="bg-white p-4 rounded-lg border border-gray-200 flex gap-4">
-                        <div class="relative flex-grow max-w-md">
-                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="searchTerm" placeholder="搜尋訂單..." class="input-std pl-10">
-                        </div>
-                        <select v-model="filterStatus" class="input-std max-w-xs">
-                            <option value="">全部狀態</option>
-                            <option value="PENDING">待付款</option>
-                            <option value="PAID">已付款</option>
-                            <option value="CANCELLED">已取消</option>
-                        </select>
+                        <div class="relative flex-grow max-w-md"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input v-model="searchTerm" placeholder="搜尋訂單..." class="input-std pl-10"></div>
+                        <select v-model="filterStatus" class="input-std max-w-xs"><option value="">全部狀態</option><option value="PENDING">待付款</option><option value="PAID">已付款</option><option value="CANCELLED">已取消</option></select>
                     </div>
-
                     <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-50 text-gray-500 border-b">
-                                <tr>
-                                    <th class="px-6 py-3 font-medium">訂單資訊</th>
-                                    <th class="px-6 py-3 font-medium">學員</th>
-                                    <th class="px-6 py-3 font-medium">金額</th>
-                                    <th class="px-6 py-3 font-medium">狀態</th>
-                                    <th class="px-6 py-3 font-medium">操作</th>
-                                </tr>
-                            </thead>
+                            <thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="px-6 py-3">訂單資訊</th><th class="px-6 py-3">學員資料</th><th class="px-6 py-3">課程/備註</th><th class="px-6 py-3">狀態</th><th class="px-6 py-3">操作</th></tr></thead>
                             <tbody class="divide-y divide-gray-100">
                                 <tr v-for="o in filteredOrders" :key="o.orderId" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4"><div class="text-xs text-gray-400 mb-1">{{ o.orderId.slice(0,8) }}</div><div>{{ formatTime(o.createdAt) }}</div></td>
+                                    <td class="px-6 py-4"><div class="font-bold text-gray-800">{{ o.name }}</div><div class="text-xs text-gray-500">{{ o.phone }}</div></td>
                                     <td class="px-6 py-4">
-                                        <div class="text-xs text-gray-400 mb-1">{{ o.orderId.slice(0,8) }}</div>
-                                        <div>{{ formatTime(o.createdAt) }}</div>
+                                        <div class="text-gray-700">{{ o.courseId }}</div>
+                                        <div class="font-bold text-[#06C755]">${{ o.amount }}</div>
+                                        <div v-if="o.note" class="text-xs text-red-500 mt-1 bg-red-50 p-1 rounded max-w-xs break-words" :title="o.note">{{ o.note }}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="font-bold">{{ o.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ o.phone }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 font-bold text-[#06C755]">${{ o.amount }}</td>
-                                    <td class="px-6 py-4">
-                                        <span class="status-badge" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex gap-2">
-                                            <button v-if="o.status==='PENDING'" @click="updateStatus(o.orderId, 'PAID')" class="btn-outline text-green-600 border-green-200 hover:bg-green-50 px-2 py-1 text-xs">收款</button>
-                                            <button v-if="o.status!=='CANCELLED'" @click="updateStatus(o.orderId, 'CANCELLED')" class="btn-outline text-red-500 border-red-200 hover:bg-red-50 px-2 py-1 text-xs">取消</button>
-                                        </div>
-                                    </td>
+                                    <td class="px-6 py-4"><span class="status-badge" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span></td>
+                                    <td class="px-6 py-4"><div class="flex gap-2"><button v-if="o.status==='PENDING'" @click="updateStatus(o.orderId, 'PAID')" class="btn-outline text-green-600 border-green-200 hover:bg-green-50 px-2 py-1 text-xs">收款</button><button v-if="o.status!=='CANCELLED'" @click="updateStatus(o.orderId, 'CANCELLED')" class="btn-outline text-red-500 border-red-200 hover:bg-red-50 px-2 py-1 text-xs">取消</button></div></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- 會員管理 -->
+                <!-- Members -->
                 <div v-if="currentTab==='members'" class="space-y-4">
-                    <div class="bg-white p-4 rounded-lg border border-gray-200">
-                        <div class="relative max-w-md">
-                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="searchTerm" placeholder="搜尋會員 (姓名、身分證...)" class="input-std pl-10">
-                        </div>
-                    </div>
-
+                    <div class="bg-white p-4 rounded-lg border border-gray-200"><div class="relative max-w-md"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input v-model="searchTerm" placeholder="搜尋會員..." class="input-std pl-10"></div></div>
                     <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-50 text-gray-500 border-b">
-                                <tr>
-                                    <th class="px-6 py-3 font-medium">姓名</th>
-                                    <th class="px-6 py-3 font-medium">身分證</th>
-                                    <th class="px-6 py-3 font-medium">家人數</th>
-                                    <th class="px-6 py-3 font-medium">操作</th>
-                                </tr>
-                            </thead>
+                            <thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="px-6 py-3">姓名</th><th class="px-6 py-3">身分證</th><th class="px-6 py-3">家人數</th><th class="px-6 py-3">操作</th></tr></thead>
                             <tbody class="divide-y divide-gray-100">
-                                <tr v-for="u in filteredUsers" :key="u.userId" class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-bold text-gray-800">{{ u.name }}</td>
-                                    <td class="px-6 py-4 font-mono text-gray-600">{{ u.nationalId }}</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">
-                                            {{ u.familyMembers ? u.familyMembers.length : 0 }} 位
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <button @click="openMember(u)" class="bg-green-50 text-[#06C755] hover:bg-green-100 px-3 py-1.5 rounded text-xs font-bold transition">
-                                            查看詳情
-                                        </button>
-                                    </td>
+                                <tr v-for="u in filteredUsers" :key="u.userId" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-bold text-gray-800">{{ u.name }}</td><td class="px-6 py-4 font-mono text-gray-600">{{ u.nationalId }}</td>
+                                    <td class="px-6 py-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">{{ u.familyMembers ? u.familyMembers.length : 0 }} 位</span></td>
+                                    <td class="px-6 py-4"><button @click="openMember(u)" class="text-[#06C755] hover:underline font-bold">查看詳情</button></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>
 
-    <!-- Modal: 新增課程 -->
+    <!-- Modal: Add Course (更新版) -->
     <transition name="fade">
         <div v-if="showAddCourseModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div class="bg-white w-[480px] rounded-lg shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-white w-[600px] rounded-lg shadow-2xl overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800">新增課程</h3>
-                    <button @click="showAddCourseModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                    <h3 class="text-lg font-bold text-gray-800">新增課程</h3><button @click="showAddCourseModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="p-6 space-y-4">
-                    <div><label class="label-std">代碼</label><input v-model="newCourse.id" class="input-std" placeholder="例如: 2026-CAMP-A"></div>
-                    <div><label class="label-std">名稱</label><input v-model="newCourse.name" class="input-std" placeholder="課程名稱"></div>
-                    <div><label class="label-std">日期</label><input v-model="newCourse.date" type="date" class="input-std"></div>
-                    <div class="flex gap-4">
-                        <div class="w-1/2"><label class="label-std">價格</label><input v-model="newCourse.price" type="number" class="input-std"></div>
-                        <div class="w-1/2"><label class="label-std">名額</label><input v-model="newCourse.capacity" type="number" class="input-std"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="label-std">代碼</label><input v-model="newCourse.id" class="input-std" placeholder="例如: 2026-CAMP-A"></div>
+                        <div><label class="label-std">名稱</label><input v-model="newCourse.name" class="input-std" placeholder="課程名稱"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="label-std">開始日期</label><input v-model="newCourse.startDate" type="date" class="input-std"></div>
+                        <div><label class="label-std">結束日期</label><input v-model="newCourse.endDate" type="date" class="input-std"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div><label class="label-std">價格</label><input v-model="newCourse.price" type="number" class="input-std"></div>
+                        <div><label class="label-std">名額</label><input v-model="newCourse.capacity" type="number" class="input-std"></div>
+                        <div><label class="label-std">總堂數 (重要)</label><input v-model="newCourse.totalSessions" type="number" class="input-std" placeholder="1"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="label-std">上課地點</label><input v-model="newCourse.location" class="input-std"></div>
+                        <div><label class="label-std">授課教練</label><input v-model="newCourse.instructor" class="input-std"></div>
                     </div>
                 </div>
-                <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2">
-                    <button @click="showAddCourseModal=false" class="btn-outline">取消</button>
-                    <button @click="submitCourse" class="btn-primary">建立</button>
-                </div>
+                <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2"><button @click="showAddCourseModal=false" class="btn-outline">取消</button><button @click="submitCourse" class="btn-primary">建立</button></div>
             </div>
         </div>
     </transition>
 
-    <!-- Modal: 會員詳情 (儲存修復) -->
+    <!-- Modal: Member Detail (同前) -->
     <transition name="fade">
         <div v-if="showMemberModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
             <div class="bg-white w-[900px] h-[85vh] rounded-lg shadow-2xl flex flex-col overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-user-edit mr-2 text-[#06C755]"></i> 會員資料</h3>
-                    <button @click="showMemberModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-user-edit mr-2 text-[#06C755]"></i> 會員資料</h3><button @click="showMemberModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
                 </div>
-                
                 <div class="flex flex-1 overflow-hidden">
-                    <!-- 左欄: 編輯主帳號 -->
                     <div class="w-1/2 p-6 overflow-y-auto border-r border-gray-100">
-                        <div class="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">基本資料</div>
                         <form @submit.prevent="saveMember" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="label-std">姓名</label><input v-model="editingMember.name" class="input-std"></div>
-                                <div><label class="label-std">身分證</label><input v-model="editingMember.nationalId" class="input-std bg-gray-50 text-gray-500 cursor-not-allowed" readonly></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="label-std">電話</label><input v-model="editingMember.phone" class="input-std"></div>
-                                <div><label class="label-std">生日</label><input v-model="editingMember.birthday" type="date" class="input-std"></div>
-                            </div>
+                            <div class="grid grid-cols-2 gap-4"><div><label class="label-std">姓名</label><input v-model="editingMember.name" class="input-std"></div><div><label class="label-std">身分證</label><input v-model="editingMember.nationalId" class="input-std bg-gray-100 cursor-not-allowed" readonly></div></div>
+                            <div class="grid grid-cols-2 gap-4"><div><label class="label-std">電話</label><input v-model="editingMember.phone" class="input-std"></div><div><label class="label-std">生日</label><input v-model="editingMember.birthday" type="date" class="input-std"></div></div>
                             <div><label class="label-std">地址</label><input v-model="editingMember.address" class="input-std"></div>
-                            <div><label class="label-std">健康備註</label><textarea v-model="editingMember.healthNote" rows="2" class="input-std" placeholder="無"></textarea></div>
-                            <div><label class="label-std text-yellow-600">管理備註 (內部)</label><textarea v-model="editingMember.notes" rows="3" class="input-std bg-yellow-50 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400"></textarea></div>
-                            
-                            <button class="w-full btn-primary mt-2">
-                                <i class="fas fa-save mr-2"></i> 儲存變更
-                            </button>
+                            <div><label class="label-std">健康備註</label><textarea v-model="editingMember.healthNote" rows="2" class="input-std"></textarea></div>
+                            <div><label class="label-std text-yellow-600">管理備註</label><textarea v-model="editingMember.notes" rows="3" class="input-std bg-yellow-50 border-yellow-200"></textarea></div>
+                            <button class="w-full btn-primary mt-2">儲存變更</button>
                         </form>
                     </div>
-
-                    <!-- 右欄: 家人列表 -->
                     <div class="w-1/2 p-6 overflow-y-auto bg-gray-50">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">家人名單</div>
-                            <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">{{ editingMember.familyMembers ? editingMember.familyMembers.length : 0 }}</span>
-                        </div>
-
-                        <div v-if="!editingMember.familyMembers || editingMember.familyMembers.length===0" class="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded">
-                            <i class="far fa-folder-open text-2xl mb-2 block"></i> 尚無家人資料
-                        </div>
-
+                        <div class="flex justify-between items-center mb-4"><div class="text-xs font-bold text-gray-400 uppercase">家人名單</div><span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">{{ editingMember.familyMembers ? editingMember.familyMembers.length : 0 }}</span></div>
+                        <div v-if="!editingMember.familyMembers || editingMember.familyMembers.length===0" class="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded">無資料</div>
                         <div v-else class="space-y-3">
                             <div v-for="fm in editingMember.familyMembers" :key="fm.userId" class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="font-bold text-gray-800">{{ fm.name }}</span>
-                                    <span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100">{{ fm.relation }}</span>
-                                </div>
-                                <div class="text-xs text-gray-500 grid grid-cols-2 gap-1">
-                                    <div>ID: {{ fm.nationalId }}</div>
-                                    <div>生日: {{ formatDate(fm.birthday) }}</div>
-                                </div>
-                                <div v-if="fm.healthStatus === '需備註'" class="mt-2 text-xs text-red-500 bg-red-50 p-2 rounded">
-                                    備註: {{ fm.healthNote }}
-                                </div>
+                                <div class="flex justify-between items-center mb-2"><span class="font-bold text-gray-800">{{ fm.name }}</span><span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100">{{ fm.relation }}</span></div>
+                                <div class="text-xs text-gray-500 grid grid-cols-2 gap-1"><div>ID: {{ fm.nationalId }}</div><div>生日: {{ formatDate(fm.birthday) }}</div></div>
+                                <div v-if="fm.healthStatus === '需備註'" class="mt-2 text-xs text-red-500 bg-red-50 p-2 rounded">備註: {{ fm.healthNote }}</div>
                             </div>
                         </div>
                     </div>
@@ -378,33 +237,19 @@
 
     createApp({
         setup() {
-            const isLoggedIn = ref(false), password = ref(''), isLoading = ref(false), currentTab = ref('courses'), error = ref('');
-            const courses = ref([]), orders = ref([]), users = ref([]);
-            
-            // Modal & Editing
-            const showMemberModal = ref(false), editingMember = ref({ familyMembers: [] });
-            const showAddCourseModal = ref(false), newCourse = ref({id:'',name:'',date:'',price:0,capacity:0});
-            
-            // Search
-            const searchTerm = ref(''), filterStatus = ref('');
+            const isLoggedIn=ref(false), password=ref(''), isLoading=ref(false), currentTab=ref('courses'), error=ref('');
+            const courses=ref([]), orders=ref([]), users=ref([]);
+            const showMemberModal=ref(false), editingMember=ref({ familyMembers: [] });
+            const showAddCourseModal=ref(false), newCourse=ref({id:'',name:'',startDate:'',endDate:'',price:0,capacity:0,totalSessions:1,location:'',instructor:''});
+            const searchTerm=ref(''), filterStatus=ref('');
 
             const tabName = computed(() => ({'courses':'課程管理','orders':'訂單管理','members':'會員管理'}[currentTab.value]));
-
-            // Filters
-            const filteredOrders = computed(() => orders.value.filter(o => {
-                const matchSearch = (o.name+o.phone+o.nationalId).toLowerCase().includes(searchTerm.value.toLowerCase());
-                const matchStatus = !filterStatus.value || o.status===filterStatus.value;
-                return matchSearch && matchStatus;
-            }));
-            const filteredUsers = computed(() => {
-                if(currentTab.value !== 'members') return [];
-                return users.value.filter(u => (u.name+u.nationalId+u.phone).toLowerCase().includes(searchTerm.value.toLowerCase()));
-            });
+            const filteredOrders = computed(() => orders.value.filter(o => (o.name+o.phone+o.nationalId).toLowerCase().includes(searchTerm.value.toLowerCase()) && (!filterStatus.value || o.status===filterStatus.value)));
+            const filteredUsers = computed(() => currentTab.value!=='members'?[]:users.value.filter(u => (u.name+u.nationalId+u.phone).toLowerCase().includes(searchTerm.value.toLowerCase())));
             const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + c.enrolled, 0));
 
-            // Actions
             const login = async () => {
-                isLoading.value = true; error.value = '';
+                isLoading.value=true; error.value='';
                 try {
                     const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action:'ADMIN_LOGIN', payload:{password:password.value}}) });
                     const json = await res.json();
@@ -428,18 +273,18 @@
                 fetchData();
             };
 
+            const openAddCourse = () => { newCourse.value={id:'',name:'',startDate:'',endDate:'',price:0,capacity:0,totalSessions:1,location:'',instructor:''}; showAddCourseModal.value=true; };
             const submitCourse = async () => { 
                 try {
                     const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action:'ADMIN_ADD_COURSE', payload:{password:password.value, ...newCourse.value}}) });
                     const json = await res.json();
-                    if(json.status==='success') { alert('建立成功'); showAddCourseModal.value=false; newCourse.value={id:'',name:'',date:'',price:0,capacity:0}; fetchData(); } else alert(json.message);
+                    if(json.status==='success') { alert('建立成功'); showAddCourseModal.value=false; fetchData(); } else alert(json.message);
                 } catch(e) { alert('失敗'); }
             };
 
             const openMember = (u) => { 
-                // Deep Copy & Date Fix
                 let copy = JSON.parse(JSON.stringify(u));
-                if(copy.birthday) copy.birthday = copy.birthday.split('T')[0]; // Format for input type=date
+                if(copy.birthday) copy.birthday = copy.birthday.split('T')[0];
                 if(!copy.familyMembers) copy.familyMembers = [];
                 editingMember.value = copy;
                 showMemberModal.value = true; 
@@ -450,13 +295,7 @@
                 try {
                     const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action:'ADMIN_UPDATE_MEMBER', payload:{password:password.value, memberData:editingMember.value}}) });
                     const json = await res.json();
-                    if(json.status === 'success') {
-                        alert('已儲存'); 
-                        showMemberModal.value = false; 
-                        fetchData();
-                    } else {
-                        alert('儲存失敗: ' + json.message);
-                    }
+                    if(json.status === 'success') { alert('已儲存'); showMemberModal.value = false; fetchData(); } else alert('儲存失敗: ' + json.message);
                 } catch(e) { alert('連線錯誤'); }
             };
 
@@ -464,7 +303,7 @@
                 isLoggedIn, password, isLoading, error, currentTab, tabName, courses, totalEnrolled, 
                 filteredOrders, filteredUsers, searchTerm, filterStatus,
                 showMemberModal, editingMember, showAddCourseModal, newCourse,
-                login, logout, fetchData, updateStatus, submitCourse, openMember, saveMember,
+                login, logout, fetchData, updateStatus, openAddCourse, submitCourse, openMember, saveMember,
                 formatDate: d=>d?new Date(d).toLocaleDateString('zh-TW'):'-',
                 formatTime: d=>d?new Date(d).toLocaleString('zh-TW',{hour12:false}):'-',
                 getStatusLabel: s=>({'PENDING':'待付款','PAID':'已付款','CANCELLED':'已取消'}[s]||s),
