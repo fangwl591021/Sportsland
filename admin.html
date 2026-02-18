@@ -20,9 +20,17 @@
         .btn-primary { @apply bg-[#06C755] hover:bg-[#05b34c] text-white px-4 py-2 rounded shadow-sm text-sm font-bold transition duration-150; }
         .btn-outline { @apply border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded text-sm transition; }
         
-        /* 輸入框樣式優化 (明確區塊) */
-        .input-std { @apply w-full border border-gray-300 bg-gray-50 p-2.5 rounded hover:bg-white focus:bg-white focus:border-[#06C755] focus:ring-1 focus:ring-[#06C755] outline-none text-sm transition; }
-        .label-std { @apply block text-xs font-bold text-gray-600 mb-1.5; }
+        /* [修正 1] 輸入框樣式優化：加深底色，區隔更明顯 */
+        .input-std { 
+            @apply w-full border-2 border-gray-200 bg-gray-100 p-2.5 rounded-lg 
+            text-gray-800 text-sm font-medium
+            focus:bg-white focus:border-[#06C755] focus:ring-0 outline-none transition-colors; 
+        }
+        /* 唯讀狀態 */
+        .input-std:read-only { @apply text-gray-500 cursor-not-allowed border-gray-100; }
+
+        /* [修正 1] 標籤樣式：加深顏色，加大字體 */
+        .label-std { @apply block text-sm font-bold text-gray-700 mb-1.5 tracking-wide; }
         
         .status-badge { @apply px-2 py-1 rounded text-xs font-bold inline-block text-center min-w-[60px]; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
@@ -44,7 +52,7 @@
             <form @submit.prevent="login">
                 <div class="mb-6">
                     <label class="label-std">管理員密碼</label>
-                    <div class="relative"><input v-model="password" type="password" class="input-std pl-10" placeholder="請輸入密碼"><i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i></div>
+                    <div class="relative"><input v-model="password" type="password" class="input-std pl-10 bg-white border-gray-300" placeholder="請輸入密碼"><i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i></div>
                 </div>
                 <button :disabled="isLoading" class="w-full btn-primary py-3 flex justify-center items-center">
                     <span v-if="isLoading"><i class="fas fa-circle-notch fa-spin mr-2"></i>登入中...</span><span v-else>登入系統</span>
@@ -73,7 +81,7 @@
                 <a @click="currentTab='courses'" :class="{'active':currentTab==='courses'}" class="sidebar-item"><i class="fas fa-chalkboard-teacher w-5 text-center mr-3 text-lg"></i> 課程管理</a>
                 <a @click="currentTab='orders'" :class="{'active':currentTab==='orders'}" class="sidebar-item"><i class="fas fa-file-invoice-dollar w-5 text-center mr-3 text-lg"></i> 訂單管理</a>
                 <a @click="currentTab='members'" :class="{'active':currentTab==='members'}" class="sidebar-item"><i class="fas fa-users w-5 text-center mr-3 text-lg"></i> 會員管理</a>
-                <div class="mt-auto px-6 pt-6 pb-2 border-t border-gray-100"><div class="text-xs text-gray-400">System v2.4</div></div>
+                <div class="mt-auto px-6 pt-6 pb-2 border-t border-gray-100"><div class="text-xs text-gray-400">System v2.5</div></div>
             </aside>
 
             <main class="flex-1 bg-[#f5f6f8] overflow-auto p-8">
@@ -103,7 +111,8 @@
                                         </td>
                                         <td class="px-6 py-4 text-xs space-y-1">
                                             <div><i class="far fa-calendar-alt mr-1"></i>{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
-                                            <div v-if="c.startTime"><i class="far fa-clock mr-1"></i>{{ formatRawTime(c.startTime) }} - {{ formatRawTime(c.endTime) }}</div>
+                                            <!-- [修正] 直接顯示手寫的時間字串 -->
+                                            <div v-if="c.startTime" class="text-blue-600 font-bold"><i class="far fa-clock mr-1"></i>{{ c.startTime }}</div>
                                         </td>
                                         <td class="px-6 py-4 text-xs">
                                             <div><i class="fas fa-user-tie mr-1"></i>{{ c.instructor || '未定' }}</div>
@@ -124,8 +133,8 @@
                 <!-- Orders -->
                 <div v-if="currentTab==='orders'" class="space-y-4">
                     <div class="bg-white p-4 rounded-lg border border-gray-200 flex gap-4">
-                        <div class="relative flex-grow max-w-md"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input v-model="searchTerm" placeholder="搜尋訂單..." class="input-std pl-10"></div>
-                        <select v-model="filterStatus" class="input-std max-w-xs"><option value="">全部狀態</option><option value="PENDING">待付款</option><option value="PAID">已付款</option><option value="CANCELLED">已取消</option></select>
+                        <div class="relative flex-grow max-w-md"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input v-model="searchTerm" placeholder="搜尋訂單..." class="input-std pl-10 bg-white"></div>
+                        <select v-model="filterStatus" class="input-std max-w-xs bg-white"><option value="">全部狀態</option><option value="PENDING">待付款</option><option value="PAID">已付款</option><option value="CANCELLED">已取消</option></select>
                     </div>
                     <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <table class="w-full text-sm text-left">
@@ -149,7 +158,7 @@
 
                 <!-- Members -->
                 <div v-if="currentTab==='members'" class="space-y-4">
-                    <div class="bg-white p-4 rounded-lg border border-gray-200"><div class="relative max-w-md"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input v-model="searchTerm" placeholder="搜尋會員..." class="input-std pl-10"></div></div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-200"><div class="relative max-w-md"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input v-model="searchTerm" placeholder="搜尋會員..." class="input-std pl-10 bg-white"></div></div>
                     <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="px-6 py-3">姓名</th><th class="px-6 py-3">身分證</th><th class="px-6 py-3">家人數</th><th class="px-6 py-3">操作</th></tr></thead>
@@ -167,41 +176,57 @@
         </div>
     </div>
 
-    <!-- Modal: Course Editor (新增/編輯共用) -->
+    <!-- Modal: Course Editor (修正版：手寫時間 + 明確區塊) -->
     <transition name="fade">
         <div v-if="showCourseModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div class="bg-white w-[600px] rounded-lg shadow-2xl overflow-hidden">
+            <div class="bg-white w-[600px] rounded-lg shadow-2xl overflow-hidden border border-gray-200">
                 <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 class="text-lg font-bold text-gray-800">{{ isEditingCourse ? '編輯課程' : '新增課程' }}</h3>
                     <button @click="showCourseModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="p-6 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="label-std">代碼 (ID)</label><input v-model="courseForm.id" class="input-std" :disabled="isEditingCourse" :class="{'bg-gray-100 cursor-not-allowed': isEditingCourse}" placeholder="例如: 2026-CAMP-A"></div>
-                        <div><label class="label-std">名稱</label><input v-model="courseForm.name" class="input-std" placeholder="課程名稱"></div>
+                
+                <div class="p-6 space-y-5 overflow-y-auto max-h-[80vh]">
+                    <!-- Block 1: 基本資料 -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label-std">課程代碼 (ID)</label>
+                                <input v-model="courseForm.id" class="input-std" :disabled="isEditingCourse" :class="{'bg-gray-200 opacity-60 cursor-not-allowed': isEditingCourse}" placeholder="例如: 2026-CAMP-A">
+                            </div>
+                            <div>
+                                <label class="label-std">課程名稱</label>
+                                <input v-model="courseForm.name" class="input-std" placeholder="請輸入完整名稱">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div><label class="label-std">價格 ($)</label><input v-model="courseForm.price" type="number" class="input-std"></div>
+                            <div><label class="label-std">名額 (人)</label><input v-model="courseForm.capacity" type="number" class="input-std"></div>
+                            <div><label class="label-std">總堂數 (堂)</label><input v-model="courseForm.totalSessions" type="number" class="input-std" placeholder="1"></div>
+                        </div>
                     </div>
-                    <!-- 日期時間 -->
-                    <div class="p-3 bg-gray-50 rounded border border-gray-200">
-                        <div class="grid grid-cols-2 gap-4 mb-2">
-                            <div><label class="label-std">開始日期</label><input v-model="courseForm.startDate" type="date" class="input-std"></div>
-                            <div><label class="label-std">結束日期</label><input v-model="courseForm.endDate" type="date" class="input-std"></div>
+
+                    <hr class="border-gray-100">
+
+                    <!-- Block 2: 時間與地點 (灰色背景區塊，增強對比) -->
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="label-std">開始日期</label><input v-model="courseForm.startDate" type="date" class="input-std bg-white"></div>
+                            <div><label class="label-std">結束日期</label><input v-model="courseForm.endDate" type="date" class="input-std bg-white"></div>
+                        </div>
+                        <!-- [修正 2] 上課時段改為單一手寫欄位 -->
+                        <div>
+                            <label class="label-std">上課時段 (手寫)</label>
+                            <input v-model="courseForm.startTime" type="text" class="input-std bg-white" placeholder="例如: 14:00-15:00 或 上午 09:00">
+                            <p class="text-xs text-gray-400 mt-1">請直接輸入完整時段敘述，無需選擇</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="label-std">開始時間</label><input v-model="courseForm.startTime" type="time" class="input-std"></div>
-                            <div><label class="label-std">結束時間</label><input v-model="courseForm.endTime" type="time" class="input-std"></div>
+                            <div><label class="label-std">上課地點</label><input v-model="courseForm.location" class="input-std bg-white"></div>
+                            <div><label class="label-std">授課教練</label><input v-model="courseForm.instructor" class="input-std bg-white"></div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div><label class="label-std">價格</label><input v-model="courseForm.price" type="number" class="input-std"></div>
-                        <div><label class="label-std">名額</label><input v-model="courseForm.capacity" type="number" class="input-std"></div>
-                        <div><label class="label-std">總堂數</label><input v-model="courseForm.totalSessions" type="number" class="input-std" placeholder="1"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="label-std">上課地點</label><input v-model="courseForm.location" class="input-std"></div>
-                        <div><label class="label-std">授課教練</label><input v-model="courseForm.instructor" class="input-std"></div>
-                    </div>
                 </div>
-                <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2">
+
+                <div class="px-6 py-4 bg-gray-50 flex justify-end gap-2 border-t border-gray-100">
                     <button @click="showCourseModal=false" class="btn-outline">取消</button>
                     <button @click="submitCourse" class="btn-primary">{{ isEditingCourse ? '儲存變更' : '建立課程' }}</button>
                 </div>
@@ -209,7 +234,7 @@
         </div>
     </transition>
 
-    <!-- Modal: Member Detail -->
+    <!-- Modal: Member Detail (Style Updated) -->
     <transition name="fade">
         <div v-if="showMemberModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
             <div class="bg-white w-[900px] h-[85vh] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-gray-200">
@@ -218,9 +243,9 @@
                 </div>
                 <div class="flex flex-1 overflow-hidden">
                     <div class="w-1/2 p-6 overflow-y-auto border-r border-gray-100">
-                        <div class="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">基本資料</div>
+                        <div class="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">基本資料 (編輯)</div>
                         <form @submit.prevent="saveMember" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4"><div><label class="label-std">姓名</label><input v-model="editingMember.name" class="input-std"></div><div><label class="label-std">身分證</label><input v-model="editingMember.nationalId" class="input-std bg-gray-50 text-gray-500 cursor-not-allowed" readonly></div></div>
+                            <div class="grid grid-cols-2 gap-4"><div><label class="label-std">姓名</label><input v-model="editingMember.name" class="input-std"></div><div><label class="label-std">身分證</label><input v-model="editingMember.nationalId" class="input-std bg-gray-200 text-gray-500 cursor-not-allowed" readonly></div></div>
                             <div class="grid grid-cols-2 gap-4"><div><label class="label-std">電話</label><input v-model="editingMember.phone" class="input-std"></div><div><label class="label-std">生日</label><input v-model="editingMember.birthday" type="date" class="input-std"></div></div>
                             <div><label class="label-std">地址</label><input v-model="editingMember.address" class="input-std"></div>
                             <div><label class="label-std">健康備註</label><textarea v-model="editingMember.healthNote" rows="2" class="input-std" placeholder="無"></textarea></div>
@@ -258,7 +283,8 @@
             // Modal States
             const showMemberModal = ref(false), editingMember = ref({ familyMembers: [] });
             const showCourseModal = ref(false), isEditingCourse = ref(false);
-            const courseForm = ref({id:'',name:'',startDate:'',endDate:'',startTime:'',endTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:''});
+            // startTime is now used for the "Time Slot String"
+            const courseForm = ref({id:'',name:'',startDate:'',endDate:'',startTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:''});
             
             const searchTerm = ref(''), filterStatus = ref('');
             const tabName = computed(() => ({'courses':'課程管理','orders':'訂單管理','members':'會員管理'}[currentTab.value]));
@@ -297,25 +323,22 @@
             // Course Management
             const openAddCourse = () => { 
                 isEditingCourse.value = false;
-                courseForm.value={id:'',name:'',startDate:'',endDate:'',startTime:'',endTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:''}; 
+                // startTime is now used for manual text input
+                courseForm.value={id:'',name:'',startDate:'',endDate:'',startTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:''}; 
                 showCourseModal.value=true; 
             };
             
             const openEditCourse = (course) => {
                 isEditingCourse.value = true;
-                // Format dates for input[type=date]
                 const fmt = d => d ? new Date(d).toISOString().split('T')[0] : '';
-                courseForm.value = { 
-                    ...course, 
-                    startDate: fmt(course.startDate), 
-                    endDate: fmt(course.endDate)
-                };
+                courseForm.value = { ...course, startDate: fmt(course.startDate), endDate: fmt(course.endDate) };
                 showCourseModal.value = true;
             };
 
             const submitCourse = async () => { 
                 const action = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE';
                 try {
+                    // Send startTime as the text string for "Time Slot"
                     const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action:action, payload:{password:password.value, ...courseForm.value}}) });
                     const json = await res.json();
                     if(json.status==='success') { alert(isEditingCourse.value?'更新成功':'建立成功'); showCourseModal.value=false; fetchData(); } else alert(json.message);
@@ -354,23 +377,6 @@
                     hour: '2-digit', minute: '2-digit', hour12: false
                 });
             };
-            
-            // NEW: Format HH:mm from raw 1899-12-30T... string
-            const formatRawTime = (val) => {
-                if (!val) return '';
-                // Handle 1899 ISO string
-                if (typeof val === 'string' && val.includes('T')) {
-                    const date = new Date(val);
-                    if (!isNaN(date.getTime())) {
-                        return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    }
-                }
-                // Handle raw HH:mm:ss
-                if (typeof val === 'string' && val.length >= 5) {
-                    return val.substring(0, 5);
-                }
-                return val;
-            };
 
             return { 
                 isLoggedIn, password, isLoading, error, currentTab, tabName, courses, totalEnrolled, 
@@ -378,7 +384,7 @@
                 showMemberModal, editingMember, showCourseModal, isEditingCourse, courseForm,
                 login, logout, fetchData, updateStatus, 
                 openAddCourse, openEditCourse, submitCourse, openMember, saveMember,
-                formatDate, formatTime, formatRawTime,
+                formatDate, formatTime,
                 getStatusLabel: s=>({'PENDING':'待付款','PAID':'已付款','CANCELLED':'已取消'}[s]||s),
                 getStatusClass: s=>({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s])
             };
