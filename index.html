@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竹北運動中心營隊報名</title>
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 解決 iOS 輸入框字體縮放問題 */
+        input { font-size: 16px; }
+        [v-cloak] { display: none; }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+<div id="app" v-cloak class="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col">
+    
+    <!-- 導航列 -->
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
+        <h1 class="text-lg font-bold">竹北國民運動中心 營隊報名</h1>
+        <p class="text-xs opacity-90" v-if="userProfile">Hi, {{ userProfile.displayName }}</p>
+    </header>
+
+    <!-- 內容區域 -->
+    <main class="flex-grow p-4 space-y-4">
+
+        <!-- 狀態: 載入中 -->
+        <div v-if="isLoading" class="flex flex-col items-center justify-center py-10">
+            <div class="loader mb-2"></div>
+            <p class="text-sm text-gray-500">資料載入中...</p>
+        </div>
+
+        <!-- 狀態: LIFF 未初始化或錯誤 -->
+        <div v-else-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+            <p class="font-bold">發生錯誤</p>
+            <p>{{ error }}</p>
+        </div>
+
+        <!-- 主畫面 -->
+        <div v-else>
+            
+            <!-- 課程列表 -->
+            <div v-if="view === 'list'" class="space-y-4">
+                <h2 class="text-xl font-bold border-b pb-2">熱門營隊</h2>
+                
+                <div v-for="course in courses" :key="course.id" class="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg text-blue-800">{{ course.name }}</h3>
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                            ${{ course.price }}
+                        </span>
+                    </div>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <p>📅 日期: {{ formatDate(course.date) }}</p>
+                        <p>👥 名額: {{ course.enrolled }} / {{ course.capacity }}</p>
+                    </div>
+                    
+                    <button 
+                        @click="selectCourse(course)"
+                        :disabled="course.enrolled >= course.capacity"
+                        :class="course.enrolled >= course.capacity ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+                        class="w-full mt-3 text-white font-bold py-2 px-4 rounded transition">
+                        {{ course.enrolled >= course.capacity ? '已額滿' : '立即報名' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- 報名表單 -->
+            <div v-if="view === 'form'" class="bg-white rounded-lg">
+                <button @click="view = 'list'" class="text-sm text-blue-500 mb-4 flex items-center">
+                    ← 返回課程列表
+                </button>
+                
+                <h2 class="text-xl font-bold mb-4">{{ selectedCourse.name }}</h2>
+                <div class="bg-yellow-50 p-3 rounded text-sm text-yellow-800 mb-4 border border-yellow-200">
+                    <p>💡 團報優惠：5人95折、10人9折！<br>請輸入相同的「團體代碼」即可連動優惠。</p>
+                </div>
+
+                <form @submit.prevent="submitRegistration" class="space-y-4">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">真實姓名</label>
+                        <input type="text" v-model="form.name" required placeholder="請輸入姓名" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">身分證字號 (實名制)</label>
+                        <input type="text" v-model="form.nationalId" required placeholder="A123456789" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">聯絡電話</label>
+                        <input type="tel" v-model="form.phone" required placeholder="0912345678" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">團體代碼 (選填)</label>
+                        <input type="text" v-model="form.groupId" placeholder="自行設定 (如: BADMINTON_TEAM_A)" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                        <p class="text-xs text-gray-500 mt-1">若與朋友一起報名，請約定一個代碼並填入相同內容。</p>
+                    </div>
+
+                    <button type="submit" :disabled="isSubmitting" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded shadow transition flex justify-center items-center">
+                        <span v-if="isSubmitting" class="loader w-5 h-5 border-2 mr-2"></span>
+                        {{ isSubmitting ? '處理中...' : '確認報名' }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- 報名成功頁 -->
+            <div v-if="view === 'success'" class="text-center py-8">
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">✓</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">報名成功！</h2>
+                <p class="text-gray-600 mb-6">{{ successMessage }}</p>
+                
+                <div class="bg-gray-50 p-4 rounded text-left text-sm space-y-2 mb-6 border">
+                    <p><span class="font-bold">訂單編號:</span> {{ orderResult.orderId }}</p>
+                    <p><span class="font-bold">應繳金額:</span> <span class="text-red-600 font-bold">${{ orderResult.amount }}</span></p>
+                    <p><span class="font-bold">繳費期限:</span> {{ formatTime(orderResult.paymentDeadline) }}</p>
+                </div>
+
+                <button @click="closeLiff" class="w-full bg-gray-800 text-white font-bold py-3 rounded">
+                    關閉視窗
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="p-4 text-center text-xs text-gray-400 border-t">
+        &copy; 2026 竹北國民運動中心 | Powered by LIFF & GAS
+    </footer>
+</div>
+
+<script>
+    const { createApp, ref, onMounted } = Vue;
+
+    // 設定：填入您的 Cloudflare Worker 網址
+    const API_ENDPOINT = 'https://your-worker-url.workers.dev'; 
+    // 設定：填入您的 LIFF ID
+    const LIFF_ID = 'YOUR_LIFF_ID';
+
+    createApp({
+        setup() {
+            const view = ref('list'); // list, form, success
+            const isLoading = ref(true);
+            const isSubmitting = ref(false);
+            const error = ref('');
+            const courses = ref([]);
+            const userProfile = ref(null);
+            const idToken = ref('');
+            const selectedCourse = ref(null);
+            const successMessage = ref('');
+            const orderResult = ref({});
+            
+            const form = ref({
+                name: '',
+                nationalId: '',
+                phone: '',
+                groupId: ''
+            });
+
+            // 初始化 LIFF
+            const initLiff = async () => {
+                try {
+                    await liff.init({ liffId: LIFF_ID });
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                        return;
+                    }
+                    
+                    const profile = await liff.getProfile();
+                    userProfile.value = profile;
+                    idToken.value = liff.getIDToken();
+                    
+                    // LIFF 準備好後，撈取課程
+                    await fetchCourses();
+                } catch (err) {
+                    error.value = 'LIFF 初始化失敗: ' + err.message;
+                    isLoading.value = false;
+                }
+            };
+
+            // 呼叫後端 API (透過 Cloudflare Worker)
+            const fetchCourses = async () => {
+                try {
+                    const res = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'GET_COURSES',
+                            idToken: idToken.value // 傳送 Token 驗證身分
+                        })
+                    });
+                    const json = await res.json();
+                    
+                    if (json.status === 'success') {
+                        courses.value = json.data;
+                    } else {
+                        throw new Error(json.message);
+                    }
+                } catch (err) {
+                    error.value = '無法取得課程資料: ' + err.message;
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            const selectCourse = (course) => {
+                selectedCourse.value = course;
+                view.value = 'form';
+                // 預填姓名
+                form.value.name = userProfile.value.displayName;
+            };
+
+            const submitRegistration = async () => {
+                isSubmitting.value = true;
+                try {
+                    const res = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'REGISTER',
+                            idToken: idToken.value,
+                            payload: {
+                                courseId: selectedCourse.value.id,
+                                ...form.value
+                            }
+                        })
+                    });
+                    const json = await res.json();
+
+                    if (json.status === 'success') {
+                        orderResult.value = json.data;
+                        successMessage.value = json.data.message;
+                        view.value = 'success';
+                    } else {
+                        alert('報名失敗: ' + json.message);
+                    }
+                } catch (err) {
+                    alert('連線錯誤: ' + err.message);
+                } finally {
+                    isSubmitting.value = false;
+                }
+            };
+
+            const formatDate = (dateString) => {
+                return new Date(dateString).toLocaleDateString('zh-TW');
+            };
+
+            const formatTime = (isoString) => {
+                if(!isoString) return '';
+                return new Date(isoString).toLocaleString('zh-TW');
+            };
+
+            const closeLiff = () => {
+                liff.closeWindow();
+            };
+
+            onMounted(() => {
+                initLiff();
+            });
+
+            return {
+                view, isLoading, isSubmitting, error, courses, userProfile,
+                selectedCourse, form, successMessage, orderResult,
+                selectCourse, submitRegistration, formatDate, formatTime, closeLiff
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
