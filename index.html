@@ -168,7 +168,8 @@
                     <span class="bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded-full">${{ course.price }}</span>
                 </div>
                 <div class="text-sm text-gray-500 space-y-1 mb-4">
-                    <p>日期: {{ formatDate(course.date) }}</p>
+                    <p><i class="far fa-calendar-alt mr-1"></i> {{ formatDate(course.startDate) }} - {{ formatDate(course.endDate) }}</p>
+                    <p v-if="course.startTime"><i class="far fa-clock mr-1"></i> {{ course.startTime }} - {{ course.endTime }}</p>
                     <p>名額: {{ course.enrolled }}/{{ course.capacity }}</p>
                 </div>
                 <button @click="selectCourse(course)" :disabled="course.enrolled >= course.capacity" class="w-full py-2.5 rounded-lg font-bold text-sm transition" :class="course.enrolled >= course.capacity ? 'bg-gray-100 text-gray-400' : 'bg-blue-600 text-white'">{{ course.enrolled >= course.capacity ? '已額滿' : '立即報名' }}</button>
@@ -183,7 +184,7 @@
             </div>
             <div class="bg-blue-50 p-4 rounded-xl mb-6 border border-blue-100">
                 <h3 class="font-bold text-blue-800 text-lg mb-1">{{ selectedCourse.name }}</h3>
-                <p class="text-blue-600 text-sm">{{ formatDate(selectedCourse.date) }}</p>
+                <p class="text-blue-600 text-sm">{{ formatDate(selectedCourse.startDate) }} - {{ formatDate(selectedCourse.endDate) }}</p>
             </div>
             <form @submit.prevent="submitRegistration" class="space-y-5">
                 <div><label class="form-label text-gray-500">姓名</label><input type="text" v-model="form.name" readonly class="form-input bg-gray-200 cursor-not-allowed"></div>
@@ -345,7 +346,13 @@
             };
 
             onMounted(init);
-            const formatDate = (d) => new Date(d).toLocaleDateString('zh-TW');
+            
+            // Updated Date Formatter
+            const formatDate = (d) => {
+                if (!d) return '-';
+                const date = new Date(d);
+                return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('zh-TW');
+            };
 
             return {
                 view, loadingText, error, isSubmitting, userProfile, userInfo, courses, selectedCourse,
