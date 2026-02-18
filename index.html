@@ -6,8 +6,8 @@
     <title>竹北運動中心營隊報名</title>
     <!-- LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Vue 3 (更換為 cdnjs 以提升穩定度) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -146,6 +146,12 @@
 </div>
 
 <script>
+    // 檢查 Vue 是否載入成功
+    if (typeof Vue === 'undefined') {
+        alert('錯誤：無法載入 Vue.js 函式庫，請檢查網路連線或 CDN 設定。');
+        throw new Error('Vue is not defined');
+    }
+
     const { createApp, ref, onMounted } = Vue;
 
     // 您提供的資料
