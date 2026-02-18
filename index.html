@@ -311,6 +311,12 @@
             // 檢查會員 API
             const checkUserStatus = async () => {
                 try {
+                    // 開發模式：強制顯示儀表板 (測試完記得改回來)
+                    // view.value = 'dashboard'; 
+                    // userInfo.value = { name: '測試人員', nationalId: 'A123456789', phone: '0912345678' };
+                    // return; 
+
+                    // --- 正常邏輯 ---
                     const res = await callApi('CHECK_USER', { userId: userProfile.value.userId });
                     if (res.data.registered) {
                         userInfo.value = res.data.info;
