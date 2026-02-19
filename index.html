@@ -4,34 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>竹北運動中心</title>
-    <!-- LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Vue 3 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* iOS Input Zoom Fix */
         input, select, textarea { font-size: 16px; }
         [v-cloak] { display: none; }
-        
-        /* Loading Spinner */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #06C755; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* UI Components */
         .btn-primary { @apply bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3 rounded-lg shadow active:scale-95 transition duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed; }
+        .btn-secondary { @apply border border-gray-300 text-gray-600 font-bold py-3 rounded-lg hover:bg-gray-50 active:scale-95 transition duration-150; }
         .form-label { @apply block text-sm font-bold text-gray-700 mb-1; }
         .form-input { @apply w-full bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#06C755] outline-none transition; }
-        
-        /* Checkbox Custom */
         .checkbox-wrapper { @apply flex items-center p-3 border rounded-lg bg-white mb-2 cursor-pointer transition; }
         .checkbox-wrapper.active { @apply border-[#06C755] bg-green-50; }
-        .checkbox-input { @apply w-5 h-5 text-[#06C755] rounded focus:ring-[#06C755]; }
-
-        /* Transitions */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
@@ -39,38 +26,18 @@
 <body class="bg-gray-50 min-h-screen text-gray-800 font-sans">
 
 <div id="app" v-cloak class="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative">
-    
-    <!-- Header -->
     <header class="bg-[#06C755] text-white p-4 sticky top-0 z-20 flex items-center justify-between shadow-md">
         <h1 class="text-lg font-bold tracking-wide">竹北國民運動中心</h1>
-        <div class="text-xs bg-white/20 px-2 py-1 rounded-full" v-if="userProfile">
-            <i class="fas fa-user mr-1"></i> {{ userInfo.name || userProfile.displayName }}
-        </div>
+        <div class="text-xs bg-white/20 px-2 py-1 rounded-full" v-if="userProfile"><i class="fas fa-user mr-1"></i> {{ userInfo.name || userProfile.displayName }}</div>
     </header>
 
-    <main class="flex-grow p-0 relative pb-24"> <!-- pb-24 for fixed footer -->
+    <main class="flex-grow p-0 relative pb-24">
+        <div v-if="isLoading" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center"><div class="loader mb-4"></div><p class="text-gray-500 font-medium animate-pulse">{{ loadingText }}</p></div>
+        <div v-if="error" class="p-6"><div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow"><p class="font-bold mb-1">系統提示</p><p>{{ error }}</p><button @click="window.location.reload()" class="mt-3 text-sm underline">重新整理</button></div></div>
 
-        <!-- Loading -->
-        <div v-if="isLoading" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-500 font-medium animate-pulse">{{ loadingText }}</p>
-        </div>
-
-        <!-- Error -->
-        <div v-if="error" class="p-6">
-            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow">
-                <p class="font-bold mb-1">系統提示</p>
-                <p>{{ error }}</p>
-                <button @click="window.location.reload()" class="mt-3 text-sm underline">重新整理</button>
-            </div>
-        </div>
-
-        <!-- View 1: Register/Edit Profile (會員註冊) -->
+        <!-- View 1: Register -->
         <div v-else-if="view === 'register'" class="p-6 animate-fade-in">
-            <div class="flex items-center mb-6">
-                <button v-if="userInfo.name" @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button>
-                <h2 class="text-2xl font-bold text-gray-800">{{ userInfo.name ? '修改會員資料' : '會員註冊' }}</h2>
-            </div>
+            <div class="flex items-center mb-6"><button v-if="userInfo.name" @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-2xl font-bold text-gray-800">{{ userInfo.name ? '修改會員資料' : '會員註冊' }}</h2></div>
             <form @submit.prevent="submitMemberRegister" class="space-y-4">
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
                     <h3 class="text-blue-800 font-bold mb-3 text-sm">基本資料 (必填)</h3>
@@ -78,190 +45,59 @@
                     <div><label class="form-label">身分證字號</label><input type="text" v-model="regForm.nationalId" required class="form-input uppercase" :readonly="!!userInfo.nationalId && userInfo.nationalId!==''"></div>
                     <div><label class="form-label">出生年月日</label><input type="date" v-model="regForm.birthday" required class="form-input"></div>
                     <div><label class="form-label">聯絡電話</label><input type="tel" v-model="regForm.phone" required class="form-input"></div>
-                    <!-- 新增性別欄位 -->
-                    <div>
-                        <label class="form-label">性別</label>
-                        <select v-model="regForm.gender" required class="form-input">
-                            <option value="">請選擇</option>
-                            <option value="男">男</option>
-                            <option value="女">女</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label">身分</label>
-                        <select v-model="regForm.identity" required class="form-input">
-                            <option value="一般">一般民眾</option>
-                            <option value="家長">家長</option>
-                            <option value="學生">學生</option>
-                        </select>
-                    </div>
+                    <div><label class="form-label">性別</label><select v-model="regForm.gender" required class="form-input"><option value="">請選擇</option><option value="男">男</option><option value="女">女</option></select></div>
+                    <div><label class="form-label">身分</label><select v-model="regForm.identity" required class="form-input"><option value="一般">一般民眾</option><option value="家長">家長</option><option value="學生">學生</option></select></div>
                 </div>
-                <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                    <h3 class="text-orange-800 font-bold mb-3 text-sm flex justify-between"><span>家人名單</span><button type="button" @click="openFamilyModal" class="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded"><i class="fas fa-plus"></i> 新增</button></h3>
-                    <div v-for="(m, i) in regForm.familyMembers" :key="i" class="bg-white p-3 rounded mb-2 text-sm flex justify-between border shadow-sm">
-                        <span>{{m.name}} ({{m.relation}})</span>
-                        <button type="button" @click="removeFamilyMember(i)" class="text-red-400"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div v-if="regForm.familyMembers.length === 0" class="text-gray-400 text-xs text-center py-2">尚無資料</div>
-                </div>
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-100"><h3 class="text-orange-800 font-bold mb-3 text-sm flex justify-between"><span>家人名單</span><button type="button" @click="openFamilyModal" class="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded"><i class="fas fa-plus"></i> 新增</button></h3><div v-for="(m, i) in regForm.familyMembers" :key="i" class="bg-white p-2 rounded mb-2 text-sm flex justify-between border shadow-sm"><span>{{m.name}} ({{m.relation}})</span><button type="button" @click="removeFamilyMember(i)" class="text-red-400"><i class="fas fa-times"></i></button></div></div>
                 <button type="submit" :disabled="isSubmitting" class="btn-primary w-full">{{ userInfo.name ? '儲存變更' : '確認註冊' }}</button>
             </form>
         </div>
 
-        <!-- View 2: Dashboard (儀表板) -->
+        <!-- View 2: Dashboard -->
         <div v-else-if="view === 'dashboard'" class="animate-fade-in">
-            <div class="bg-gradient-to-b from-[#06C755] to-[#05b54d] text-white p-6 pb-10 rounded-b-[2rem] shadow-lg mb-6">
-                <div class="flex items-center space-x-4">
-                    <img :src="userProfile.pictureUrl || 'https://via.placeholder.com/150'" class="w-16 h-16 rounded-full border-4 border-white/30 shadow-sm">
-                    <div><p class="text-white/80 text-sm mb-1">早安，運動好夥伴</p><h2 class="text-2xl font-bold">{{ userInfo.name }}</h2></div>
-                </div>
-            </div>
-            <!-- Menu Grid -->
+            <div class="bg-gradient-to-b from-[#06C755] to-[#05b54d] text-white p-6 pb-10 rounded-b-[2rem] shadow-lg mb-6"><div class="flex items-center space-x-4"><img :src="userProfile.pictureUrl || 'https://via.placeholder.com/150'" class="w-16 h-16 rounded-full border-4 border-white/30 shadow-sm"><div><p class="text-white/80 text-sm mb-1">早安，運動好夥伴</p><h2 class="text-2xl font-bold">{{ userInfo.name }}</h2></div></div></div>
             <div class="px-6 grid grid-cols-2 gap-4 -mt-8">
-                <button @click="goToCourses" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50 transition">
-                    <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl mb-3"><i class="fas fa-running"></i></div><span class="font-bold text-gray-700">營隊報名</span>
-                </button>
-                <button @click="goToMyOrders" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50 transition">
-                    <div class="w-12 h-12 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center text-xl mb-3"><i class="fas fa-clipboard-list"></i></div><span class="font-bold text-gray-700">我的報名</span>
-                </button>
-                <button @click="editProfile" class="col-span-2 bg-white p-4 rounded-xl shadow-md flex items-center justify-center gap-4 border border-gray-100 hover:bg-gray-50 transition">
-                    <div class="w-10 h-10 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-lg"><i class="fas fa-id-card"></i></div><span class="font-bold text-gray-700">會員資料 / 家人管理</span>
-                </button>
+                <button @click="goToCourses" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl mb-3"><i class="fas fa-running"></i></div><span class="font-bold text-gray-700">營隊報名</span></button>
+                <button @click="goToMyOrders" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50"><div class="w-12 h-12 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center text-xl mb-3"><i class="fas fa-clipboard-list"></i></div><span class="font-bold text-gray-700">我的報名</span></button>
+                <button @click="editProfile" class="col-span-2 bg-white p-4 rounded-xl shadow-md flex items-center justify-center gap-4 border border-gray-100 hover:bg-gray-50"><div class="w-10 h-10 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-lg"><i class="fas fa-id-card"></i></div><span class="font-bold text-gray-700">會員資料 / 家人管理</span></button>
             </div>
         </div>
 
-        <!-- View 3: Course List (課程列表) -->
+        <!-- View 3: Course List (更新：加入詳細內容按鈕) -->
         <div v-else-if="view === 'course_list'" class="p-4 space-y-4">
-            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">選擇營隊課程</h2></div>
+            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">選擇課程</h2></div>
             <div v-for="c in courses" :key="c.id" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <div class="flex gap-2 mb-1">
-                            <span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span>
-                            <span class="text-xs bg-gray-100 text-gray-600 px-2 rounded">{{ c.timeSlotType }}</span>
-                        </div>
-                        <h3 class="font-bold text-lg text-gray-800">{{ c.name }}</h3>
-                    </div>
-                    <span class="text-[#06C755] font-bold text-lg">${{ c.price }}</span>
+                <div class="flex justify-between items-start mb-2"><div><div class="flex gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span><span class="text-xs bg-gray-100 text-gray-600 px-2 rounded">{{ c.timeSlotType }}</span></div><h3 class="font-bold text-lg text-gray-800">{{ c.name }}</h3></div><span class="text-[#06C755] font-bold text-lg">${{ c.price }}</span></div>
+                <div class="text-sm text-gray-500 space-y-1 mb-4"><p><i class="far fa-calendar-alt mr-1"></i> {{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</p><p>名額: {{ c.enrolled }}/{{ c.capacity }}</p></div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button @click="openDetail(c)" class="btn-secondary col-span-1">詳細內容</button>
+                    <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity" class="btn-primary col-span-2">{{ c.enrolled >= c.capacity ? '已額滿' : '立即報名' }}</button>
                 </div>
-                <div class="text-sm text-gray-500 space-y-1 mb-4">
-                    <p><i class="far fa-calendar-alt mr-1"></i> {{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</p>
-                    <p v-if="c.startTime"><i class="far fa-clock mr-1"></i> {{ c.startTime }}</p>
-                    <p>名額: {{ c.enrolled }}/{{ c.capacity }}</p>
-                </div>
-                <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity" class="w-full py-2.5 rounded-lg font-bold text-sm transition" :class="c.enrolled >= c.capacity ? 'bg-gray-100 text-gray-400' : 'bg-[#06C755] text-white'">
-                    {{ c.enrolled >= c.capacity ? '已額滿' : '立即報名' }}
-                </button>
             </div>
         </div>
 
-        <!-- View 4: Order Form (報名表單) -->
+        <!-- View 4: Order Form -->
         <div v-else-if="view === 'form'" class="p-4 animate-fade-in">
             <div class="flex items-center mb-4"><button @click="view='course_list'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">確認報名資料</h2></div>
-            
-            <div class="bg-green-50 p-4 rounded-xl mb-6 border border-green-100">
-                <h3 class="font-bold text-green-900 text-lg mb-1">{{ selectedCourse.name }}</h3>
-                <p class="text-green-700 text-sm">{{ formatDate(selectedCourse.startDate) }} - {{ formatDate(selectedCourse.endDate) }}</p>
-                <div v-if="isEarlyBird" class="mt-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded inline-flex items-center"><i class="fas fa-stopwatch mr-1"></i> 早鳥優惠價 ${{ selectedCourse.earlyBirdPrice }}</div>
-            </div>
-            
+            <div class="bg-green-50 p-4 rounded-xl mb-6 border border-green-100"><h3 class="font-bold text-green-900 text-lg mb-1">{{ selectedCourse.name }}</h3><p class="text-green-700 text-sm">{{ formatDate(selectedCourse.startDate) }} - {{ formatDate(selectedCourse.endDate) }}</p><div v-if="isEarlyBird" class="mt-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded inline-flex items-center"><i class="fas fa-stopwatch mr-1"></i> 早鳥價 ${{ selectedCourse.earlyBirdPrice }}</div></div>
             <form @submit.prevent="submitRegistration" class="space-y-6">
-                <div class="space-y-4">
-                    <div><label class="form-label">學員姓名</label><input type="text" v-model="form.name" readonly class="form-input bg-gray-100"></div>
-                    <div><label class="form-label">團體代碼 (選填)</label><input type="text" v-model="form.groupId" class="form-input" placeholder="如: TEAM_A"></div>
-                </div>
-
-                <!-- 設備租用區 -->
-                <div v-if="equipmentList.length > 0" class="border-t pt-4">
-                    <h3 class="font-bold text-gray-800 mb-2">設備租用</h3>
-                    <div v-for="(eq, idx) in equipmentList" :key="idx" class="checkbox-wrapper" :class="{'active': selectedEquipments.includes(eq)}" @click="toggleEquipment(eq)">
-                        <div class="flex-1"><span class="font-bold text-gray-700">{{ eq.name }}</span> <span class="text-xs text-gray-500 ml-2">+${{ eq.price }}</span></div>
-                        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center" :class="selectedEquipments.includes(eq) ? 'bg-[#06C755] border-[#06C755]' : 'border-gray-300'"><i v-if="selectedEquipments.includes(eq)" class="fas fa-check text-white text-xs"></i></div>
-                    </div>
-                </div>
-
-                <!-- 請假區 (僅多日營隊顯示) -->
-                <div v-if="selectedCourse.type === '多日營隊'" class="border-t pt-4">
-                    <h3 class="font-bold text-gray-800 mb-1 flex items-center"><i class="far fa-calendar-times mr-2 text-red-500"></i> 請假 (扣除費用)</h3>
-                    <p class="text-xs text-gray-500 mb-3">勾選請假日期 (最多3天)</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div v-for="dateStr in generatedDates" :key="dateStr" class="checkbox-wrapper text-sm" :class="{'active': excludedDates.includes(dateStr)}" @click="toggleDate(dateStr)">
-                            <span class="flex-1">{{ dateStr }}</span>
-                            <div class="w-4 h-4 rounded border flex items-center justify-center" :class="excludedDates.includes(dateStr) ? 'bg-red-500 border-red-500' : 'border-gray-300'"><i v-if="excludedDates.includes(dateStr)" class="fas fa-times text-white text-xs"></i></div>
-                        </div>
-                    </div>
-                    <div v-if="excludedDates.length > 3" class="mt-2 text-red-600 text-xs bg-red-50 p-2 rounded animate-pulse">請假超過 3 天無法報名</div>
-                </div>
-
-                <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-lg z-30 flex justify-between items-center">
-                    <div class="flex flex-col"><span class="text-xs text-gray-500">總金額</span><span class="text-xl font-bold text-[#06C755]">${{ calculatedTotal }}</span></div>
-                    <button type="submit" :disabled="isSubmitting || excludedDates.length > 3" class="btn-primary w-2/3">{{ isSubmitting ? '處理中' : '確認報名' }}</button>
-                </div>
+                <div class="space-y-4"><div><label class="form-label">學員姓名</label><input type="text" v-model="form.name" readonly class="form-input bg-gray-100"></div><div><label class="form-label">團體代碼 (選填)</label><input type="text" v-model="form.groupId" class="form-input" placeholder="如: TEAM_A"></div></div>
+                <div v-if="equipmentList.length > 0" class="border-t pt-4"><h3 class="font-bold text-gray-800 mb-2">設備租用</h3><div v-for="(eq, idx) in equipmentList" :key="idx" class="checkbox-wrapper" :class="{'active': selectedEquipments.includes(eq)}" @click="toggleEquipment(eq)"><div class="flex-1"><span class="font-bold text-gray-700">{{ eq.name }}</span> <span class="text-xs text-gray-500 ml-2">+${{ eq.price }}</span></div><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center" :class="selectedEquipments.includes(eq) ? 'bg-[#06C755] border-[#06C755]' : 'border-gray-300'"><i v-if="selectedEquipments.includes(eq)" class="fas fa-check text-white text-xs"></i></div></div></div>
+                <div v-if="selectedCourse.type === '多日營隊'" class="border-t pt-4"><h3 class="font-bold text-gray-800 mb-1 flex items-center"><i class="far fa-calendar-times mr-2 text-red-500"></i> 請假 (扣除費用)</h3><div class="grid grid-cols-2 gap-2"><div v-for="dateStr in generatedDates" :key="dateStr" class="checkbox-wrapper text-sm" :class="{'active': excludedDates.includes(dateStr)}" @click="toggleDate(dateStr)"><span class="flex-1">{{ dateStr }}</span><div class="w-4 h-4 rounded border flex items-center justify-center" :class="excludedDates.includes(dateStr) ? 'bg-red-500 border-red-500' : 'border-gray-300'"><i v-if="excludedDates.includes(dateStr)" class="fas fa-times text-white text-xs"></i></div></div></div><div v-if="excludedDates.length > 3" class="mt-2 text-red-600 text-xs bg-red-50 p-2 rounded animate-pulse">請假超過 3 天無法報名</div></div>
+                <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-lg z-30 flex justify-between items-center"><div class="flex flex-col"><span class="text-xs text-gray-500">總金額</span><span class="text-xl font-bold text-[#06C755]">${{ calculatedTotal }}</span></div><button type="submit" :disabled="isSubmitting || excludedDates.length > 3" class="btn-primary w-2/3">{{ isSubmitting ? '處理中' : '確認報名' }}</button></div>
             </form>
         </div>
 
-        <!-- View 5: My Orders (報名紀錄) -->
-        <div v-else-if="view === 'my_orders'" class="p-4 pb-20 animate-fade-in">
-            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">我的報名紀錄</h2></div>
-            <div v-if="myOrders.length === 0" class="text-center text-gray-400 py-10">尚無報名紀錄</div>
-            <div v-for="order in myOrders" :key="order.orderId" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm mb-4">
-                <div class="flex justify-between items-start mb-2">
-                    <div><h3 class="font-bold text-gray-800 text-lg">{{ order.courseName }}</h3><div class="text-xs text-gray-500">{{ formatDate(order.courseDate) }}</div></div>
-                    <span class="px-2 py-1 rounded text-xs font-bold" :class="getStatusClass(order.status)">{{ getStatusLabel(order.status) }}</span>
-                </div>
-                <div class="border-t border-dashed my-3"></div>
-                <div class="flex justify-between items-center mb-3"><span class="text-sm text-gray-500">金額</span><span class="font-bold text-gray-800">${{ order.amount }}</span></div>
-                <div class="bg-gray-50 p-3 rounded text-sm flex justify-between mb-3"><span class="text-gray-600">匯款後五碼</span><span class="font-mono font-bold">{{ order.remittance || '未填寫' }}</span></div>
-                <div v-if="order.status !== 'CANCELLED'" class="text-right"><button @click="openRemittanceModal(order)" class="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded font-bold">回填/修改</button></div>
-            </div>
-        </div>
+        <!-- View 5: My Orders -->
+        <div v-else-if="view === 'my_orders'" class="p-4 pb-20 animate-fade-in"><div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">我的報名</h2></div><div v-if="myOrders.length === 0" class="text-center text-gray-400 py-10">尚無紀錄</div><div v-for="o in myOrders" :key="o.orderId" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm mb-4"><div class="flex justify-between items-start mb-2"><div><h3 class="font-bold text-gray-800 text-lg">{{ o.courseName }}</h3><div class="text-xs text-gray-500">{{ formatDate(o.courseDate) }}</div></div><span class="px-2 py-1 rounded text-xs font-bold" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span></div><div class="border-t border-dashed my-3"></div><div class="flex justify-between items-center mb-3"><span class="text-sm text-gray-500">金額</span><span class="font-bold text-gray-800">${{ o.amount }}</span></div><div class="bg-gray-50 p-3 rounded text-sm flex justify-between mb-3"><span class="text-gray-600">匯款末五碼</span><span class="font-mono font-bold">{{ o.remittance || '未填' }}</span></div><div v-if="o.status !== 'CANCELLED'" class="text-right"><button @click="openRemittanceModal(o)" class="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded font-bold">回填/修改</button></div></div></div>
 
-        <!-- View 6: Success (成功頁) -->
-        <div v-else-if="view === 'success'" class="p-8 text-center pt-20">
-            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-check text-4xl text-[#06C755]"></i></div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">報名成功！</h2>
-            <p class="text-gray-500 mb-8">{{ successMessage }}</p>
-            <div class="flex flex-col gap-3">
-                <button @click="goToMyOrders" class="w-full bg-[#06C755] text-white font-bold py-3 rounded-lg">查看訂單</button>
-                <button @click="view='dashboard'" class="w-full bg-white border border-gray-300 font-bold py-3 rounded-lg">返回首頁</button>
-            </div>
-        </div>
+        <!-- View 6: Success -->
+        <div v-else-if="view === 'success'" class="p-8 text-center pt-20"><div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-check text-4xl text-[#06C755]"></i></div><h2 class="text-2xl font-bold text-gray-800 mb-2">報名成功！</h2><p class="text-gray-500 mb-8">{{ successMessage }}</p><div class="flex flex-col gap-3"><button @click="goToMyOrders" class="w-full bg-[#06C755] text-white font-bold py-3 rounded-lg mb-3">查看訂單</button><button @click="view='dashboard'" class="w-full bg-white border border-gray-300 font-bold py-3 rounded-lg">返回首頁</button></div></div>
 
-        <!-- Remittance Modal (回填匯款) -->
-        <transition name="fade">
-            <div v-if="showRemittanceModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">回填匯款資訊</h3>
-                    <div class="mb-4"><label class="form-label">帳號後五碼</label><input v-model="tempRemittance" class="form-input text-center text-lg font-mono" maxlength="5"></div>
-                    <div class="flex gap-2"><button @click="showRemittanceModal=false" class="flex-1 bg-gray-200 py-3 rounded-lg font-bold">取消</button><button @click="submitRemittance" class="flex-1 bg-[#06C755] text-white py-3 rounded-lg font-bold">儲存</button></div>
-                </div>
-            </div>
-        </transition>
-        
-        <!-- Family Modal (新增家人) -->
-        <transition name="fade">
-            <div v-if="showFamilyModal" class="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-4">
-                <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新增家人</h3><button @click="showFamilyModal=false"><i class="fas fa-times"></i></button></div>
-                    <form @submit.prevent="saveFamilyMember" class="space-y-3">
-                        <div><label class="form-label">姓名</label><input v-model="tempFamily.name" required class="form-input"></div>
-                        <div><label class="form-label">關係</label><input v-model="tempFamily.relation" required class="form-input"></div>
-                        <div><label class="form-label">身分證</label><input v-model="tempFamily.nationalId" required class="form-input uppercase"></div>
-                        <!-- 新增性別欄位 -->
-                        <div>
-                            <label class="form-label">性別</label>
-                            <select v-model="tempFamily.gender" required class="form-input">
-                                <option value="男">男</option>
-                                <option value="女">女</option>
-                            </select>
-                        </div>
-                        <div><label class="form-label">生日</label><input v-model="tempFamily.birthday" type="date" required class="form-input"></div>
-                        <div><label class="form-label">身分</label><select v-model="tempFamily.identity" required class="form-input"><option value="學生">學生</option><option value="一般">一般</option></select></div>
-                        <button type="submit" class="w-full btn-primary mt-4">加入</button>
-                    </form>
-                </div>
-            </div>
-        </transition>
+        <!-- Modals -->
+        <transition name="fade"><div v-if="showDetailModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"><div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"><div class="h-48 bg-gray-200 relative"><img v-if="detailCourse.image" :src="detailCourse.image" class="w-full h-full object-cover"><div v-else class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-image text-3xl"></i></div><button @click="showDetailModal=false" class="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full text-white flex items-center justify-center"><i class="fas fa-times"></i></button></div><div class="p-6 overflow-y-auto"><h3 class="text-xl font-bold text-gray-800 mb-2">{{ detailCourse.name }}</h3><p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{{ detailCourse.description || '暫無詳細說明' }}</p></div><div class="p-4 border-t"><button @click="selectCourse(detailCourse); showDetailModal=false" class="w-full btn-primary">立即報名</button></div></div></div></transition>
+        <transition name="fade"><div v-if="showRemittanceModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"><div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl"><h3 class="text-lg font-bold text-gray-800 mb-4 text-center">回填匯款資訊</h3><div class="mb-4"><label class="form-label">帳號後五碼</label><input v-model="tempRemittance" class="form-input text-center text-lg font-mono" maxlength="5"></div><div class="flex gap-2"><button @click="showRemittanceModal=false" class="flex-1 bg-gray-200 py-3 rounded-lg font-bold">取消</button><button @click="submitRemittance" class="flex-1 bg-[#06C755] text-white py-3 rounded-lg font-bold">儲存</button></div></div></div></transition>
+        <transition name="fade"><div v-if="showFamilyModal" class="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-4"><div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新增家人</h3><button @click="showFamilyModal=false"><i class="fas fa-times"></i></button></div><form @submit.prevent="saveFamilyMember" class="space-y-3"><div><label class="form-label">姓名</label><input v-model="tempFamily.name" required class="form-input"></div><div><label class="form-label">關係</label><input v-model="tempFamily.relation" required class="form-input"></div><div><label class="form-label">身分證</label><input v-model="tempFamily.nationalId" required class="form-input uppercase"></div><div><label class="form-label">性別</label><select v-model="tempFamily.gender" required class="form-input"><option value="男">男</option><option value="女">女</option></select></div><div><label class="form-label">生日</label><input v-model="tempFamily.birthday" type="date" required class="form-input"></div><div><label class="form-label">身分</label><select v-model="tempFamily.identity" required class="form-input"><option value="學生">學生</option><option value="一般">一般</option></select></div><button type="submit" class="w-full btn-primary mt-4">加入</button></form></div></div></transition>
 
     </main>
 </div>
@@ -281,8 +117,7 @@
             const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', identity: '一般', gender: '', familyMembers: [] });
             const form = ref({ name: '', groupId: '' });
             const excludedDates = ref([]), selectedEquipments = ref([]);
-            
-            const showFamilyModal = ref(false), tempFamily = ref({});
+            const showFamilyModal = ref(false), tempFamily = ref({}), showDetailModal = ref(false), detailCourse = ref({});
             const showRemittanceModal = ref(false), editingOrder = ref({}), tempRemittance = ref('');
 
             const callApi = async (act, pl = {}) => {
@@ -328,7 +163,6 @@
             const editProfile = () => { 
                 regForm.value = JSON.parse(JSON.stringify(userInfo.value)); 
                 if (!regForm.value.familyMembers) regForm.value.familyMembers = [];
-                // Date formatting for input type=date
                 if (regForm.value.birthday && regForm.value.birthday.includes('T')) regForm.value.birthday = regForm.value.birthday.split('T')[0];
                 view.value = 'register'; 
             };
@@ -360,6 +194,7 @@
                 return Math.max(0, t); 
             });
 
+            const openDetail = (c) => { detailCourse.value = c; showDetailModal.value = true; };
             const selectCourse = (c) => { selectedCourse.value = c; form.value.name = userInfo.value.name; excludedDates.value=[]; selectedEquipments.value=[]; view.value = 'form'; };
             const toggleDate = (d) => { const i = excludedDates.value.indexOf(d); if(i>-1) excludedDates.value.splice(i,1); else excludedDates.value.push(d); };
             const toggleEquipment = (eq) => { const i = selectedEquipments.value.indexOf(eq); if(i>-1) selectedEquipments.value.splice(i,1); else selectedEquipments.value.push(eq); };
@@ -391,9 +226,10 @@
             return {
                 view, loadingText, error, isSubmitting, userProfile, userInfo, courses, myOrders, selectedCourse,
                 regForm, form, successMessage, showFamilyModal, tempFamily, showRemittanceModal, editingOrder, tempRemittance,
+                showDetailModal, detailCourse,
                 excludedDates, selectedEquipments, isEarlyBird, basePrice, equipmentList, generatedDates, calculatedTotal,
                 openFamilyModal, saveFamilyMember, removeFamilyMember, submitMemberRegister, editProfile,
-                goToCourses, selectCourse, toggleDate, toggleEquipment, submitRegistration, goToMyOrders, openRemittanceModal, submitRemittance,
+                goToCourses, selectCourse, toggleDate, toggleEquipment, submitRegistration, goToMyOrders, openRemittanceModal, submitRemittance, openDetail,
                 formatDate, getStatusLabel, getStatusClass
             };
         }
