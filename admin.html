@@ -4,1312 +4,578 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>運動島管理後台</title>
+    <!-- Vue 3 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         [v-cloak] { display: none; }
-
-        :root {
-            --line-green: #06C755;
-            --line-green-dark: #05b34c;
-            --line-green-pale: #e8f9ef;
-            --line-green-bg: #f0fbf5;
-            --sidebar-width: 240px;
-            --sidebar-collapsed: 64px;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --bg-body: #f3f4f6;
-            --border: #e5e7eb;
-            --white: #ffffff;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
-            --shadow-xl: 0 20px 60px rgba(0,0,0,0.20);
-            --radius: 10px;
+        
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: #f0f2f5;
+            color: #1e1e2d;
+            overflow: hidden; 
         }
 
-        * { box-sizing: border-box; }
-
-        html, body, #app { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-
-        body {
-            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-body);
-            color: var(--text-primary);
-        }
-
-        /* =========== SIDEBAR =========== */
+        /* --- Sidebar (LINE OA 風格: 白底垂直) --- */
         .sidebar {
-            width: var(--sidebar-width);
-            min-width: var(--sidebar-width);
-            height: 100%;
-            background: var(--white);
-            border-right: 1px solid var(--border);
+            width: 240px;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e7eb;
             display: flex;
             flex-direction: column;
-            transition: width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1);
-            overflow: hidden;
-            position: relative;
-            z-index: 30;
             flex-shrink: 0;
+            z-index: 50;
         }
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed);
-            min-width: var(--sidebar-collapsed);
-        }
-
-        /* Header */
+        
         .sidebar-header {
             height: 64px;
             display: flex;
             align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--border);
-            gap: 10px;
-            overflow: hidden;
-            flex-shrink: 0;
+            padding: 0 20px;
+            border-bottom: 1px solid #f3f4f6;
         }
-        .sidebar-logo {
-            width: 36px;
-            height: 36px;
-            background: var(--line-green);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 16px;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(6,199,85,0.35);
-        }
-        .sidebar-title {
-            font-size: 15px;
-            font-weight: 900;
-            color: var(--text-primary);
-            white-space: nowrap;
-            opacity: 1;
-            transition: opacity 0.2s;
-        }
-        .sidebar.collapsed .sidebar-title { opacity: 0; pointer-events: none; }
 
-        /* Toggle Button */
-        .sidebar-toggle {
-            position: absolute;
-            top: 50%;
-            right: -12px;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 50%;
+        .menu-category {
+            padding: 20px 20px 8px 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .menu-item {
             display: flex;
             align-items: center;
-            justify-content: center;
+            width: 100%;
+            height: 48px;
+            padding: 0 20px;
+            color: #4b5563;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 10px;
-            color: var(--text-secondary);
-            z-index: 40;
-            box-shadow: var(--shadow-sm);
+            border-left: 4px solid transparent;
             transition: all 0.2s;
         }
-        .sidebar-toggle:hover { background: var(--line-green); color: white; border-color: var(--line-green); }
 
-        /* Nav Section Label */
-        .nav-section-label {
-            padding: 12px 20px 4px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            color: #9ca3af;
-            text-transform: uppercase;
-            white-space: nowrap;
-            opacity: 1;
-            transition: opacity 0.2s;
+        .menu-item:hover {
+            background-color: #f0fbf5;
+            color: #06C755;
         }
-        .sidebar.collapsed .nav-section-label { opacity: 0; height: 0; padding: 0; overflow: hidden; }
 
-        /* Nav Items */
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 20px;
-            height: 48px;
-            cursor: pointer;
-            border-left: 3px solid transparent;
-            transition: all 0.15s;
-            position: relative;
-            overflow: hidden;
-            white-space: nowrap;
-            color: var(--text-secondary);
-            font-size: 13.5px;
+        .menu-item.active {
+            background-color: #f0fbf5;
+            color: #06C755;
+            border-left-color: #06C755;
             font-weight: 700;
         }
-        .nav-item:hover {
-            background: var(--line-green-bg);
-            color: var(--line-green);
-        }
-        .nav-item.active {
-            background: var(--line-green-pale);
-            color: var(--line-green);
-            border-left-color: var(--line-green);
-        }
-        .nav-icon {
-            width: 22px;
-            text-align: center;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-        .nav-label {
-            opacity: 1;
-            transition: opacity 0.2s;
-        }
-        .sidebar.collapsed .nav-label { opacity: 0; }
 
-        /* Tooltip on collapsed */
-        .nav-item .tooltip {
-            display: none;
-            position: absolute;
-            left: calc(var(--sidebar-collapsed) + 8px);
-            background: #1f2937;
-            color: white;
-            font-size: 12px;
-            padding: 5px 10px;
-            border-radius: 6px;
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 100;
-        }
-        .sidebar.collapsed .nav-item:hover .tooltip { display: block; }
+        .menu-icon { width: 24px; text-align: center; margin-right: 12px; font-size: 16px; }
 
-        /* Badge */
-        .nav-badge {
-            margin-left: auto;
-            background: #ef4444;
-            color: white;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 9999px;
-            flex-shrink: 0;
-            transition: opacity 0.2s;
-        }
-        .sidebar.collapsed .nav-badge { opacity: 0; }
-
-        /* Sidebar Footer */
-        .sidebar-footer {
-            border-top: 1px solid var(--border);
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #f9fafb;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #d1d5db;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 13px;
-            color: #4b5563;
-            flex-shrink: 0;
-        }
-        .footer-info {
+        /* --- Main Content --- */
+        .main-content {
             flex: 1;
-            overflow: hidden;
-            opacity: 1;
-            transition: opacity 0.2s;
-        }
-        .sidebar.collapsed .footer-info { opacity: 0; }
-        .footer-name { font-size: 13px; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-        .footer-role { font-size: 11px; color: var(--text-secondary); }
-        .logout-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.15s;
-            flex-shrink: 0;
-        }
-        .logout-btn:hover { background: #fee2e2; color: #ef4444; }
-
-        /* =========== MAIN CONTENT =========== */
-        .main-area {
-            flex: 1;
-            min-width: 0;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            background-color: #f0f2f5;
             overflow: hidden;
+            position: relative;
         }
-        .topbar {
+
+        .top-header {
             height: 64px;
-            background: var(--white);
-            border-bottom: 1px solid var(--border);
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 28px;
+            padding: 0 32px;
             flex-shrink: 0;
-            box-shadow: var(--shadow-sm);
         }
-        .topbar-title {
-            font-size: 18px;
-            font-weight: 900;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .title-accent {
-            width: 4px;
-            height: 22px;
-            background: var(--line-green);
-            border-radius: 2px;
-        }
-        .sync-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 14px;
+
+        .content-scroll-area { flex: 1; overflow-y: auto; padding: 32px; }
+
+        /* --- Components --- */
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-secondary);
-            background: #f3f4f6;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            transition: all 0.15s;
-        }
-        .sync-btn:hover { background: var(--line-green-pale); color: var(--line-green); border-color: var(--line-green); }
-
-        /* Content Scroll */
-        .content-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 28px;
-        }
-
-        /* =========== STAT CARDS =========== */
-        .stat-card {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px 24px;
-            box-shadow: var(--shadow-sm);
-        }
-        .stat-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; }
-        .stat-value { font-size: 28px; font-weight: 900; color: var(--text-primary); }
-        .stat-value.green { color: var(--line-green); }
-
-        /* =========== TABLE =========== */
-        .card-table {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             overflow: hidden;
+            margin-bottom: 24px;
         }
+
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th {
-            padding: 14px 20px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            background: #f9fafb;
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-            text-align: left;
+            text-align: left; padding: 16px 24px; background-color: #f9fafb;
+            color: #6b7280; font-size: 12px; font-weight: 700; border-bottom: 1px solid #e5e7eb;
         }
         .data-table td {
-            padding: 14px 20px;
-            font-size: 13px;
-            border-bottom: 1px solid #f3f4f6;
-            vertical-align: middle;
+            padding: 16px 24px; border-bottom: 1px solid #f3f4f6;
+            font-size: 14px; color: #374151; vertical-align: middle;
         }
-        .data-table tbody tr:last-child td { border-bottom: none; }
-        .data-table tbody tr:hover { background: #fafafa; }
+        .data-table tr:hover { background-color: #f9fafb; }
 
-        /* Progress Bar */
-        .prog-bar { height: 5px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
-        .prog-fill { height: 100%; background: var(--line-green); border-radius: 3px; transition: width 0.3s; }
+        .btn-line-green {
+            background-color: #06C755; color: white; padding: 8px 16px; border-radius: 6px;
+            font-weight: 700; font-size: 14px; transition: background 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-line-green:hover { background-color: #05b34c; }
 
-        /* =========== SEARCH / FILTER =========== */
-        .filter-bar {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 20px;
+        .btn-white {
+            background-color: white; border: 1px solid #d1d5db; color: #374151;
+            padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; transition: all 0.2s;
         }
-        .search-wrap { position: relative; flex: 1; max-width: 400px; }
-        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 14px; }
-        .form-input {
-            width: 100%;
-            border: 1px solid var(--border);
-            background: white;
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: var(--text-primary);
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s;
-            font-family: inherit;
-        }
-        .form-input:focus { border-color: var(--line-green); box-shadow: 0 0 0 3px rgba(6,199,85,0.12); }
-        .form-input.pl-10 { padding-left: 36px; }
-        .form-input[readonly] { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+        .btn-white:hover { border-color: #06C755; color: #06C755; background-color: #f0fbf5; }
 
-        /* =========== STATUS BADGES =========== */
-        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .badge-pending { background: #fef3c7; color: #92400e; }
-        .badge-paid { background: #d1fae5; color: #065f46; }
-        .badge-cancelled { background: #f3f4f6; color: #6b7280; }
+        .input-line {
+            width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px 12px;
+            font-size: 14px; outline: none; transition: border 0.2s;
+        }
+        .input-line:focus { border-color: #06C755; box-shadow: 0 0 0 2px rgba(6,199,85,0.1); }
+        .label-line { display: block; font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; }
 
-        /* =========== BUTTONS =========== */
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            background: var(--line-green);
-            color: white;
-            padding: 9px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-            box-shadow: 0 2px 8px rgba(6,199,85,0.30);
-            font-family: inherit;
+        /* --- Modal (Central Popup) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
         }
-        .btn-primary:hover { background: var(--line-green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,199,85,0.35); }
-        .btn-outline {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            background: white;
-            color: var(--text-secondary);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            transition: all 0.15s;
-            font-family: inherit;
+        .modal-container {
+            background: white; width: 95%; height: 95%; max-width: 1400px;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: popIn 0.2s ease-out;
         }
-        .btn-outline:hover { background: #f9fafb; color: var(--text-primary); }
-        .btn-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 7px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            color: #9ca3af;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.15s;
-            font-size: 14px;
-        }
-        .btn-icon:hover { background: var(--line-green-pale); color: var(--line-green); border-color: rgba(6,199,85,0.2); }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* =========== LOGIN =========== */
-        .login-wrap {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #f0fbf5 0%, #e8f4ff 100%);
-            z-index: 1000;
+        .section-title {
+            font-size: 14px; font-weight: 700; color: #111827;
+            padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
         }
-        .login-card {
-            background: white;
-            padding: 48px 44px;
-            border-radius: 16px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
-            width: 400px;
-            text-align: center;
-            border: 1px solid var(--border);
+        
+        /* 針對課程編輯的特殊樣式 */
+        .settings-box {
+            background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px;
         }
-        .login-logo {
-            width: 64px;
-            height: 64px;
-            background: var(--line-green);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 26px;
-            color: white;
-            box-shadow: 0 4px 16px rgba(6,199,85,0.40);
+        .toggle-switch {
+            position: relative; display: inline-block; width: 44px; height: 24px;
         }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #06C755; }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        /* =========== MODAL =========== */
-        .modal-mask {
-            position: fixed;
-            inset: 0;
-            background: rgba(17,24,39,0.55);
-            backdrop-filter: blur(3px);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-box {
-            background: white;
-            width: 92vw;
-            height: 90vh;
-            max-width: 1300px;
-            border-radius: 14px;
-            box-shadow: var(--shadow-xl);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .modal-box.sm {
-            max-width: 760px;
-            height: auto;
-            max-height: 90vh;
-        }
-        .modal-header {
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 28px;
-            border-bottom: 1px solid var(--border);
-            background: white;
-            flex-shrink: 0;
-        }
-        .modal-title {
-            font-size: 16px;
-            font-weight: 900;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .modal-icon {
-            width: 30px;
-            height: 30px;
-            background: var(--line-green-pale);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--line-green);
-            font-size: 13px;
-        }
-        .modal-close {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #9ca3af;
-            font-size: 16px;
-            transition: all 0.15s;
-        }
-        .modal-close:hover { background: #fee2e2; color: #ef4444; }
-        .modal-body { flex: 1; overflow: hidden; display: flex; }
-        .modal-scroll { flex: 1; overflow-y: auto; padding: 28px; }
-        .modal-footer {
-            height: 68px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-            padding: 0 28px;
-            border-top: 1px solid var(--border);
-            background: #f9fafb;
-            flex-shrink: 0;
-        }
-
-        /* Form Groups inside Modal */
-        .form-section { margin-bottom: 24px; }
-        .form-section-title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-        .form-label { font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block; }
-        .form-group { margin-bottom: 16px; }
-        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-        /* =========== VUE TRANSITIONS =========== */
-        .pop-enter-active, .pop-leave-active { transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(0.95); }
-
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
-        /* Member Split Panel */
-        .split-panel { display: flex; width: 100%; height: 100%; }
-        .split-left { width: 50%; padding: 28px; overflow-y: auto; border-right: 1px solid var(--border); }
-        .split-right { width: 50%; padding: 28px; overflow-y: auto; background: #fafafa; }
-
-        /* Family Card */
-        .family-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 10px;
-            box-shadow: var(--shadow-sm);
-        }
-        .health-alert { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 8px 10px; font-size: 12px; color: #9a3412; margin-top: 8px; }
-
-        /* Empty State */
-        .empty-state {
-            border: 2px dashed #e5e7eb;
-            border-radius: 10px;
-            padding: 48px 20px;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 13px;
-        }
-
-        /* Course Info Cell */
-        .course-code {
-            display: inline-block;
-            font-size: 10px;
-            background: #f3f4f6;
-            color: #6b7280;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
     </style>
 </head>
 <body>
 
-<div id="app" v-cloak class="flex flex-col" style="height:100%;width:100%;">
+<div id="app" v-cloak class="flex h-full w-full">
 
-    <!-- ===== LOGIN ===== -->
-    <div v-if="!isLoggedIn" class="login-wrap">
-        <div class="login-card">
-            <div class="login-logo"><i class="fas fa-running"></i></div>
-            <h1 style="font-size:20px;font-weight:900;color:#111827;margin-bottom:6px;">運動島管理後台</h1>
-            <p style="font-size:13px;color:#9ca3af;margin-bottom:28px;">LINE OA 整合管理系統</p>
+    <!-- LOGIN -->
+    <div v-if="!isLoggedIn" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#f0f2f5]">
+        <div class="bg-white p-10 rounded-xl shadow-lg w-[400px] border border-gray-200 text-center">
+            <div class="w-16 h-16 bg-[#06C755] rounded-xl flex items-center justify-center mx-auto mb-6 text-white text-3xl">
+                <i class="fas fa-running"></i>
+            </div>
+            <h1 class="text-xl font-bold text-gray-800 mb-6">運動島管理後台</h1>
             <form @submit.prevent="login">
-                <div class="form-group text-left">
-                    <label class="form-label">管理密碼</label>
-                    <input v-model="password" type="password" class="form-input" placeholder="請輸入密碼" style="font-size:14px;padding:11px 14px;">
-                </div>
-                <button :disabled="isLoading" class="btn-primary" style="width:100%;margin-top:8px;padding:12px;font-size:14px;">
-                    <i class="fas fa-sign-in-alt" v-if="!isLoading"></i>
-                    <i class="fas fa-circle-notch fa-spin" v-else></i>
+                <input v-model="password" type="password" class="input-line mb-4" placeholder="請輸入管理密碼">
+                <button :disabled="isLoading" class="w-full btn-line-green py-3 justify-center">
                     {{ isLoading ? '登入中...' : '登入系統' }}
                 </button>
-                <p v-if="error" style="color:#ef4444;font-size:13px;margin-top:12px;">{{ error }}</p>
+                <p v-if="error" class="text-red-500 text-sm mt-4">{{ error }}</p>
             </form>
         </div>
     </div>
 
-    <!-- ===== MAIN LAYOUT ===== -->
-    <div v-else style="display:flex;height:100%;width:100%;overflow:hidden;">
-
+    <!-- MAIN DASHBOARD -->
+    <template v-else>
         <!-- SIDEBAR -->
-        <aside :class="['sidebar', sidebarCollapsed ? 'collapsed' : '']">
-            <!-- Header -->
+        <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo"><i class="fas fa-running"></i></div>
-                <div class="sidebar-title">運動島管理</div>
-                <!-- Toggle -->
-                <div class="sidebar-toggle" @click="sidebarCollapsed=!sidebarCollapsed" style="right:-12px;">
-                    <i :class="sidebarCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+                <span class="bg-[#06C755] text-white px-2 py-0.5 rounded text-xs font-bold mr-2">LINE OA</span>
+                <span class="font-bold text-gray-800 text-lg">運動島管理</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto py-2">
+                <div class="menu-category">MENU</div>
+                <div class="menu-item" :class="{ active: currentTab === 'courses' }" @click="currentTab = 'courses'">
+                    <i class="fas fa-chalkboard-teacher menu-icon"></i> 課程管理
+                </div>
+                <div class="menu-item" :class="{ active: currentTab === 'orders' }" @click="currentTab = 'orders'">
+                    <i class="fas fa-file-invoice-dollar menu-icon"></i> 訂單管理
+                </div>
+                <div class="menu-item" :class="{ active: currentTab === 'members' }" @click="currentTab = 'members'">
+                    <i class="fas fa-users menu-icon"></i> 會員管理
                 </div>
             </div>
 
-            <!-- Nav -->
-            <nav style="flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 0;">
-                <div class="nav-section-label">選單</div>
-
-                <div class="nav-item" :class="{active:currentTab==='courses'}" @click="currentTab='courses'">
-                    <span class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></span>
-                    <span class="nav-label">課程管理</span>
-                    <span v-if="courses.length>0" class="nav-badge">{{ courses.length }}</span>
-                    <span class="tooltip">課程管理</span>
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-white">A</div>
+                    <span class="text-sm font-bold text-gray-600">系統管理員</span>
                 </div>
-
-                <div class="nav-item" :class="{active:currentTab==='orders'}" @click="currentTab='orders'">
-                    <span class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-                    <span class="nav-label">訂單管理</span>
-                    <span v-if="pendingCount>0" class="nav-badge">{{ pendingCount }}</span>
-                    <span class="tooltip">訂單管理</span>
-                </div>
-
-                <div class="nav-item" :class="{active:currentTab==='members'}" @click="currentTab='members'">
-                    <span class="nav-icon"><i class="fas fa-users"></i></span>
-                    <span class="nav-label">會員管理</span>
-                    <span class="tooltip">會員管理</span>
-                </div>
-
-                <div class="nav-section-label" style="margin-top:8px;">系統</div>
-
-                <div class="nav-item" @click="fetchData">
-                    <span class="nav-icon"><i class="fas fa-sync-alt" :class="{'fa-spin':isLoading}"></i></span>
-                    <span class="nav-label">資料同步</span>
-                    <span class="tooltip">資料同步</span>
-                </div>
-            </nav>
-
-            <!-- Footer -->
-            <div class="sidebar-footer">
-                <div class="avatar">A</div>
-                <div class="footer-info">
-                    <div class="footer-name">系統管理員</div>
-                    <div class="footer-role">Administrator</div>
-                </div>
-                <div class="logout-btn" @click="logout" title="登出">
-                    <i class="fas fa-sign-out-alt"></i>
-                </div>
+                <button @click="logout" class="w-full btn-white text-xs py-1">登出</button>
             </div>
         </aside>
 
-        <!-- MAIN AREA -->
-        <main class="main-area">
-            <!-- Topbar -->
-            <div class="topbar">
-                <div class="topbar-title">
-                    <div class="title-accent"></div>
-                    {{ tabName }}
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div v-if="currentTab==='orders'" style="font-size:12px;color:#9ca3af;">
-                        共 {{ filteredOrders.length }} 筆訂單
-                    </div>
-                    <div class="sync-btn" @click="fetchData">
-                        <i class="fas fa-sync-alt" :class="{'fa-spin':isLoading}"></i>
-                        資料同步
-                    </div>
-                </div>
-            </div>
+        <!-- CONTENT -->
+        <main class="main-content">
+            <header class="top-header">
+                <h2 class="text-xl font-bold text-gray-800 pl-3 border-l-4 border-[#06C755]">{{ tabName }}</h2>
+                <button @click="fetchData" class="btn-white text-gray-500 hover:text-[#06C755]">
+                    <i class="fas fa-sync-alt" :class="{'fa-spin':isLoading}"></i> 資料同步
+                </button>
+            </header>
 
-            <!-- Content -->
-            <div class="content-scroll">
-
-                <!-- ====== COURSES TAB ====== -->
-                <div v-if="currentTab==='courses'">
-                    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;">
-                        <div style="display:flex;gap:14px;">
-                            <div class="stat-card">
-                                <div class="stat-label">上架課程</div>
-                                <div class="stat-value">{{ courses.length }}</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label">總報名人數</div>
-                                <div class="stat-value green">{{ totalEnrolled }}</div>
+            <div class="content-scroll-area">
+                
+                <!-- COURSES TAB -->
+                <div v-if="currentTab === 'courses'">
+                    <div class="flex justify-between items-end mb-6">
+                        <div class="flex gap-4">
+                            <div class="bg-white px-6 py-4 rounded-lg border border-gray-200 shadow-sm">
+                                <div class="text-xs text-gray-400 font-bold uppercase">上架課程</div>
+                                <div class="text-3xl font-bold text-gray-800 mt-1">{{ courses.length }}</div>
                             </div>
                         </div>
-                        <button class="btn-primary" @click="openAddCourse">
-                            <i class="fas fa-plus"></i> 新增課程
-                        </button>
+                        <button @click="openAddCourse" class="btn-line-green"><i class="fas fa-plus"></i> 新增課程</button>
                     </div>
 
-                    <div class="card-table">
+                    <div class="card">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>課程資訊</th>
-                                    <th>時間</th>
-                                    <th>教練 / 費用</th>
-                                    <th>報名進度</th>
-                                    <th style="text-align:right">操作</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>課程資訊</th><th>類型/時間</th><th>教練/費用</th><th>報名進度</th><th class="text-right">操作</th></tr></thead>
                             <tbody>
                                 <tr v-for="c in courses" :key="c.id">
-                                    <td style="max-width:220px;">
-                                        <div style="font-weight:700;font-size:14px;margin-bottom:5px;color:#111827;">{{ c.name }}</div>
-                                        <div style="display:flex;align-items:center;gap:6px;">
-                                            <span class="course-code">{{ c.id }}</span>
-                                            <span style="font-size:11px;color:#9ca3af;"><i class="fas fa-map-marker-alt" style="margin-right:3px;"></i>{{ c.location }}</span>
-                                        </div>
+                                    <td class="w-1/3">
+                                        <div class="font-bold text-base text-gray-800">{{ c.name }}</div>
+                                        <div class="text-xs text-gray-400 font-mono mt-1 bg-gray-100 inline-block px-1 rounded">{{ c.id }}</div>
                                     </td>
                                     <td>
-                                        <div style="font-size:13px;color:#374151;margin-bottom:4px;">{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
-                                        <div style="font-size:12px;font-weight:700;color:var(--line-green);">{{ c.startTime || '--:--' }}</div>
+                                        <div class="flex gap-2 mb-1">
+                                            <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">{{ c.type }}</span>
+                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">{{ c.timeSlotType }}</span>
+                                        </div>
+                                        <div class="text-sm text-gray-600">{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
+                                        <div v-if="c.startTime" class="text-xs text-[#06C755] font-bold mt-1">{{ c.startTime }}</div>
                                     </td>
                                     <td>
-                                        <div style="font-size:13px;color:#374151;margin-bottom:4px;">{{ c.instructor || '未定' }} <span style="font-size:11px;color:#9ca3af;">({{ c.totalSessions }}堂)</span></div>
-                                        <div style="font-weight:900;color:var(--line-green);font-size:15px;">${{ c.price }}</div>
+                                        <div class="text-sm text-gray-700">{{ c.instructor || '未定' }}</div>
+                                        <div class="text-[#06C755] font-bold mt-1">${{ c.price }}</div>
+                                        <div v-if="c.earlyBirdPrice > 0" class="text-xs text-orange-500 mt-1">早鳥: ${{ c.earlyBirdPrice }}</div>
                                     </td>
-                                    <td style="min-width:160px;">
-                                        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:5px;">
-                                            <span style="font-weight:700;">{{ c.enrolled }}/{{ c.capacity }}</span>
-                                            <span>{{ c.capacity > 0 ? Math.round((c.enrolled/c.capacity)*100) : 0 }}%</span>
-                                        </div>
-                                        <div class="prog-bar">
-                                            <div class="prog-fill" :style="{width: (c.capacity > 0 ? Math.min((c.enrolled/c.capacity)*100, 100) : 0) + '%'}"></div>
-                                        </div>
+                                    <td>
+                                        <div class="text-xs text-gray-500 mb-1">{{ c.enrolled }} / {{ c.capacity }} 人</div>
+                                        <div class="w-24 bg-gray-200 rounded-full h-1.5"><div class="bg-[#06C755] h-1.5 rounded-full" :style="{width: Math.min((c.enrolled/c.capacity)*100, 100) + '%'}"></div></div>
                                     </td>
-                                    <td style="text-align:right;">
-                                        <button class="btn-icon" @click="openEditCourse(c)" title="編輯課程">
-                                            <i class="fas fa-pen"></i>
-                                        </button>
+                                    <td class="text-right">
+                                        <button @click="openEditCourse(c)" class="text-gray-400 hover:text-[#06C755] p-2"><i class="fas fa-pen"></i></button>
                                     </td>
-                                </tr>
-                                <tr v-if="courses.length === 0">
-                                    <td colspan="5" style="text-align:center;padding:40px;color:#9ca3af;font-size:13px;">暫無課程資料</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- ====== ORDERS TAB ====== -->
-                <div v-if="currentTab==='orders'">
-                    <div class="filter-bar">
-                        <div class="search-wrap">
-                            <i class="fas fa-search search-icon"></i>
-                            <input v-model="searchTerm" class="form-input pl-10" placeholder="搜尋姓名、電話...">
-                        </div>
-                        <select v-model="filterStatus" class="form-input" style="width:140px;">
-                            <option value="">全部狀態</option>
-                            <option value="PENDING">待付款</option>
-                            <option value="PAID">已付款</option>
-                            <option value="CANCELLED">已取消</option>
-                        </select>
-                    </div>
-
-                    <div class="card-table">
+                <!-- ORDERS TAB -->
+                <div v-if="currentTab === 'orders'">
+                    <div class="card">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>訂單編號</th>
-                                    <th>學員</th>
-                                    <th>課程 / 金額</th>
-                                    <th>匯款碼</th>
-                                    <th>狀態</th>
-                                    <th style="text-align:right">操作</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>訂單編號</th><th>學員</th><th>金額</th><th>狀態</th><th class="text-right">操作</th></tr></thead>
                             <tbody>
                                 <tr v-for="o in filteredOrders" :key="o.orderId">
-                                    <td>
-                                        <div style="font-weight:700;font-size:13px;color:#111827;font-family:monospace;margin-bottom:3px;">{{ o.orderId.slice(0,8).toUpperCase() }}</div>
-                                        <div style="font-size:11px;color:#9ca3af;">{{ formatTime(o.createdAt) }}</div>
-                                    </td>
-                                    <td>
-                                        <div style="font-weight:700;font-size:13px;color:#111827;">{{ o.name }}</div>
-                                        <div style="font-size:12px;color:#9ca3af;">{{ o.phone }}</div>
-                                    </td>
-                                    <td>
-                                        <div style="font-size:12px;color:#374151;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ o.courseId }}</div>
-                                        <div style="font-weight:900;color:var(--line-green);font-size:14px;margin-top:3px;">${{ o.amount }}</div>
-                                    </td>
-                                    <td>
-                                        <span v-if="o.remittance" style="font-family:monospace;background:#f3f4f6;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:700;color:#374151;">{{ o.remittance }}</span>
-                                        <span v-else style="color:#d1d5db;font-size:12px;">—</span>
-                                    </td>
-                                    <td><span class="badge" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span></td>
-                                    <td style="text-align:right;">
-                                        <button class="btn-outline" style="font-size:12px;padding:6px 12px;" @click="openOrder(o)">編輯</button>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredOrders.length===0">
-                                    <td colspan="6" style="text-align:center;padding:40px;color:#9ca3af;font-size:13px;">暫無訂單資料</td>
+                                    <td><div class="font-bold">{{ o.orderId.slice(0,8) }}</div><div class="text-xs text-gray-400">{{ formatTime(o.createdAt) }}</div></td>
+                                    <td>{{ o.name }}<br><span class="text-xs text-gray-500">{{ o.phone }}</span></td>
+                                    <td class="font-bold text-[#06C755]">${{ o.amount }}</td>
+                                    <td><span class="px-2 py-1 rounded text-xs font-bold" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span></td>
+                                    <td class="text-right"><button @click="openOrder(o)" class="btn-white text-xs py-1">編輯</button></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- ====== MEMBERS TAB ====== -->
-                <div v-if="currentTab==='members'">
-                    <div class="filter-bar">
-                        <div class="search-wrap">
-                            <i class="fas fa-search search-icon"></i>
-                            <input v-model="searchTerm" class="form-input pl-10" placeholder="搜尋姓名、身分證、電話...">
-                        </div>
-                        <div style="font-size:12px;color:#9ca3af;margin-left:auto;">共 {{ filteredUsers.length }} 位會員</div>
+                <!-- MEMBERS TAB -->
+                <div v-if="currentTab === 'members'">
+                    <div class="mb-4 relative max-w-md">
+                        <input v-model="searchTerm" class="input-line pl-10" placeholder="搜尋會員...">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     </div>
-
-                    <div class="card-table">
+                    <div class="card">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>姓名</th>
-                                    <th>身分證</th>
-                                    <th>電話</th>
-                                    <th>家人數</th>
-                                    <th style="text-align:right">操作</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>姓名</th><th>身分證</th><th>家人數</th><th class="text-right">操作</th></tr></thead>
                             <tbody>
                                 <tr v-for="u in filteredUsers" :key="u.userId">
-                                    <td style="font-weight:700;font-size:13px;color:#111827;">{{ u.name }}</td>
-                                    <td style="font-family:monospace;font-size:13px;color:#374151;">{{ u.nationalId }}</td>
-                                    <td style="font-size:13px;color:#6b7280;">{{ u.phone || '-' }}</td>
-                                    <td>
-                                        <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;">
-                                            {{ u.familyMembers ? u.familyMembers.length : 0 }} 人
-                                        </span>
-                                    </td>
-                                    <td style="text-align:right;">
-                                        <button class="btn-icon" @click="openMember(u)" title="查看詳情" style="color:var(--line-green);border-color:rgba(6,199,85,0.2);background:var(--line-green-pale);">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredUsers.length===0">
-                                    <td colspan="5" style="text-align:center;padding:40px;color:#9ca3af;font-size:13px;">暫無會員資料</td>
+                                    <td class="font-bold">{{ u.name }}</td>
+                                    <td class="font-mono">{{ u.nationalId }}</td>
+                                    <td><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs">{{ u.familyMembers?.length || 0 }}</span></td>
+                                    <td class="text-right"><button @click="openMember(u)" class="text-[#06C755] font-bold text-sm">詳情</button></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-            </div><!-- /content-scroll -->
+            </div>
         </main>
-    </div><!-- /main layout -->
+    </template>
 
+    <!-- *** COURSE MODAL (升級版) *** -->
+    <div v-if="showCourseModal" class="modal-overlay" @click.self="showCourseModal=false">
+        <div class="modal-container">
+            <div class="h-16 px-8 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
+                <h3 class="text-lg font-bold text-gray-800">{{ isEditingCourse ? '編輯課程' : '新增課程' }}</h3>
+                <button @click="showCourseModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="flex-1 flex overflow-hidden">
+                <!-- 左側：基本設定 -->
+                <div class="w-1/2 p-8 overflow-y-auto border-r border-gray-200 bg-white">
+                    <div class="section-title"><i class="fas fa-info-circle text-[#06C755]"></i> 基本資訊</div>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div><label class="label-line">課程代碼</label><input v-model="courseForm.id" class="input-line" :readonly="isEditingCourse"></div>
+                        <div><label class="label-line">課程名稱</label><input v-model="courseForm.name" class="input-line"></div>
+                    </div>
 
-    <!-- ==============================
-         POP MODALS
-    ============================== -->
+                    <div class="settings-box">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="label-line">課程類型</label>
+                                <select v-model="courseForm.type" class="input-line bg-white">
+                                    <option value="單日課程">單日課程 (無退費)</option>
+                                    <option value="多日營隊">多日營隊 (可請假)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label-line">時段屬性</label>
+                                <select v-model="courseForm.timeSlotType" class="input-line bg-white">
+                                    <option value="全日">全日班</option>
+                                    <option value="上午">上午班</option>
+                                    <option value="下午">下午班</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p v-if="courseForm.type==='多日營隊'" class="text-xs text-orange-500 mt-2">
+                            <i class="fas fa-exclamation-triangle"></i> 注意：多日營隊將允許使用者在報名時勾選請假日期（超過3天將無法報名）。
+                        </p>
+                    </div>
 
-    <!-- 1. MEMBER MODAL (大型 90%) -->
-    <transition name="pop">
-    <div v-if="showMemberModal" class="modal-mask" @click.self="showMemberModal=false">
-        <div class="modal-box">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <div class="modal-icon"><i class="fas fa-user"></i></div>
-                    會員詳細資料
-                    <span style="font-size:12px;font-weight:400;color:#9ca3af;margin-left:4px;">{{ editingMember.name }}</span>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="label-line">開始日期</label><input v-model="courseForm.startDate" type="date" class="input-line"></div>
+                        <div><label class="label-line">結束日期</label><input v-model="courseForm.endDate" type="date" class="input-line"></div>
+                    </div>
+                    <div class="mb-4"><label class="label-line">上課時段 (手寫)</label><input v-model="courseForm.startTime" type="text" class="input-line" placeholder="例: 09:00-16:00"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="label-line">地點</label><input v-model="courseForm.location" class="input-line"></div>
+                        <div><label class="label-line">教練</label><input v-model="courseForm.instructor" class="input-line"></div>
+                    </div>
                 </div>
-                <div class="modal-close" @click="showMemberModal=false"><i class="fas fa-times"></i></div>
+
+                <!-- 右側：費用與進階 -->
+                <div class="w-1/2 p-8 overflow-y-auto bg-[#fafafa]">
+                    <div class="section-title"><i class="fas fa-dollar-sign text-[#06C755]"></i> 費用與規則</div>
+                    
+                    <div class="grid grid-cols-3 gap-6 mb-6">
+                        <div><label class="label-line text-green-600">標準定價 ($)</label><input v-model="courseForm.price" type="number" class="input-line font-bold text-lg text-[#06C755]"></div>
+                        <div><label class="label-line">總名額</label><input v-model="courseForm.capacity" type="number" class="input-line"></div>
+                        <div><label class="label-line">總堂數 (計費基準)</label><input v-model="courseForm.totalSessions" type="number" class="input-line"></div>
+                    </div>
+
+                    <!-- 早鳥優惠 -->
+                    <div class="settings-box bg-white">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="font-bold text-gray-700 flex items-center"><i class="fas fa-stopwatch mr-2 text-orange-500"></i> 早鳥優惠</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" v-model="hasEarlyBird">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div v-if="hasEarlyBird" class="grid grid-cols-2 gap-4">
+                            <div><label class="label-line">早鳥價格 ($)</label><input v-model="courseForm.earlyBirdPrice" type="number" class="input-line"></div>
+                            <div><label class="label-line">截止日期</label><input v-model="courseForm.earlyBirdDate" type="date" class="input-line"></div>
+                        </div>
+                    </div>
+
+                    <!-- 設備租用 -->
+                    <div class="settings-box bg-white">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="font-bold text-gray-700 flex items-center"><i class="fas fa-tools mr-2 text-blue-500"></i> 設備租用選項</label>
+                            <button @click="addEquipment" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">+ 新增</button>
+                        </div>
+                        
+                        <div v-if="equipList.length === 0" class="text-center text-gray-400 text-sm py-2">無租用項目</div>
+                        
+                        <div v-else class="space-y-3">
+                            <div v-for="(eq, idx) in equipList" :key="idx" class="equip-row">
+                                <input v-model="eq.name" placeholder="品項名稱 (如: 球拍)" class="input-line w-2/3">
+                                <input v-model="eq.price" type="number" placeholder="$" class="input-line w-1/4">
+                                <button @click="removeEquipment(idx)" class="text-gray-400 hover:text-red-500 px-2"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="modal-body">
-                <!-- 左欄：基本資料 -->
-                <div class="split-left">
-                    <div class="form-section">
-                        <div class="form-section-title"><i class="fas fa-id-card" style="margin-right:6px;"></i>基本資料</div>
-                        <div class="form-grid-2">
-                            <div class="form-group"><label class="form-label">姓名</label><input v-model="editingMember.name" class="form-input"></div>
-                            <div class="form-group"><label class="form-label">身分證號</label><input v-model="editingMember.nationalId" class="form-input" readonly></div>
-                        </div>
-                        <div class="form-grid-2">
-                            <div class="form-group"><label class="form-label">電話</label><input v-model="editingMember.phone" class="form-input" placeholder="0912-345-678"></div>
-                            <div class="form-group"><label class="form-label">生日</label><input v-model="editingMember.birthday" type="date" class="form-input"></div>
-                        </div>
-                        <div class="form-group"><label class="form-label">地址</label><input v-model="editingMember.address" class="form-input" placeholder="完整地址"></div>
-                    </div>
-
-                    <div class="form-section">
-                        <div class="form-section-title" style="color:#2563eb;"><i class="fas fa-heartbeat" style="margin-right:6px;color:#3b82f6;"></i>健康備註</div>
-                        <textarea v-model="editingMember.healthNote" class="form-input" rows="3" placeholder="健康狀況說明..." style="resize:none;background:#eff6ff;border-color:#bfdbfe;"></textarea>
-                    </div>
-
-                    <div class="form-section">
-                        <div class="form-section-title" style="color:#d97706;"><i class="fas fa-sticky-note" style="margin-right:6px;color:#f59e0b;"></i>管理備註 (內部)</div>
-                        <textarea v-model="editingMember.notes" class="form-input" rows="3" placeholder="僅管理員可見..." style="resize:none;background:#fffbeb;border-color:#fde68a;"></textarea>
-                    </div>
-                </div>
-
-                <!-- 右欄：家人名單 -->
-                <div class="split-right">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <div class="form-section-title" style="border:none;margin:0;padding:0;"><i class="fas fa-users" style="margin-right:6px;"></i>家人名單</div>
-                        <span style="background:#f3f4f6;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;color:#374151;">
-                            {{ editingMember.familyMembers ? editingMember.familyMembers.length : 0 }} 人
-                        </span>
-                    </div>
-
-                    <div v-if="!editingMember.familyMembers || editingMember.familyMembers.length===0" class="empty-state">
-                        <i class="fas fa-user-friends" style="font-size:28px;margin-bottom:10px;display:block;"></i>
-                        尚未登記家人資料
-                    </div>
-
-                    <div v-else>
-                        <div v-for="fm in editingMember.familyMembers" :key="fm.userId" class="family-card">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                <span style="font-weight:700;font-size:14px;color:#111827;">{{ fm.name }}</span>
-                                <span style="font-size:11px;font-weight:700;background:var(--line-green-pale);color:var(--line-green);padding:2px 9px;border-radius:999px;border:1px solid rgba(6,199,85,0.2);">{{ fm.relation }}</span>
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;color:#6b7280;">
-                                <div><i class="fas fa-id-badge" style="margin-right:4px;"></i>{{ fm.nationalId }}</div>
-                                <div><i class="fas fa-birthday-cake" style="margin-right:4px;"></i>{{ formatDate(fm.birthday) }}</div>
-                            </div>
-                            <div v-if="fm.healthStatus==='需備註'" class="health-alert">
-                                <i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>{{ fm.healthNote }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-outline" @click="showMemberModal=false">取消</button>
-                <button class="btn-primary" @click="saveMember" style="min-width:110px;">
-                    <i class="fas fa-save"></i> 儲存變更
-                </button>
+            <div class="h-20 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0">
+                <button @click="showCourseModal=false" class="btn-white">取消</button>
+                <button @click="submitCourse" class="btn-line-green w-32 justify-center">儲存設定</button>
             </div>
         </div>
     </div>
-    </transition>
 
-
-    <!-- 2. COURSE MODAL (大型 90%) -->
-    <transition name="pop">
-    <div v-if="showCourseModal" class="modal-mask" @click.self="showCourseModal=false">
-        <div class="modal-box">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <div class="modal-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-                    {{ isEditingCourse ? '編輯課程' : '新增課程' }}
-                    <span v-if="isEditingCourse" style="font-size:12px;font-weight:400;color:#9ca3af;margin-left:4px;">{{ courseForm.id }}</span>
-                </div>
-                <div class="modal-close" @click="showCourseModal=false"><i class="fas fa-times"></i></div>
+    <!-- MEMBER MODAL -->
+    <div v-if="showMemberModal" class="modal-overlay" @click.self="showMemberModal=false">
+        <div class="modal-container" style="max-width:1000px;height:85%;">
+            <div class="h-16 px-8 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
+                <h3 class="text-lg font-bold text-gray-800">會員資料</h3>
+                <button @click="showMemberModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-
-            <div class="modal-scroll" style="padding:32px 40px;">
-                <div class="form-section">
-                    <div class="form-section-title"><i class="fas fa-tag" style="margin-right:6px;"></i>課程基本資訊</div>
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label class="form-label">課程代碼</label>
-                            <input v-model="courseForm.id" class="form-input" :readonly="isEditingCourse" placeholder="例：SWIM-2024-001">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">課程名稱</label>
-                            <input v-model="courseForm.name" class="form-input" placeholder="課程完整名稱">
-                        </div>
-                    </div>
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-1/2 p-8 overflow-y-auto border-r border-gray-200 bg-white">
+                     <form @submit.prevent="saveMember" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4"><div><label class="label-line">姓名</label><input v-model="editingMember.name" class="input-line"></div><div><label class="label-line">身分證</label><input v-model="editingMember.nationalId" class="input-line bg-gray-50" readonly></div></div>
+                        <div class="grid grid-cols-2 gap-4"><div><label class="label-line">電話</label><input v-model="editingMember.phone" class="input-line"></div><div><label class="label-line">生日</label><input v-model="editingMember.birthday" type="date" class="input-line"></div></div>
+                        <div><label class="label-line">地址</label><input v-model="editingMember.address" class="input-line"></div>
+                        <div><label class="label-line text-blue-600">健康備註</label><textarea v-model="editingMember.healthNote" rows="3" class="input-line"></textarea></div>
+                        <div><label class="label-line text-yellow-600">管理備註</label><textarea v-model="editingMember.notes" rows="3" class="input-line bg-yellow-50"></textarea></div>
+                     </form>
                 </div>
-
-                <div class="form-section" style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:24px;">
-                    <div class="form-section-title" style="border:none;padding-bottom:12px;"><i class="fas fa-calendar-alt" style="margin-right:6px;"></i>時間與地點</div>
-                    <div class="form-grid-2">
-                        <div class="form-group"><label class="form-label">開始日期</label><input v-model="courseForm.startDate" type="date" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">結束日期</label><input v-model="courseForm.endDate" type="date" class="form-input"></div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">上課時段</label>
-                        <input v-model="courseForm.startTime" type="text" class="form-input" placeholder="例：每週三 14:00-15:30">
-                    </div>
-                    <div class="form-grid-2">
-                        <div class="form-group"><label class="form-label">上課地點</label><input v-model="courseForm.location" class="form-input" placeholder="地點名稱"></div>
-                        <div class="form-group"><label class="form-label">指導教練</label><input v-model="courseForm.instructor" class="form-input" placeholder="教練姓名"></div>
-                    </div>
-                </div>
-
-                <div class="form-section" style="margin-top:20px;">
-                    <div class="form-section-title"><i class="fas fa-sliders-h" style="margin-right:6px;"></i>費用與名額</div>
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label class="form-label" style="color:var(--line-green);">課程費用 (元)</label>
-                            <input v-model="courseForm.price" type="number" class="form-input" style="font-size:18px;font-weight:900;color:var(--line-green);" placeholder="0">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">報名名額</label>
-                            <input v-model="courseForm.capacity" type="number" class="form-input" placeholder="0">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">總堂數</label>
-                            <input v-model="courseForm.totalSessions" type="number" class="form-input" placeholder="1">
-                        </div>
+                <div class="w-1/2 p-8 overflow-y-auto bg-[#fafafa]">
+                    <h4 class="text-xs font-bold text-gray-400 mb-4">家人名單 ({{ editingMember.familyMembers?.length || 0 }})</h4>
+                    <div v-for="fm in editingMember.familyMembers" :key="fm.userId" class="bg-white p-3 rounded border border-gray-200 mb-2 shadow-sm">
+                        <div class="font-bold">{{ fm.name }} <span class="text-xs bg-gray-100 px-2 rounded">{{ fm.relation }}</span></div>
+                        <div class="text-xs text-gray-500">ID: {{ fm.nationalId }}</div>
                     </div>
                 </div>
             </div>
-
-            <div class="modal-footer">
-                <button class="btn-outline" @click="showCourseModal=false">取消</button>
-                <button class="btn-primary" @click="submitCourse" style="min-width:110px;">
-                    <i class="fas fa-save"></i> {{ isEditingCourse ? '更新課程' : '建立課程' }}
-                </button>
+            <div class="h-20 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0">
+                <button @click="showMemberModal=false" class="btn-white">取消</button><button @click="saveMember" class="btn-line-green w-32 justify-center">儲存</button>
             </div>
         </div>
     </div>
-    </transition>
-
-
-    <!-- 3. ORDER MODAL (中型) -->
-    <transition name="pop">
-    <div v-if="showOrderModal" class="modal-mask" @click.self="showOrderModal=false">
-        <div class="modal-box sm">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <div class="modal-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-                    編輯訂單
-                </div>
-                <div class="modal-close" @click="showOrderModal=false"><i class="fas fa-times"></i></div>
+    
+    <!-- ORDER MODAL -->
+    <div v-if="showOrderModal" class="modal-overlay" @click.self="showOrderModal=false">
+        <div class="modal-container" style="max-width:600px;height:auto;max-height:90vh;">
+            <div class="h-16 px-8 border-b border-gray-200 flex justify-between items-center bg-white">
+                <h3 class="text-lg font-bold text-gray-800">編輯訂單</h3><button @click="showOrderModal=false" class="text-gray-400"><i class="fas fa-times"></i></button>
             </div>
-
-            <div class="modal-scroll">
-                <!-- Order Info Card -->
-                <div style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:22px;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
-                        <div>
-                            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9ca3af;margin-bottom:3px;">訂單編號</div>
-                            <div style="font-family:monospace;font-weight:700;font-size:13px;color:#111827;">{{ editingOrder.orderId }}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9ca3af;margin-bottom:3px;">建立時間</div>
-                            <div style="font-size:12px;color:#374151;">{{ formatTime(editingOrder.createdAt) }}</div>
-                        </div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <div style="width:42px;height:42px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:18px;flex-shrink:0;">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:700;font-size:15px;color:#111827;">{{ editingOrder.name }}</div>
-                            <div style="font-size:12px;color:#9ca3af;">{{ editingOrder.phone }}</div>
-                        </div>
-                        <div style="margin-left:auto;">
-                            <span class="badge" :class="getStatusClass(editingOrder.status)">{{ getStatusLabel(editingOrder.status) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Fields -->
-                <div class="form-grid-2" style="margin-bottom:16px;">
-                    <div class="form-group">
-                        <label class="form-label">訂單狀態</label>
-                        <select v-model="editingOrder.status" class="form-input">
-                            <option value="PENDING">待付款</option>
-                            <option value="PAID">已付款</option>
-                            <option value="CANCELLED">已取消</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">金額</label>
-                        <input v-model="editingOrder.amount" type="number" class="form-input" style="font-weight:700;color:var(--line-green);font-size:16px;">
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom:16px;">
-                    <label class="form-label">匯款後五碼</label>
-                    <input v-model="editingOrder.remittance" class="form-input" style="font-family:monospace;letter-spacing:0.2em;text-align:center;font-size:16px;font-weight:700;" placeholder="- - - - -">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">備註</label>
-                    <textarea v-model="editingOrder.note" rows="4" class="form-input" style="resize:none;" placeholder="訂單備註說明..."></textarea>
-                </div>
+            <div class="p-8 overflow-y-auto">
+                 <div class="grid grid-cols-2 gap-4 mb-4">
+                     <div><label class="label-line">狀態</label><select v-model="editingOrder.status" class="input-line"><option value="PENDING">待付款</option><option value="PAID">已付款</option><option value="CANCELLED">已取消</option></select></div>
+                     <div><label class="label-line">金額</label><input v-model="editingOrder.amount" type="number" class="input-line"></div>
+                 </div>
+                 <div class="mb-4"><label class="label-line">匯款後五碼</label><input v-model="editingOrder.remittance" class="input-line"></div>
+                 <div><label class="label-line">備註</label><textarea v-model="editingOrder.note" rows="3" class="input-line"></textarea></div>
             </div>
-
-            <div class="modal-footer">
-                <button class="btn-outline" @click="showOrderModal=false">取消</button>
-                <button class="btn-primary" @click="saveOrder" style="min-width:110px;">
-                    <i class="fas fa-save"></i> 儲存變更
-                </button>
+            <div class="h-20 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3">
+                <button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-line-green justify-center">儲存</button>
             </div>
         </div>
     </div>
-    </transition>
 
-</div><!-- #app -->
+</div>
 
 <script>
-    const { createApp, ref, computed } = Vue;
-    const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/';
+    const { createApp, ref, computed, watch } = Vue;
+    const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/'; 
 
     createApp({
         setup() {
-            const isLoggedIn = ref(false);
-            const password = ref('');
-            const isLoading = ref(false);
-            const currentTab = ref('courses');
-            const error = ref('');
-            const sidebarCollapsed = ref(false);
+            const isLoggedIn=ref(false), password=ref(''), isLoading=ref(false), currentTab=ref('courses'), error=ref('');
+            const courses=ref([]), orders=ref([]), users=ref([]);
+            const showCourseModal=ref(false), isEditingCourse=ref(false), showMemberModal=ref(false), showOrderModal=ref(false);
+            const editingMember=ref({}), editingOrder=ref({});
+            const searchTerm=ref(''), filterStatus=ref('');
 
-            const courses = ref([]);
-            const orders = ref([]);
-            const users = ref([]);
+            const courseForm = ref({
+                id:'', name:'', startDate:'', endDate:'', startTime:'', price:0, capacity:0, totalSessions:1, location:'', instructor:'',
+                type: '單日課程', timeSlotType: '全日', earlyBirdPrice: 0, earlyBirdDate: '', equipmentJson: '[]'
+            });
+            const hasEarlyBird = ref(false);
+            const equipList = ref([]);
 
-            const showMemberModal = ref(false);
-            const editingMember = ref({ familyMembers: [] });
-            const showCourseModal = ref(false);
-            const isEditingCourse = ref(false);
-            const courseForm = ref({ id:'', name:'', startDate:'', endDate:'', startTime:'', price:0, capacity:0, totalSessions:1, location:'', instructor:'' });
-            const showOrderModal = ref(false);
-            const editingOrder = ref({});
+            watch(hasEarlyBird, (val) => { if(!val) { courseForm.value.earlyBirdPrice=0; courseForm.value.earlyBirdDate=''; } });
+            
+            const tabName = computed(() => ({'courses':'課程管理','orders':'訂單管理','members':'會員管理'}[currentTab.value]));
+            const filteredOrders = computed(() => orders.value.filter(o => (o.name+o.phone).includes(searchTerm.value)));
+            const filteredUsers = computed(() => users.value.filter(u => (u.name+u.nationalId).includes(searchTerm.value)));
+            const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + c.enrolled, 0));
 
-            const searchTerm = ref('');
-            const filterStatus = ref('');
-
-            const tabName = computed(() => ({ courses:'課程管理', orders:'訂單管理', members:'會員管理' }[currentTab.value]));
-
-            const filteredOrders = computed(() =>
-                orders.value.filter(o =>
-                    (o.name + o.phone + (o.nationalId||'')).toLowerCase().includes(searchTerm.value.toLowerCase()) &&
-                    (!filterStatus.value || o.status === filterStatus.value)
-                )
-            );
-            const filteredUsers = computed(() =>
-                users.value.filter(u =>
-                    (u.name + u.nationalId + (u.phone||'')).toLowerCase().includes(searchTerm.value.toLowerCase())
-                )
-            );
-            const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + (c.enrolled || 0), 0));
-            const pendingCount = computed(() => orders.value.filter(o => o.status === 'PENDING').length);
-
-            const callApi = async (action, payload = {}) => {
-                const res = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    body: JSON.stringify({ action, payload: { password: password.value, ...payload } })
-                });
+            const callApi = async (action, payload={}) => {
+                const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action, payload:{password:password.value, ...payload}}) });
                 const json = await res.json();
-                if (json.status !== 'success') throw new Error(json.message);
+                if(json.status!=='success') throw new Error(json.message);
                 return json.data;
             };
 
-            const login = async () => {
-                isLoading.value = true;
-                error.value = '';
-                try {
-                    await callApi('ADMIN_LOGIN');
-                    isLoggedIn.value = true;
-                    fetchData();
-                } catch(e) {
-                    error.value = '密碼錯誤，請重新輸入';
-                } finally {
-                    isLoading.value = false;
-                }
+            const login = async () => { isLoading.value=true; try { await callApi('ADMIN_LOGIN'); isLoggedIn.value=true; fetchData(); } catch(e){ error.value='密碼錯誤'; } finally { isLoading.value=false; } };
+            const logout = () => { isLoggedIn.value=false; password.value=''; };
+            const fetchData = async () => { 
+                isLoading.value=true; 
+                try { const d = await callApi('ADMIN_GET_DATA'); courses.value=d.courses; orders.value=d.orders.reverse(); users.value=d.users.reverse(); } catch(e){ alert('Error'); } 
+                isLoading.value=false; 
             };
 
-            const logout = () => { isLoggedIn.value = false; password.value = ''; };
-
-            const fetchData = async () => {
-                isLoading.value = true;
-                try {
-                    const data = await callApi('ADMIN_GET_DATA');
-                    courses.value = data.courses;
-                    orders.value = data.orders.reverse();
-                    users.value = data.users.reverse();
-                } catch(e) {
-                    alert('資料載入失敗，請重試');
-                } finally {
-                    isLoading.value = false;
-                }
+            const openAddCourse = () => { 
+                isEditingCourse.value=false; 
+                courseForm.value={id:'',name:'',startDate:'',endDate:'',startTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:'', type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]'}; 
+                hasEarlyBird.value=false; equipList.value=[];
+                showCourseModal.value=true; 
+            };
+            
+            const openEditCourse = (c) => { 
+                isEditingCourse.value=true;
+                const fmt = d => d ? new Date(d).toISOString().split('T')[0] : '';
+                courseForm.value = {...c, startDate:fmt(c.startDate), endDate:fmt(c.endDate), earlyBirdDate:fmt(c.earlyBirdDate)};
+                hasEarlyBird.value = c.earlyBirdPrice > 0;
+                try { equipList.value = JSON.parse(c.equipmentJson || '[]'); } catch(e) { equipList.value=[]; }
+                showCourseModal.value=true; 
             };
 
-            const openAddCourse = () => {
-                isEditingCourse.value = false;
-                courseForm.value = { id:'', name:'', startDate:'', endDate:'', startTime:'', price:0, capacity:0, totalSessions:1, location:'', instructor:'' };
-                showCourseModal.value = true;
-            };
-
-            const openEditCourse = (c) => {
-                try {
-                    isEditingCourse.value = true;
-                    const fmt = d => d ? new Date(d).toISOString().split('T')[0] : '';
-                    courseForm.value = { ...c, startDate: fmt(c.startDate), endDate: fmt(c.endDate) };
-                    showCourseModal.value = true;
-                } catch(e) {}
-            };
+            const addEquipment = () => equipList.value.push({name:'', price:0});
+            const removeEquipment = (i) => equipList.value.splice(i,1);
 
             const submitCourse = async () => {
-                try {
-                    await callApi(isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE', courseForm.value);
-                    alert('操作成功');
-                    showCourseModal.value = false;
-                    fetchData();
-                } catch(e) {
-                    alert('操作失敗：' + (e.message || '請重試'));
-                }
+                courseForm.value.equipmentJson = JSON.stringify(equipList.value);
+                const action = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE';
+                try { await callApi(action, courseForm.value); alert('成功'); showCourseModal.value=false; fetchData(); } catch(e){ alert('失敗'); }
             };
 
-            const openMember = (u) => {
-                try {
-                    let copy = JSON.parse(JSON.stringify(u));
-                    if (copy.birthday) copy.birthday = new Date(copy.birthday).toISOString().split('T')[0];
-                    if (!copy.familyMembers) copy.familyMembers = [];
-                    editingMember.value = copy;
-                    showMemberModal.value = true;
-                } catch(e) {}
-            };
-
-            const saveMember = async () => {
-                if (!confirm('確認儲存會員資料？')) return;
-                try {
-                    await callApi('ADMIN_UPDATE_MEMBER', { memberData: editingMember.value });
-                    alert('已成功儲存');
-                    showMemberModal.value = false;
-                    fetchData();
-                } catch(e) {
-                    alert('儲存失敗：' + (e.message || '請重試'));
-                }
-            };
-
-            const openOrder = (o) => {
-                editingOrder.value = { ...o };
-                showOrderModal.value = true;
-            };
-
-            const saveOrder = async () => {
-                if (!confirm('確認儲存訂單資料？')) return;
-                try {
-                    await callApi('ADMIN_UPDATE_ORDER', { orderData: editingOrder.value });
-                    alert('已成功儲存');
-                    showOrderModal.value = false;
-                    fetchData();
-                } catch(e) {
-                    alert('儲存失敗：' + (e.message || '請重試'));
-                }
-            };
+            const openMember = (u) => { editingMember.value=JSON.parse(JSON.stringify(u)); showMemberModal.value=true; };
+            const saveMember = async () => { await callApi('ADMIN_UPDATE_MEMBER', {memberData:editingMember.value}); showMemberModal.value=false; fetchData(); };
+            const openOrder = (o) => { editingOrder.value={...o}; showOrderModal.value=true; };
+            const saveOrder = async () => { await callApi('ADMIN_UPDATE_ORDER', {orderData:editingOrder.value}); showOrderModal.value=false; fetchData(); };
 
             const formatDate = d => d ? new Date(d).toLocaleDateString('zh-TW') : '-';
-            const formatTime = d => d ? new Date(d).toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }) : '-';
-            const getStatusLabel = s => ({ PENDING:'待付款', PAID:'已付款', CANCELLED:'已取消' }[s] || s);
-            const getStatusClass = s => ({ PENDING:'badge-pending', PAID:'badge-paid', CANCELLED:'badge-cancelled' }[s]);
+            const formatTime = d => d ? new Date(d).toLocaleString('zh-TW',{hour12:false}) : '-';
+            const getStatusLabel = s => ({'PENDING':'待付','PAID':'已付','CANCELLED':'取消'}[s]||s);
+            const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100'}[s]);
 
-            return {
-                isLoggedIn, password, isLoading, error, currentTab, tabName, sidebarCollapsed,
-                courses, orders, users, totalEnrolled, pendingCount,
+            return { 
+                isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, totalEnrolled, 
                 filteredOrders, filteredUsers, searchTerm, filterStatus,
-                showMemberModal, editingMember,
-                showCourseModal, isEditingCourse, courseForm,
-                showOrderModal, editingOrder,
-                login, logout, fetchData,
-                openAddCourse, openEditCourse, submitCourse,
-                openMember, saveMember,
-                openOrder, saveOrder,
+                showCourseModal, isEditingCourse, courseForm, hasEarlyBird, equipList,
+                showMemberModal, editingMember, showOrderModal, editingOrder,
+                login, logout, fetchData, openAddCourse, openEditCourse, submitCourse, addEquipment, removeEquipment,
+                openMember, saveMember, openOrder, saveOrder,
                 formatDate, formatTime, getStatusLabel, getStatusClass
             };
         }
