@@ -4,34 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>竹北運動中心</title>
-    <!-- LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Vue 3 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* iOS Input Zoom Fix */
         input, select, textarea { font-size: 16px; }
         [v-cloak] { display: none; }
-        
-        /* Loading Spinner */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #06C755; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* UI Components */
         .btn-primary { @apply bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3 rounded-lg shadow active:scale-95 transition duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed; }
         .form-label { @apply block text-sm font-bold text-gray-700 mb-1; }
         .form-input { @apply w-full bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#06C755] outline-none transition; }
-        
-        /* Checkbox Custom */
         .checkbox-wrapper { @apply flex items-center p-3 border rounded-lg bg-white mb-2 cursor-pointer transition; }
         .checkbox-wrapper.active { @apply border-[#06C755] bg-green-50; }
-        .checkbox-input { @apply w-5 h-5 text-[#06C755] rounded focus:ring-[#06C755]; }
-
-        /* Transitions */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
@@ -48,7 +34,7 @@
         </div>
     </header>
 
-    <main class="flex-grow p-0 relative pb-24"> <!-- pb-24 for fixed footer -->
+    <main class="flex-grow p-0 relative pb-24">
 
         <!-- Loading -->
         <div v-if="isLoading" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center">
@@ -65,24 +51,27 @@
             </div>
         </div>
 
-        <!-- View 1: Register User -->
+        <!-- View 1: Register -->
         <div v-else-if="view === 'register'" class="p-6 animate-fade-in">
-            <div class="text-center mb-6"><h2 class="text-2xl font-bold text-gray-800">會員詳細資料</h2></div>
+            <div class="flex items-center mb-6">
+                <button v-if="userInfo.name" @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="text-2xl font-bold text-gray-800">{{ userInfo.name ? '修改資料' : '會員註冊' }}</h2>
+            </div>
             <form @submit.prevent="submitMemberRegister" class="space-y-4">
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
                     <h3 class="text-blue-800 font-bold mb-3 text-sm">基本資料 (必填)</h3>
                     <div><label class="form-label">真實姓名</label><input type="text" v-model="regForm.name" required class="form-input"></div>
-                    <div><label class="form-label">身分證字號</label><input type="text" v-model="regForm.nationalId" required class="form-input uppercase"></div>
+                    <div><label class="form-label">身分證字號</label><input type="text" v-model="regForm.nationalId" required class="form-input uppercase" :readonly="!!userInfo.nationalId"></div>
                     <div><label class="form-label">出生年月日</label><input type="date" v-model="regForm.birthday" required class="form-input"></div>
                     <div><label class="form-label">聯絡電話</label><input type="tel" v-model="regForm.phone" required class="form-input"></div>
                     <div><label class="form-label">身分</label><select v-model="regForm.identity" required class="form-input"><option value="一般">一般民眾</option><option value="家長">家長</option><option value="學生">學生</option></select></div>
                 </div>
                 <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                    <h3 class="text-orange-800 font-bold mb-3 text-sm flex justify-between"><span>家人名單</span><button type="button" @click="openFamilyModal" class="text-xs bg-orange-200 text-orange-800 px-2 rounded"><i class="fas fa-plus"></i></button></h3>
+                    <h3 class="text-orange-800 font-bold mb-3 text-sm flex justify-between"><span>家人名單</span><button type="button" @click="openFamilyModal" class="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded"><i class="fas fa-plus"></i></button></h3>
                     <div v-for="(m, i) in regForm.familyMembers" :key="i" class="bg-white p-2 rounded mb-2 text-sm flex justify-between"><span>{{m.name}} ({{m.relation}})</span><button type="button" @click="removeFamilyMember(i)" class="text-red-400"><i class="fas fa-times"></i></button></div>
-                    <div v-if="regForm.familyMembers.length === 0" class="text-gray-400 text-xs text-center py-2">尚無資料</div>
+                    <div v-if="regForm.familyMembers.length===0" class="text-center text-xs text-gray-400 py-2">無資料</div>
                 </div>
-                <button type="submit" :disabled="isSubmitting" class="btn-primary w-full flex justify-center items-center"><span v-if="isSubmitting">處理中...</span><span v-else>確認註冊</span></button>
+                <button type="submit" :disabled="isSubmitting" class="btn-primary w-full flex justify-center items-center"><span v-if="isSubmitting">處理中...</span><span v-else>確認</span></button>
             </form>
         </div>
 
@@ -95,13 +84,13 @@
                 </div>
             </div>
             <div class="px-6 grid grid-cols-2 gap-4 -mt-8">
-                <button @click="goToCourses" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50">
+                <button @click="goToCourses" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50 transition">
                     <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl mb-3"><i class="fas fa-running"></i></div><span class="font-bold text-gray-700">營隊報名</span>
                 </button>
-                <button @click="goToMyOrders" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50">
+                <button @click="goToMyOrders" class="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square border border-gray-100 hover:bg-gray-50 transition">
                     <div class="w-12 h-12 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center text-xl mb-3"><i class="fas fa-clipboard-list"></i></div><span class="font-bold text-gray-700">我的報名</span>
                 </button>
-                <button @click="editProfile" class="col-span-2 bg-white p-4 rounded-xl shadow-md flex items-center justify-center gap-4 border border-gray-100 hover:bg-gray-50">
+                <button @click="editProfile" class="col-span-2 bg-white p-4 rounded-xl shadow-md flex items-center justify-center gap-4 border border-gray-100 hover:bg-gray-50 transition">
                     <div class="w-10 h-10 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-lg"><i class="fas fa-id-card"></i></div><span class="font-bold text-gray-700">會員資料 / 家人管理</span>
                 </button>
             </div>
@@ -109,11 +98,11 @@
 
         <!-- View 3: Course List -->
         <div v-else-if="view === 'course_list'" class="p-4 space-y-4">
-            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">選擇營隊課程</h2></div>
+            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">選擇課程</h2></div>
             <div v-for="c in courses" :key="c.id" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition">
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <div class="flex gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span></div>
+                        <div class="flex gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span><span class="text-xs bg-gray-100 text-gray-600 px-2 rounded">{{ c.timeSlotType }}</span></div>
                         <h3 class="font-bold text-lg text-gray-800">{{ c.name }}</h3>
                     </div>
                     <span class="text-[#06C755] font-bold text-lg">${{ c.price }}</span>
@@ -122,27 +111,27 @@
                     <p><i class="far fa-calendar-alt mr-1"></i> {{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</p>
                     <p>名額: {{ c.enrolled }}/{{ c.capacity }}</p>
                 </div>
-                <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity" class="w-full py-2.5 rounded-lg font-bold text-sm transition" :class="c.enrolled >= c.capacity ? 'bg-gray-100 text-gray-400' : 'bg-[#06C755] text-white'">
-                    {{ c.enrolled >= c.capacity ? '已額滿' : '立即報名' }}
-                </button>
+                <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity" class="w-full py-2.5 rounded-lg font-bold text-sm transition" :class="c.enrolled >= c.capacity ? 'bg-gray-100 text-gray-400' : 'bg-[#06C755] text-white'">{{ c.enrolled >= c.capacity ? '已額滿' : '立即報名' }}</button>
             </div>
         </div>
 
         <!-- View 4: Order Form -->
         <div v-else-if="view === 'form'" class="p-4 animate-fade-in">
             <div class="flex items-center mb-4"><button @click="view='course_list'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">確認報名資料</h2></div>
+            
             <div class="bg-green-50 p-4 rounded-xl mb-6 border border-green-100">
                 <h3 class="font-bold text-green-900 text-lg mb-1">{{ selectedCourse.name }}</h3>
                 <p class="text-green-700 text-sm">{{ formatDate(selectedCourse.startDate) }} - {{ formatDate(selectedCourse.endDate) }}</p>
-                <div v-if="isEarlyBird" class="mt-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded inline-flex items-center"><i class="fas fa-stopwatch mr-1"></i> 早鳥優惠價 ${{ selectedCourse.earlyBirdPrice }}</div>
+                <div v-if="isEarlyBird" class="mt-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded inline-flex items-center"><i class="fas fa-stopwatch mr-1"></i> 早鳥價 ${{ selectedCourse.earlyBirdPrice }}</div>
             </div>
-            
+
             <form @submit.prevent="submitRegistration" class="space-y-6">
                 <div class="space-y-4">
                     <div><label class="form-label">學員姓名</label><input type="text" v-model="form.name" readonly class="form-input bg-gray-100"></div>
                     <div><label class="form-label">團體代碼 (選填)</label><input type="text" v-model="form.groupId" class="form-input" placeholder="如: TEAM_A"></div>
                 </div>
 
+                <!-- 設備租用區 -->
                 <div v-if="equipmentList.length > 0" class="border-t pt-4">
                     <h3 class="font-bold text-gray-800 mb-2">設備租用</h3>
                     <div v-for="(eq, idx) in equipmentList" :key="idx" class="checkbox-wrapper" :class="{'active': selectedEquipments.includes(eq)}" @click="toggleEquipment(eq)">
@@ -151,9 +140,10 @@
                     </div>
                 </div>
 
+                <!-- 請假區 (僅多日) -->
                 <div v-if="selectedCourse.type === '多日營隊'" class="border-t pt-4">
-                    <h3 class="font-bold text-gray-800 mb-1 flex items-center"><i class="far fa-calendar-times mr-2 text-red-500"></i> 請假日期 (不出席)</h3>
-                    <p class="text-xs text-gray-500 mb-3">勾選日期將扣除當日費用</p>
+                    <h3 class="font-bold text-gray-800 mb-1 flex items-center"><i class="far fa-calendar-times mr-2 text-red-500"></i> 請假 (扣除費用)</h3>
+                    <p class="text-xs text-gray-500 mb-3">勾選請假日期 (最多3天)</p>
                     <div class="grid grid-cols-2 gap-2">
                         <div v-for="dateStr in generatedDates" :key="dateStr" class="checkbox-wrapper text-sm" :class="{'active': excludedDates.includes(dateStr)}" @click="toggleDate(dateStr)">
                             <span class="flex-1">{{ dateStr }}</span>
@@ -163,26 +153,26 @@
                     <div v-if="excludedDates.length > 3" class="mt-2 text-red-600 text-xs bg-red-50 p-2 rounded animate-pulse">請假超過 3 天無法報名</div>
                 </div>
 
-                <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-lg z-30">
-                    <div class="max-w-md mx-auto flex justify-between items-center mb-2"><span class="text-sm text-gray-500">總金額</span><span class="text-2xl font-bold text-[#06C755]">${{ calculatedTotal }}</span></div>
-                    <button type="submit" :disabled="isSubmitting || excludedDates.length > 3" class="btn-primary w-full">{{ isSubmitting ? '處理中...' : '確認報名' }}</button>
+                <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-lg z-30 flex justify-between items-center">
+                    <div class="flex flex-col"><span class="text-xs text-gray-500">總金額</span><span class="text-xl font-bold text-[#06C755]">${{ calculatedTotal }}</span></div>
+                    <button type="submit" :disabled="isSubmitting || excludedDates.length > 3" class="btn-primary w-2/3">{{ isSubmitting ? '處理中' : '確認報名' }}</button>
                 </div>
             </form>
         </div>
 
         <!-- View 5: My Orders -->
         <div v-else-if="view === 'my_orders'" class="p-4 pb-20 animate-fade-in">
-            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">我的報名紀錄</h2></div>
-            <div v-if="myOrders.length === 0" class="text-center text-gray-400 py-10">尚無報名紀錄</div>
-            <div v-for="order in myOrders" :key="order.orderId" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm mb-4">
+            <div class="flex items-center mb-4"><button @click="view='dashboard'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button><h2 class="text-xl font-bold">我的報名</h2></div>
+            <div v-if="myOrders.length === 0" class="text-center text-gray-400 py-10">尚無紀錄</div>
+            <div v-for="o in myOrders" :key="o.orderId" class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm mb-4">
                 <div class="flex justify-between items-start mb-2">
-                    <div><h3 class="font-bold text-gray-800 text-lg">{{ order.courseName }}</h3><div class="text-xs text-gray-500">{{ formatDate(order.courseDate) }}</div></div>
-                    <span class="px-2 py-1 rounded text-xs font-bold" :class="getStatusClass(order.status)">{{ getStatusLabel(order.status) }}</span>
+                    <div><h3 class="font-bold text-gray-800">{{ o.courseName }}</h3><div class="text-xs text-gray-500">{{ formatDate(o.courseDate) }}</div></div>
+                    <span class="px-2 py-1 rounded text-xs font-bold" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span>
                 </div>
                 <div class="border-t border-dashed my-3"></div>
-                <div class="flex justify-between items-center text-sm mb-2"><span class="text-gray-500">訂單金額</span><span class="font-bold text-gray-800">${{ order.amount }}</span></div>
-                <div class="bg-gray-50 p-3 rounded text-sm mb-3 flex justify-between items-center"><span class="text-gray-600">匯款後五碼</span><span class="font-mono font-bold">{{ order.remittance || '未填寫' }}</span></div>
-                <div v-if="order.status !== 'CANCELLED'" class="flex justify-end"><button @click="openRemittanceModal(order)" class="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded font-bold">回填/修改</button></div>
+                <div class="flex justify-between items-center mb-3"><span class="text-sm text-gray-500">金額</span><span class="font-bold text-gray-800">${{ o.amount }}</span></div>
+                <div class="bg-gray-50 p-3 rounded text-sm flex justify-between mb-3"><span class="text-gray-600">匯款末五碼</span><span class="font-mono font-bold">{{ o.remittance || '未填' }}</span></div>
+                <div v-if="o.status !== 'CANCELLED'" class="text-right"><button @click="openRemittanceModal(o)" class="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded font-bold">回填/修改</button></div>
             </div>
         </div>
 
@@ -191,39 +181,31 @@
             <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-check text-4xl text-[#06C755]"></i></div>
             <h2 class="text-2xl font-bold text-gray-800 mb-2">報名成功！</h2>
             <p class="text-gray-500 mb-8">{{ successMessage }}</p>
-            <div class="flex flex-col gap-3">
-                <button @click="goToMyOrders" class="w-full bg-[#06C755] text-white font-bold py-3 rounded-lg">查看訂單</button>
-                <button @click="view='dashboard'" class="w-full bg-white border border-gray-300 font-bold py-3 rounded-lg">返回首頁</button>
+            <button @click="goToMyOrders" class="w-full bg-[#06C755] text-white font-bold py-3 rounded-lg mb-3">查看訂單</button>
+            <button @click="view='dashboard'" class="w-full bg-white border border-gray-300 font-bold py-3 rounded-lg">回首頁</button>
+        </div>
+
+        <!-- Modals -->
+        <div v-if="showRemittanceModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+                <h3 class="text-lg font-bold mb-4 text-center">回填匯款資訊</h3>
+                <input v-model="tempRemittance" class="form-input text-center text-lg font-mono mb-4" maxlength="5" placeholder="後五碼">
+                <div class="flex gap-2"><button @click="showRemittanceModal=false" class="flex-1 bg-gray-200 py-3 rounded-lg font-bold">取消</button><button @click="submitRemittance" class="flex-1 bg-[#06C755] text-white py-3 rounded-lg font-bold">儲存</button></div>
             </div>
         </div>
 
-        <!-- Remittance Modal -->
-        <transition name="fade">
-            <div v-if="showRemittanceModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">回填匯款資訊</h3>
-                    <div class="mb-4"><label class="form-label">帳號後五碼</label><input v-model="tempRemittance" class="form-input text-center text-lg font-mono" maxlength="5"></div>
-                    <div class="flex gap-2"><button @click="showRemittanceModal=false" class="flex-1 bg-gray-200 text-gray-600 font-bold py-3 rounded-lg">取消</button><button @click="submitRemittance" class="flex-1 bg-[#06C755] text-white font-bold py-3 rounded-lg">儲存</button></div>
-                </div>
+        <div v-if="showFamilyModal" class="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新增家人</h3><button @click="showFamilyModal=false"><i class="fas fa-times"></i></button></div>
+                <form @submit.prevent="saveFamilyMember" class="space-y-3">
+                    <div><label class="form-label">姓名</label><input v-model="tempFamily.name" required class="form-input"></div>
+                    <div><label class="form-label">關係</label><input v-model="tempFamily.relation" required class="form-input"></div>
+                    <div><label class="form-label">身分證</label><input v-model="tempFamily.nationalId" required class="form-input uppercase"></div>
+                    <div><label class="form-label">生日</label><input v-model="tempFamily.birthday" type="date" required class="form-input"></div>
+                    <button type="submit" class="w-full btn-primary mt-4">加入</button>
+                </form>
             </div>
-        </transition>
-        
-        <!-- Family Modal -->
-        <transition name="fade">
-            <div v-if="showFamilyModal" class="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-4">
-                <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新增家人</h3><button @click="showFamilyModal=false"><i class="fas fa-times"></i></button></div>
-                    <form @submit.prevent="saveFamilyMember" class="space-y-3">
-                         <div><label class="form-label">姓名</label><input v-model="tempFamily.name" required class="form-input"></div>
-                         <div><label class="form-label">關係</label><input v-model="tempFamily.relation" required class="form-input"></div>
-                         <div><label class="form-label">身分證</label><input v-model="tempFamily.nationalId" required class="form-input uppercase"></div>
-                         <div><label class="form-label">生日</label><input v-model="tempFamily.birthday" type="date" required class="form-input"></div>
-                         <div><label class="form-label">身分</label><select v-model="tempFamily.identity" required class="form-input"><option value="學生">學生</option><option value="一般">一般</option></select></div>
-                         <button type="submit" class="w-full btn-primary mt-4">加入</button>
-                    </form>
-                </div>
-            </div>
-        </transition>
+        </div>
 
     </main>
 </div>
@@ -243,9 +225,15 @@
             const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', identity: '一般', familyMembers: [] });
             const form = ref({ name: '', groupId: '' });
             const excludedDates = ref([]), selectedEquipments = ref([]);
-            
             const showFamilyModal = ref(false), tempFamily = ref({});
             const showRemittanceModal = ref(false), editingOrder = ref({}), tempRemittance = ref('');
+
+            const callApi = async (act, pl = {}) => {
+                const res = await fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: act, userProfile: { userId: userProfile.value?.userId }, payload: pl }) });
+                const json = await res.json();
+                if (json.status !== 'success') throw new Error(json.message);
+                return json.data; // **關鍵修正**: 這裡必須回傳 data
+            };
 
             const init = async () => {
                 try {
@@ -257,40 +245,64 @@
             };
 
             const checkUserStatus = async () => {
-                const res = await callApi('CHECK_USER', { userId: userProfile.value.userId });
-                if (res.data.registered) {
-                    userInfo.value = res.data.info;
-                    view.value = 'dashboard';
-                } else {
-                    regForm.value.name = userProfile.value.displayName;
-                    view.value = 'register';
-                }
+                try {
+                    const data = await callApi('CHECK_USER', { userId: userProfile.value.userId });
+                    if (data && data.registered) {
+                        userInfo.value = data.info;
+                        view.value = 'dashboard';
+                    } else {
+                        regForm.value.name = userProfile.value.displayName;
+                        view.value = 'register';
+                    }
+                } catch(e) { error.value = '連線錯誤: ' + e.message; }
             };
 
-            // 補回被遺漏的註冊邏輯
             const submitMemberRegister = async () => {
                 isSubmitting.value = true;
                 try {
                     const payload = { userId: userProfile.value.userId, ...regForm.value };
                     await callApi('REGISTER_USER', payload);
                     userInfo.value = { ...regForm.value };
-                    alert('資料已更新'); 
-                    view.value = 'dashboard';
-                } catch (err) { 
-                    alert('失敗: ' + err.message); 
-                } finally { 
-                    isSubmitting.value = false; 
-                }
+                    alert('資料已更新'); view.value = 'dashboard';
+                } catch (err) { alert('失敗: ' + err.message); } finally { isSubmitting.value = false; }
             };
 
-            const goToCourses = async () => { view.value = 'loading'; const res = await callApi('GET_COURSES'); courses.value = res.data; view.value = 'course_list'; };
-            const editProfile = () => { regForm.value = JSON.parse(JSON.stringify(userInfo.value)); if (!regForm.value.familyMembers) regForm.value.familyMembers = []; if (regForm.value.birthday) regForm.value.birthday = new Date(regForm.value.birthday).toISOString().split('T')[0]; view.value = 'register'; };
+            const goToCourses = async () => { view.value = 'loading'; const data = await callApi('GET_COURSES'); courses.value = data; view.value = 'course_list'; };
+            const editProfile = () => { 
+                regForm.value = JSON.parse(JSON.stringify(userInfo.value)); 
+                if (!regForm.value.familyMembers) regForm.value.familyMembers = [];
+                // Date formatting for input type=date
+                if (regForm.value.birthday && regForm.value.birthday.includes('T')) regForm.value.birthday = regForm.value.birthday.split('T')[0];
+                view.value = 'register'; 
+            };
 
-            const isEarlyBird = computed(() => { if(!selectedCourse.value || !selectedCourse.value.earlyBirdPrice) return false; if(!selectedCourse.value.earlyBirdDate) return false; return new Date(selectedCourse.value.earlyBirdDate) >= new Date(); });
+            const isEarlyBird = computed(() => { if(!selectedCourse.value?.earlyBirdPrice || !selectedCourse.value?.earlyBirdDate) return false; return new Date(selectedCourse.value.earlyBirdDate) >= new Date(); });
             const basePrice = computed(() => selectedCourse.value ? (isEarlyBird.value ? selectedCourse.value.earlyBirdPrice : selectedCourse.value.price) : 0);
-            const equipmentList = computed(() => { if(!selectedCourse.value || !selectedCourse.value.equipmentJson) return []; try { return JSON.parse(selectedCourse.value.equipmentJson); } catch(e){ return []; } });
-            const generatedDates = computed(() => { if(!selectedCourse.value || selectedCourse.value.type!=='多日營隊') return []; const s = new Date(selectedCourse.value.startDate); const e = new Date(selectedCourse.value.endDate); const l = []; for(let d=s; d<=e; d.setDate(d.getDate()+1)) l.push(new Date(d).toLocaleDateString('zh-TW')); return l; });
-            const calculatedTotal = computed(() => { if(!selectedCourse.value) return 0; let t = basePrice.value; const p = Math.round(basePrice.value / (selectedCourse.value.totalSessions || 1)); t -= (p * excludedDates.value.length); selectedEquipments.value.forEach(eq => t += parseInt(eq.price)); return Math.max(0, t); });
+            const equipmentList = computed(() => { if(!selectedCourse.value?.equipmentJson) return []; try { return JSON.parse(selectedCourse.value.equipmentJson); } catch(e){ return []; } });
+            
+            const generatedDates = computed(() => { 
+                if(!selectedCourse.value || selectedCourse.value.type!=='多日營隊') return []; 
+                const s = new Date(selectedCourse.value.startDate); 
+                const e = new Date(selectedCourse.value.endDate); 
+                const list = [];
+                // Safety: Limit loop
+                let count = 0;
+                while(s <= e && count < 60) {
+                    list.push(new Date(s).toLocaleDateString('zh-TW'));
+                    s.setDate(s.getDate() + 1);
+                    count++;
+                }
+                return list; 
+            });
+            
+            const calculatedTotal = computed(() => { 
+                if(!selectedCourse.value) return 0; 
+                let t = basePrice.value; 
+                const p = Math.round(basePrice.value / (selectedCourse.value.totalSessions || 1)); 
+                t -= (p * excludedDates.value.length); 
+                selectedEquipments.value.forEach(eq => t += parseInt(eq.price)); 
+                return Math.max(0, t); 
+            });
 
             const selectCourse = (c) => { selectedCourse.value = c; form.value.name = userInfo.value.name; excludedDates.value=[]; selectedEquipments.value=[]; view.value = 'form'; };
             const toggleDate = (d) => { const i = excludedDates.value.indexOf(d); if(i>-1) excludedDates.value.splice(i,1); else excludedDates.value.push(d); };
@@ -301,12 +313,12 @@
                 isSubmitting.value = true;
                 try {
                     const payload = { courseId: selectedCourse.value.id, userId: userProfile.value.userId, ...userInfo.value, ...form.value, excludedDates: excludedDates.value, equipments: selectedEquipments.value };
-                    const res = await callApi('REGISTER', payload);
-                    successMessage.value = res.data.message; view.value = 'success';
+                    const data = await callApi('REGISTER', payload);
+                    successMessage.value = data.message; view.value = 'success';
                 } catch(e) { alert(e.message); } finally { isSubmitting.value = false; }
             };
 
-            const goToMyOrders = async () => { view.value='loading'; const res=await callApi('GET_USER_ORDERS'); myOrders.value=res.data; view.value='my_orders'; };
+            const goToMyOrders = async () => { view.value='loading'; const data=await callApi('GET_USER_ORDERS'); myOrders.value=data; view.value='my_orders'; };
             const openRemittanceModal = (o) => { editingOrder.value=o; tempRemittance.value=o.remittance||''; showRemittanceModal.value=true; };
             const submitRemittance = async () => { await callApi('UPDATE_ORDER_REMITTANCE', {orderId:editingOrder.value.orderId, remittance:tempRemittance.value}); alert('更新成功'); showRemittanceModal.value=false; goToMyOrders(); };
 
@@ -314,15 +326,8 @@
             const saveFamilyMember = () => { regForm.value.familyMembers.push({...tempFamily.value}); showFamilyModal.value=false; };
             const removeFamilyMember = (i) => regForm.value.familyMembers.splice(i,1);
 
-            const callApi = async (act, pl = {}) => {
-                const res = await fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: act, userProfile: { userId: userProfile.value?.userId }, payload: pl }) });
-                const json = await res.json();
-                if (json.status !== 'success') throw new Error(json.message);
-                return json.data;
-            };
-
-            const formatDate = d => d ? new Date(d).toLocaleDateString('zh-TW') : '-';
-            const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已付款','CANCELLED':'已取消'}[s]||s);
+            const formatDate = d => { if(!d) return '-'; const date = new Date(d); return isNaN(date.getTime()) ? d : date.toLocaleDateString('zh-TW'); };
+            const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已完款','CANCELLED':'已取消'}[s]||s);
             const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-200 text-gray-500'}[s]);
 
             onMounted(init);
