@@ -10,17 +10,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         [v-cloak] { display: none; }
-        :root { --line-green: #06C755; --line-green-dark: #05b34c; --bg-body: #f3f4f6; --text-main: #111827; }
+        :root { --line-green: #06C755; --bg-body: #f5f6f8; --text-main: #111827; }
         body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg-body); color: var(--text-main); overflow: hidden; }
 
-        /* Sidebar (Vertical Column) */
+        /* Login Card */
+        .login-wrap { position: fixed; inset: 0; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-card { background: white; padding: 48px; width: 420px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; text-align: center; }
+        .login-logo { width: 72px; height: 72px; background: var(--line-green); border-radius: 18px; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px; box-shadow: 0 4px 12px rgba(6,199,85,0.3); }
+
+        /* Sidebar */
         .sidebar { width: 240px; background: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; z-index: 50; }
         .sidebar-header { height: 64px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid #f3f4f6; }
         .menu-category { padding: 20px 20px 8px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
         .menu-item { display: flex; align-items: center; width: 100%; height: 48px; padding: 0 20px; color: #4b5563; font-size: 14px; font-weight: 500; cursor: pointer; border-left: 4px solid transparent; transition: all 0.2s; }
         .menu-item:hover { background-color: #f0fbf5; color: #06C755; }
         .menu-item.active { background-color: #f0fbf5; color: #06C755; border-left-color: #06C755; font-weight: 700; }
-        .menu-icon { width: 24px; text-align: center; margin-right: 12px; font-size: 16px; }
 
         /* Content */
         .main-content { flex: 1; display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden; }
@@ -29,21 +33,20 @@
 
         /* Components */
         .card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 24px; overflow: hidden; }
-        .data-table { width: 100%; border-collapse: collapse; }
         .data-table th { text-align: left; padding: 16px 24px; background: #f9fafb; color: #6b7280; font-size: 12px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
         .data-table td { padding: 16px 24px; border-bottom: 1px solid #f3f4f6; font-size: 14px; vertical-align: middle; }
-        .btn-green { background: var(--line-green); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-green:hover { background: var(--line-green-dark); }
-        .btn-green:disabled { background: #a7f3d0; cursor: not-allowed; }
+        .btn-green { background: var(--line-green); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-green:hover { background: #05b34c; box-shadow: 0 2px 8px rgba(6,199,85,0.2); }
         .btn-white { background: white; border: 1px solid #d1d5db; color: #374151; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; transition: 0.2s; }
+        .btn-white:hover { border-color: #06C755; color: #06C755; background-color: #f0fbf5; }
         .input-line { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px 12px; font-size: 14px; outline: none; transition: border 0.2s; }
         .input-line:focus { border-color: #06C755; box-shadow: 0 0 0 2px rgba(6,199,85,0.1); }
         .label-line { display: block; font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; }
 
-        /* Modal (Central POP) */
+        /* Modal */
         .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .modal-pop { background: white; width: 90%; height: 90%; max-width: 1400px; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: popIn 0.2s ease-out; }
-        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .modal-pop { background: white; width: 95%; height: 95%; max-width: 1400px; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: popIn 0.2s ease-out; }
+        @keyframes popIn { 0% { transform: scale(0.98); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         .settings-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -58,12 +61,20 @@
 
 <div id="app" v-cloak class="flex h-full w-full">
     <!-- LOGIN -->
-    <div v-if="!isLoggedIn" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#f0f2f5]">
-        <div class="bg-white p-10 rounded-xl shadow-lg w-[400px] border border-gray-200 text-center">
-            <h1 class="text-xl font-bold text-gray-800 mb-6">運動島管理後台</h1>
+    <div v-if="!isLoggedIn" class="login-wrap">
+        <div class="login-card">
+            <div class="login-logo"><i class="fas fa-running"></i></div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">運動島管理後台</h1>
+            <p class="text-gray-400 text-sm mb-8">LINE OA 整合管理系統</p>
             <form @submit.prevent="login">
-                <input v-model="password" type="password" class="input-line mb-4" placeholder="請輸入管理密碼">
-                <button :disabled="isLoading" class="w-full btn-line-green py-3 justify-center">{{ isLoading ? '...' : '登入系統' }}</button>
+                <div class="text-left mb-6">
+                    <label class="label-line">管理密碼</label>
+                    <input v-model="password" type="password" class="input-line" placeholder="請輸入密碼">
+                </div>
+                <button :disabled="isLoading" class="w-full btn-green justify-center py-3 text-base">
+                    {{ isLoading ? '登入中...' : '登入系統' }}
+                </button>
+                <p v-if="error" class="text-red-500 text-sm mt-4">{{ error }}</p>
             </form>
         </div>
     </div>
@@ -74,9 +85,9 @@
             <div class="sidebar-header"><span class="bg-[#06C755] text-white px-2 py-0.5 rounded text-xs font-bold mr-2">LINE OA</span><span class="font-bold text-gray-800 text-lg">運動島管理</span></div>
             <div class="flex-1 overflow-y-auto py-2">
                 <div class="menu-category">MENU</div>
-                <div class="menu-item" :class="{active: currentTab==='courses'}" @click="currentTab='courses'"><i class="fas fa-chalkboard-teacher menu-icon"></i> 課程管理</div>
-                <div class="menu-item" :class="{active: currentTab==='orders'}" @click="currentTab='orders'"><i class="fas fa-file-invoice-dollar menu-icon"></i> 訂單管理</div>
-                <div class="menu-item" :class="{active: currentTab==='members'}" @click="currentTab='members'"><i class="fas fa-users menu-icon"></i> 會員管理</div>
+                <div class="menu-item" :class="{active: currentTab==='courses'}" @click="currentTab='courses'"><i class="fas fa-chalkboard-teacher w-6 text-center mr-3 text-lg"></i> 課程管理</div>
+                <div class="menu-item" :class="{active: currentTab==='orders'}" @click="currentTab='orders'"><i class="fas fa-file-invoice-dollar w-6 text-center mr-3 text-lg"></i> 訂單管理</div>
+                <div class="menu-item" :class="{active: currentTab==='members'}" @click="currentTab='members'"><i class="fas fa-users w-6 text-center mr-3 text-lg"></i> 會員管理</div>
             </div>
             <div class="p-4 border-t border-gray-100 bg-gray-50"><button @click="logout" class="w-full btn-white text-xs py-1">登出</button></div>
         </aside>
@@ -91,7 +102,7 @@
                 <div v-if="currentTab==='courses'">
                     <div class="flex justify-between items-end mb-6">
                         <div class="text-2xl font-bold text-gray-800">上架課程：{{ courses.length }}</div>
-                        <button @click="openAddCourse" class="btn-line-green"><i class="fas fa-plus"></i> 新增課程</button>
+                        <button @click="openAddCourse" class="btn-green"><i class="fas fa-plus"></i> 新增課程</button>
                     </div>
                     <div class="card">
                         <table class="data-table">
@@ -99,7 +110,10 @@
                             <tbody>
                                 <tr v-for="c in courses" :key="c.id">
                                     <td class="w-1/3"><div class="font-bold text-base text-gray-800">{{ c.name }}</div><div class="text-xs text-gray-400 font-mono mt-1 bg-gray-100 inline-block px-1 rounded">{{ c.id }}</div></td>
-                                    <td><div class="flex gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span></div><div class="text-sm text-gray-600">{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div></td>
+                                    <td>
+                                        <div class="flex gap-2 mb-1"><span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span></div>
+                                        <div class="text-sm text-gray-600">{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
+                                    </td>
                                     <td><div class="text-[#06C755] font-bold">${{ c.price }}</div><div class="text-xs text-gray-500">{{ c.enrolled }} / {{ c.capacity }} 人</div></td>
                                     <td class="text-right"><button @click="openEditCourse(c)" class="text-gray-400 hover:text-[#06C755]"><i class="fas fa-pen"></i></button></td>
                                 </tr>
@@ -143,8 +157,7 @@
         </main>
     </template>
 
-    <!-- MODALS -->
-    <!-- 1. COURSE -->
+    <!-- 1. COURSE MODAL -->
     <div v-if="showCourseModal" class="modal-mask">
         <div class="modal-pop">
             <div class="h-16 px-8 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
@@ -169,24 +182,30 @@
                         <div><label class="label-line">名額</label><input v-model="courseForm.capacity" type="number" class="input-line"></div>
                         <div><label class="label-line">總堂數</label><input v-model="courseForm.totalSessions" type="number" class="input-line"></div>
                     </div>
+                    
                     <div class="settings-box bg-white">
                         <div class="flex items-center justify-between mb-4"><label class="font-bold text-gray-700 text-sm">早鳥優惠</label><label class="toggle-switch"><input type="checkbox" v-model="hasEarlyBird"><span class="slider"></span></label></div>
                         <div v-if="hasEarlyBird" class="grid grid-cols-2 gap-4"><div><label class="label-line">價格</label><input v-model="courseForm.earlyBirdPrice" type="number" class="input-line"></div><div><label class="label-line">截止</label><input v-model="courseForm.earlyBirdDate" type="date" class="input-line"></div></div>
                     </div>
+                    
                     <div class="settings-box bg-white">
                         <div class="flex items-center justify-between mb-4"><label class="font-bold text-gray-700 text-sm">設備租用</label><button @click="addEquipment" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded">+ 新增</button></div>
                         <div v-for="(eq, idx) in equipList" :key="idx" class="flex gap-2 mb-2"><input v-model="eq.name" placeholder="品項" class="input-line w-2/3"><input v-model="eq.price" type="number" placeholder="$" class="input-line w-1/4"><button @click="removeEquipment(idx)" class="text-red-500"><i class="fas fa-trash"></i></button></div>
                     </div>
+
+                    <!-- 新增：圖片與說明 -->
+                    <div class="mb-4"><label class="label-line">圖片網址 (URL)</label><input v-model="courseForm.image" class="input-line" placeholder="https://..."></div>
+                    <div><label class="label-line">課程詳細說明</label><textarea v-model="courseForm.description" rows="5" class="input-line h-32" placeholder="請輸入課程介紹..."></textarea></div>
                 </div>
             </div>
-            <div class="h-16 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0"><button @click="showCourseModal=false" class="btn-white">取消</button><button @click="submitCourse" class="btn-line-green w-32 justify-center">儲存設定</button></div>
+            <div class="h-16 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0"><button @click="showCourseModal=false" class="btn-white">取消</button><button @click="submitCourse" class="btn-green w-32 justify-center">儲存設定</button></div>
         </div>
     </div>
 
     <!-- 2. Member Modal -->
     <div v-if="showMemberModal" class="modal-mask">
-        <div class="modal-container">
-            <div class="h-14 px-6 border-b border-gray-200 flex justify-between items-center bg-white shrink-0"><h3 class="text-lg font-bold text-gray-800">會員資料</h3><button @click="showMemberModal=false" class="text-gray-400"><i class="fas fa-times"></i></button></div>
+        <div class="modal-container" style="max-width:1000px;height:85%;">
+            <div class="h-14 px-6 border-b border-gray-200 flex justify-between items-center bg-white shrink-0"><h3 class="text-lg font-bold text-gray-800">會員資料</h3><button @click="showMemberModal=false" class="text-gray-400"><i class="fas fa-times text-lg"></i></button></div>
             <div class="flex-1 flex overflow-hidden">
                 <div class="w-1/2 p-6 overflow-y-auto border-r border-gray-200 bg-white">
                      <form @submit.prevent="saveMember" class="space-y-4">
@@ -202,14 +221,14 @@
                     <div v-for="fm in editingMember.familyMembers" :key="fm.userId" class="bg-white p-3 rounded border border-gray-200 mb-2 shadow-sm"><div class="font-bold">{{ fm.name }} <span class="text-xs bg-gray-100 px-2 rounded">{{ fm.relation }}</span></div></div>
                 </div>
             </div>
-            <div class="h-16 px-6 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0"><button @click="showMemberModal=false" class="btn-white">取消</button><button @click="saveMember" :disabled="isSaving" class="btn-line-green w-32 justify-center">{{ isSaving ? '儲存中...' : '儲存' }}</button></div>
+            <div class="h-16 px-6 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0"><button @click="showMemberModal=false" class="btn-white">取消</button><button @click="saveMember" :disabled="isSaving" class="btn-green w-32 justify-center">{{ isSaving ? '儲存中...' : '儲存' }}</button></div>
         </div>
     </div>
-
+    
     <!-- 3. Order Modal -->
     <div v-if="showOrderModal" class="modal-mask">
         <div class="modal-container" style="max-width:600px;height:auto;max-height:90vh;">
-            <div class="h-14 px-6 border-b border-gray-200 flex justify-between items-center bg-white"><h3 class="text-lg font-bold text-gray-800">編輯訂單</h3><button @click="showOrderModal=false" class="text-gray-400"><i class="fas fa-times"></i></button></div>
+            <div class="h-14 px-6 border-b border-gray-200 flex justify-between items-center bg-white"><h3 class="text-lg font-bold text-gray-800">編輯訂單</h3><button @click="showOrderModal=false" class="text-gray-400"><i class="fas fa-times text-xl"></i></button></div>
             <div class="p-8 overflow-y-auto">
                  <div class="grid grid-cols-2 gap-4 mb-4">
                      <div><label class="label-line">狀態</label><select v-model="editingOrder.status" class="input-line"><option value="PENDING">待付款</option><option value="PAID">已付款</option><option value="CANCELLED">已取消</option></select></div>
@@ -218,7 +237,7 @@
                  <div class="mb-4"><label class="label-line">匯款後五碼</label><input v-model="editingOrder.remittance" class="input-line font-mono"></div>
                  <div><label class="label-line">備註</label><textarea v-model="editingOrder.note" rows="3" class="input-line"></textarea></div>
             </div>
-            <div class="h-16 px-6 border-t border-gray-200 bg-white flex items-center justify-end gap-3"><button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-line-green justify-center">儲存</button></div>
+            <div class="h-16 px-6 border-t border-gray-200 bg-white flex items-center justify-end gap-3"><button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-green justify-center">儲存</button></div>
         </div>
     </div>
 </div>
@@ -234,7 +253,7 @@
             const showCourseModal=ref(false), isEditingCourse=ref(false), showMemberModal=ref(false), showOrderModal=ref(false);
             const editingMember=ref({}), editingOrder=ref({});
             const searchTerm=ref(''), filterStatus=ref('');
-            const courseForm = ref({id:'', name:'', startDate:'', endDate:'', startTime:'', price:0, capacity:0, totalSessions:1, location:'', instructor:'', type: '單日課程', timeSlotType: '全日', earlyBirdPrice: 0, earlyBirdDate: '', equipmentJson: '[]'});
+            const courseForm = ref({id:'', name:'', startDate:'', endDate:'', startTime:'', price:0, capacity:0, totalSessions:1, location:'', instructor:'', type: '單日課程', timeSlotType: '全日', earlyBirdPrice: 0, earlyBirdDate: '', equipmentJson: '[]', image: '', description: ''});
             const hasEarlyBird = ref(false), equipList = ref([]);
 
             watch(hasEarlyBird, (val) => { if(!val) { courseForm.value.earlyBirdPrice=0; courseForm.value.earlyBirdDate=''; } });
@@ -243,6 +262,7 @@
             const filteredOrders = computed(() => orders.value.filter(o => (o.name+o.phone).includes(searchTerm.value)));
             const filteredUsers = computed(() => users.value.filter(u => (u.name+u.nationalId).includes(searchTerm.value)));
             const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + c.enrolled, 0));
+            const pendingCount = computed(() => orders.value.filter(o => o.status === 'PENDING').length);
 
             const callApi = async (action, payload={}) => {
                 const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action, payload:{password:password.value, ...payload}}) });
@@ -261,7 +281,7 @@
 
             const openAddCourse = () => { 
                 isEditingCourse.value=false; 
-                courseForm.value={id:'',name:'',startDate:'',endDate:'',startTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:'', type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]'}; 
+                courseForm.value={id:'',name:'',startDate:'',endDate:'',startTime:'',price:0,capacity:0,totalSessions:1,location:'',instructor:'', type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]', image:'', description:''}; 
                 hasEarlyBird.value=false; equipList.value=[];
                 showCourseModal.value=true; 
             };
@@ -277,6 +297,7 @@
 
             const addEquipment = () => equipList.value.push({name:'', price:0});
             const removeEquipment = (i) => equipList.value.splice(i,1);
+
             const submitCourse = async () => {
                 courseForm.value.equipmentJson = JSON.stringify(equipList.value);
                 const action = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE';
@@ -302,13 +323,17 @@
 
             const formatDate = d => d ? new Date(d).toLocaleDateString('zh-TW') : '-';
             const formatTime = d => d ? new Date(d).toLocaleString('zh-TW',{hour12:false}) : '-';
+            const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已付款','CANCELLED':'已取消'}[s]||s);
+            const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s]);
+
             return { 
-                isLoggedIn, password, isLoading, isSaving, error, currentTab, tabName, courses, orders, users, totalEnrolled, 
+                isLoggedIn, password, isLoading, isSaving, error, currentTab, tabName, courses, orders, users, totalEnrolled, pendingCount,
                 filteredOrders, filteredUsers, searchTerm, filterStatus,
                 showCourseModal, isEditingCourse, courseForm, hasEarlyBird, equipList,
                 showMemberModal, editingMember, showOrderModal, editingOrder,
                 login, logout, fetchData, openAddCourse, openEditCourse, submitCourse, addEquipment, removeEquipment,
-                openMember, saveMember, openOrder, saveOrder, formatDate, formatTime
+                openMember, saveMember, openOrder, saveOrder,
+                formatDate, formatTime, getStatusLabel, getStatusClass
             };
         }
     }).mount('#app');
