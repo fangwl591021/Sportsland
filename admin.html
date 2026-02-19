@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        [v-cloak] { display: none; }
+        /* 加上 !important 強制隱藏，解決畫面閃爍與 {{ }} 外露的問題 */
+        [v-cloak] { display: none !important; }
+        
         :root { --line-green: #06C755; --bg-body: #f5f6f8; --text-main: #111827; }
         body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg-body); color: var(--text-main); overflow: hidden; }
 
@@ -118,7 +120,8 @@
                     </div>
                     <div class="card">
                         <table class="data-table">
-                            <thead><tr><th>課程資訊</th><th>類型/時間</th><th>費用/名額</th><th>操作</th></tr></thead>
+                            <!-- 新增「繳費狀態」欄位 -->
+                            <thead><tr><th>課程資訊</th><th>類型/時間</th><th>費用/名額</th><th>繳費狀態</th><th class="text-right">操作</th></tr></thead>
                             <tbody>
                                 <tr v-for="c in courses" :key="c.id">
                                     <td class="w-1/3">
@@ -127,14 +130,22 @@
                                     </td>
                                     <td>
                                         <div class="flex gap-2 mb-1">
-                                            <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">{{ c.type }}</span>
-                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">{{ c.timeSlotType }}</span>
+                                            <span class="text-xs bg-blue-100 text-blue-700 px-2 rounded">{{ c.type }}</span>
+                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 rounded">{{ c.timeSlotType }}</span>
                                         </div>
                                         <div class="text-sm text-gray-600">{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
                                     </td>
                                     <td>
                                         <div class="text-[#06C755] font-bold">${{ c.price }}</div>
                                         <div class="text-xs text-gray-500">{{ c.enrolled }} / {{ c.capacity }} 人</div>
+                                    </td>
+                                    <!-- 新增：未繳費者 POP 按鈕 -->
+                                    <td>
+                                        <button @click="openUnpaidModal(c)" class="text-sm px-3 py-1.5 rounded-md border font-bold transition-colors"
+                                                :class="getUnpaidCount(c.id) > 0 ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-gray-50 text-gray-400 border-gray-200 cursor-default'"
+                                                :disabled="getUnpaidCount(c.id) === 0">
+                                            未繳費: {{ getUnpaidCount(c.id) }} 人
+                                        </button>
                                     </td>
                                     <td class="text-right"><button @click="openEditCourse(c)" class="text-gray-400 hover:text-[#06C755] p-2"><i class="fas fa-pen"></i></button></td>
                                 </tr>
@@ -190,7 +201,38 @@
         </main>
     </template>
 
-    <!-- *** MODALS (100% 完整版) *** -->
+    <!-- *** MODALS *** -->
+
+    <!-- 0. 未繳費者名單 Modal (新增) -->
+    <transition name="fade">
+    <div v-if="showUnpaidModal" class="modal-mask" @click.self="showUnpaidModal=false">
+        <div class="modal-pop" style="max-width:600px; height:auto; max-height:85vh;">
+            <div class="h-16 px-6 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
+                <h3 class="text-lg font-bold text-gray-800">未繳費名單 - {{ unpaidCourseName }}</h3>
+                <button @click="showUnpaidModal=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto bg-[#fafafa]">
+                <div v-if="unpaidList.length === 0" class="text-center text-gray-500 py-4">目前無未繳費者</div>
+                <div v-else class="space-y-3">
+                    <div v-for="u in unpaidList" :key="u.orderId" class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800 text-base">{{ u.name }}</div>
+                            <div class="text-sm text-gray-500 mt-1"><i class="fas fa-phone mr-1"></i>{{ u.phone }}</div>
+                            <div class="text-xs text-gray-400 font-mono mt-1">訂單號: {{ u.orderId.slice(0,8) }}</div>
+                        </div>
+                        <div class="text-right flex flex-col items-end">
+                            <div class="font-bold text-[#06C755] text-lg">${{ u.amount }}</div>
+                            <div class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded mt-1 font-bold">待付款</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="h-16 px-6 border-t border-gray-200 bg-white flex items-center justify-end shrink-0">
+                <button @click="showUnpaidModal=false" class="btn-white">關閉</button>
+            </div>
+        </div>
+    </div>
+    </transition>
 
     <!-- 1. COURSE MODAL -->
     <transition name="fade">
@@ -302,7 +344,7 @@
 
             <div class="h-20 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0">
                 <button @click="showCourseModal=false" class="btn-white">取消</button>
-                <button @click="submitCourse" class="btn-green w-32 justify-center">儲存設定</button>
+                <button @click="submitCourse" class="btn-line-green w-32 justify-center">儲存設定</button>
             </div>
         </div>
     </div>
@@ -346,7 +388,7 @@
             </div>
             <div class="h-20 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0">
                 <button @click="showMemberModal=false" class="btn-white">取消</button>
-                <button @click="saveMember" :disabled="isSaving" class="btn-green w-32 justify-center">
+                <button @click="saveMember" :disabled="isSaving" class="btn-line-green w-32 justify-center">
                     <i v-if="isSaving" class="fas fa-spinner fa-spin mr-2"></i> {{ isSaving ? '儲存中...' : '儲存' }}
                 </button>
             </div>
@@ -370,7 +412,7 @@
                  <div><label class="label-line">備註</label><textarea v-model="editingOrder.note" rows="3" class="input-line"></textarea></div>
             </div>
             <div class="h-20 px-8 border-t border-gray-200 bg-white flex items-center justify-end gap-3">
-                <button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-green justify-center">儲存</button>
+                <button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-line-green justify-center">儲存</button>
             </div>
         </div>
     </div>
@@ -398,12 +440,18 @@
             const hasEarlyBird = ref(false);
             const equipList = ref([]);
 
+            // Unpaid Modal Refs
+            const showUnpaidModal = ref(false);
+            const unpaidList = ref([]);
+            const unpaidCourseName = ref('');
+
             watch(hasEarlyBird, (val) => { if(!val) { courseForm.value.earlyBirdPrice=0; courseForm.value.earlyBirdDate=''; } });
             
             const tabName = computed(() => ({'courses':'課程管理','orders':'訂單管理','members':'會員管理'}[currentTab.value]));
             const filteredOrders = computed(() => orders.value.filter(o => (o.name+o.phone).includes(searchTerm.value)));
             const filteredUsers = computed(() => users.value.filter(u => (u.name+u.nationalId).includes(searchTerm.value)));
             const totalEnrolled = computed(() => courses.value.reduce((acc, c) => acc + c.enrolled, 0));
+            const pendingCount = computed(() => orders.value.filter(o => o.status === 'PENDING').length);
 
             const callApi = async (action, payload={}) => {
                 const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action, payload:{password:password.value, ...payload}}) });
@@ -471,16 +519,30 @@
             const openOrder = (o) => { editingOrder.value={...o}; showOrderModal.value=true; };
             const saveOrder = async () => { await callApi('ADMIN_UPDATE_ORDER', {orderData:editingOrder.value}); showOrderModal.value=false; fetchData(); };
 
+            // Unpaid logic
+            const getUnpaidCount = (courseId) => {
+                return orders.value.filter(o => o.courseId === courseId && o.status === 'PENDING').length;
+            };
+            
+            const openUnpaidModal = (course) => {
+                const list = orders.value.filter(o => o.courseId === course.id && o.status === 'PENDING');
+                if (list.length === 0) return;
+                unpaidList.value = list;
+                unpaidCourseName.value = course.name;
+                showUnpaidModal.value = true;
+            };
+
             const formatDate = d => d ? new Date(d).toLocaleDateString('zh-TW') : '-';
             const formatTime = d => d ? new Date(d).toLocaleString('zh-TW',{hour12:false}) : '-';
             const getStatusLabel = s => ({'PENDING':'待付','PAID':'已付','CANCELLED':'取消'}[s]||s);
             const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s]);
 
             return { 
-                isLoggedIn, password, isLoading, isSaving, error, currentTab, tabName, courses, orders, users, totalEnrolled, 
+                isLoggedIn, password, isLoading, isSaving, error, currentTab, tabName, courses, orders, users, totalEnrolled, pendingCount,
                 filteredOrders, filteredUsers, searchTerm, filterStatus,
                 showCourseModal, isEditingCourse, courseForm, hasEarlyBird, equipList,
                 showMemberModal, editingMember, showOrderModal, editingOrder,
+                showUnpaidModal, unpaidList, unpaidCourseName, getUnpaidCount, openUnpaidModal,
                 login, logout, fetchData, openAddCourse, openEditCourse, submitCourse, addEquipment, removeEquipment,
                 openMember, saveMember, openOrder, saveOrder,
                 formatDate, formatTime, getStatusLabel, getStatusClass
