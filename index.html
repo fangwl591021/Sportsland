@@ -240,6 +240,7 @@
             
             const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', identity: '一般', gender: '', familyMembers: [] });
             const form = ref({ name: '', groupId: '' });
+            const selectedAttendee = ref({}); // 新增：目前被選取的上課人員
             const excludedDates = ref([]), selectedEquipments = ref([]);
             const showFamilyModal = ref(false), tempFamily = ref({}), showDetailModal = ref(false), detailCourse = ref({});
             
@@ -318,7 +319,13 @@
 
             // Actions
             const openDetail = (c) => { detailCourse.value = c; showDetailModal.value = true; };
-            const selectCourse = (c) => { selectedCourse.value = c; form.value.name = userInfo.value.name; excludedDates.value=[]; selectedEquipments.value=[]; view.value = 'form'; };
+            const selectCourse = (c) => { 
+                selectedCourse.value = c; 
+                selectedAttendee.value = userInfo.value; // 預設先選中「本人」
+                excludedDates.value=[]; 
+                selectedEquipments.value=[]; 
+                view.value = 'form'; 
+            };
             const toggleDate = (d) => { const i = excludedDates.value.indexOf(d); if(i>-1) excludedDates.value.splice(i,1); else excludedDates.value.push(d); };
             const toggleEquipment = (eq) => { const i = selectedEquipments.value.indexOf(eq); if(i>-1) selectedEquipments.value.splice(i,1); else selectedEquipments.value.push(eq); };
             
@@ -326,7 +333,17 @@
                 if (excludedDates.value.length > 3) return alert('請假天數不可超過 3 天');
                 isSubmitting.value = true;
                 try {
-                    const payload = { courseId: selectedCourse.value.id, userId: userProfile.value.userId, ...userInfo.value, ...form.value, excludedDates: excludedDates.value, equipments: selectedEquipments.value };
+                    // 調整：送出選中人員的資料，而非預設的 userInfo
+                    const payload = { 
+                        courseId: selectedCourse.value.id, 
+                        userId: userProfile.value.userId, // 保持綁定在當前登入使用者的帳號下
+                        name: selectedAttendee.value.name,
+                        nationalId: selectedAttendee.value.nationalId,
+                        phone: selectedAttendee.value.phone || userInfo.value.phone, // 若家人未留電話則帶入家長電話
+                        groupId: form.value.groupId, // 雖然隱藏，仍保留變數以防後續開啟
+                        excludedDates: excludedDates.value, 
+                        equipments: selectedEquipments.value 
+                    };
                     const data = await callApi('REGISTER', payload);
                     successMessage.value = data.message; view.value = 'success';
                 } catch(e) { alert(e.message); } finally { isSubmitting.value = false; }
@@ -396,7 +413,7 @@
 
             return {
                 view, loadingText, error, isSubmitting, userProfile, userInfo, courses, myOrders, selectedCourse,
-                regForm, form, successMessage, showFamilyModal, tempFamily, 
+                regForm, form, selectedAttendee, successMessage, showFamilyModal, tempFamily, 
                 showDetailModal, detailCourse,
                 showEditOrderModal, editingOrder, tempRemittance, tempExcludedDates, editGeneratedDates, editOrderTotal,
                 excludedDates, selectedEquipments, isEarlyBird, basePrice, equipmentList, generatedDates, calculatedTotal,
