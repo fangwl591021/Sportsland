@@ -169,8 +169,9 @@
                                             未繳費: {{ getUnpaidCount(c.id) }} 人
                                         </button>
                                     </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button @click="openEditCourse(c)" class="text-gray-400 hover:text-[#06C755] p-2 bg-white border border-transparent hover:border-gray-200 rounded transition"><i class="fas fa-pen text-lg"></i></button>
+                                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                                        <button @click="copyCourse(c)" class="text-gray-400 hover:text-blue-500 p-2 bg-white border border-transparent hover:border-gray-200 rounded transition" title="複製課程"><i class="far fa-copy text-lg"></i></button>
+                                        <button @click="openEditCourse(c)" class="text-gray-400 hover:text-[#06C755] p-2 bg-white border border-transparent hover:border-gray-200 rounded transition" title="編輯課程"><i class="fas fa-pen text-lg"></i></button>
                                     </td>
                                 </tr>
                                 <tr v-if="courses.length === 0">
@@ -608,6 +609,22 @@
                 showCourseModal.value=true; 
             };
 
+            const copyCourse = (c) => {
+                isEditingCourse.value = false; // 複製視同新增課程
+                // 帶入被複製的課程資料，但清空代碼強迫重填，並在名稱後方加上標示
+                courseForm.value = {
+                    ...c, 
+                    id: '', 
+                    name: c.name + ' (複製)', 
+                    startDate: fmtDateForInput(c.startDate), 
+                    endDate: fmtDateForInput(c.endDate), 
+                    earlyBirdDate: fmtDateForInput(c.earlyBirdDate)
+                };
+                hasEarlyBird.value = c.earlyBirdPrice > 0;
+                try { equipList.value = JSON.parse(c.equipmentJson || '[]'); } catch(e) { equipList.value=[]; }
+                showCourseModal.value = true;
+            };
+
             const addEquipment = () => equipList.value.push({name:'', price:0});
             const removeEquipment = (i) => equipList.value.splice(i,1);
 
@@ -658,7 +675,7 @@
                 showCourseModal, isEditingCourse, courseForm, hasEarlyBird, equipList,
                 showMemberModal, editingMember, showOrderModal, editingOrder,
                 showUnpaidModal, unpaidList, unpaidCourseName, getUnpaidCount, openUnpaidModal,
-                login, logout, fetchData, openAddCourse, openEditCourse, submitCourse, addEquipment, removeEquipment,
+                login, logout, fetchData, openAddCourse, openEditCourse, copyCourse, submitCourse, addEquipment, removeEquipment,
                 openMember, saveMember, openOrder, saveOrder,
                 formatDate, formatTime, getStatusLabel, getStatusClass
             };
