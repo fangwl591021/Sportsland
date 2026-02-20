@@ -152,7 +152,14 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex gap-2 mb-1.5">
-                                            <span class="text-[11px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">{{ c.type }}</span>
+                                            <span class="text-[11px] font-bold px-2 py-0.5 rounded border"
+                                                  :class="{
+                                                      'bg-blue-50 text-blue-600 border-blue-100': c.type === '單日課程',
+                                                      'bg-orange-50 text-orange-600 border-orange-100': c.type === '多日營隊',
+                                                      'bg-purple-50 text-purple-600 border-purple-100': c.type === '常態課後' || !c.type
+                                                  }">
+                                                {{ c.type || '單日課程' }}
+                                            </span>
                                             <span class="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">{{ c.timeSlotType }}</span>
                                         </div>
                                         <div class="text-sm text-gray-600">{{ formatDate(c.startDate) }} ~ {{ formatDate(c.endDate) }}</div>
@@ -334,6 +341,7 @@
                                 <select v-model="courseForm.type" class="input-line">
                                     <option value="單日課程">單日課程 (無退費)</option>
                                     <option value="多日營隊">多日營隊 (可請假)</option>
+                                    <option value="常態課後">常態課後 (學期制)</option>
                                 </select>
                             </div>
                             <div>
@@ -342,12 +350,17 @@
                                     <option value="全日">全日班</option>
                                     <option value="上午">上午班</option>
                                     <option value="下午">下午班</option>
+                                    <option value="晚上">晚上班</option>
                                 </select>
                             </div>
                         </div>
                         <div v-if="courseForm.type==='多日營隊'" class="mt-3 text-xs text-orange-600 bg-orange-50 p-2 rounded flex items-start gap-2">
                             <i class="fas fa-exclamation-triangle mt-0.5"></i>
                             <span>設定為多日營隊後，系統將自動允許使用者在前端報名時勾選請假日期（規定超過3天將無法送出報名）。</span>
+                        </div>
+                        <div v-if="courseForm.type==='常態課後'" class="mt-3 text-xs text-purple-600 bg-purple-50 p-2 rounded flex items-start gap-2">
+                            <i class="fas fa-info-circle mt-0.5"></i>
+                            <span>常態課後為整學期固定每週上課之課程。</span>
                         </div>
                     </div>
 
