@@ -105,6 +105,8 @@
                                         </button>
                                     </td>
                                     <td class="text-right">
+                                        <!-- 恢復：課程複製按鈕 -->
+                                        <button @click="copyCourse(c)" class="text-gray-400 hover:text-blue-500 px-2" title="複製此課程"><i class="far fa-copy"></i> 複製</button>
                                         <button @click="openEditCourse(c)" class="text-blue-500 hover:underline px-2"><i class="fas fa-edit"></i> 編輯</button>
                                     </td>
                                 </tr>
@@ -320,6 +322,7 @@
         setup() {
             const isLoggedIn=ref(false), password=ref(''), isLoading=ref(false), error=ref(''), currentTab=ref('courses');
             const courses=ref([]), orders=ref([]), users=ref([]);
+            const searchTerm=ref(''); // 保留搜尋綁定
             
             const showCourseModal=ref(false), isEditingCourse=ref(false), courseForm=ref({}), courseEquipments=ref([]);
             const showMemberModal=ref(false), editingMember=ref({});
@@ -345,13 +348,22 @@
             const viewEnrollmentList = (course) => { currentViewingCourseName.value = course.name; selectedCourseEnrollment.value = orders.value.filter(o => o.courseId === course.id); showEnrollmentModal.value = true; };
             const openOrderFromList = (order) => { editingOrder.value = {...order}; showOrderModal.value = true; };
 
+            const fmtDate = d => { if (!d || d === '-') return ''; if (typeof d === 'string' && d.length >= 10) return d.substring(0, 10); return d; };
+
             const openAddCourse = () => { isEditingCourse.value=false; courseForm.value={id:'', name:'', startDate:'', endDate:'', price:0, capacity:0, totalSessions:1, type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]'}; courseEquipments.value=[]; showCourseModal.value=true; };
-            const openEditCourse = (c) => { isEditingCourse.value=true; courseForm.value = {...c}; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
+            const openEditCourse = (c) => { isEditingCourse.value=true; courseForm.value = {...c, startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate)}; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
+            
+            // 恢復：課程複製功能邏輯
+            const copyCourse = (c) => { 
+                isEditingCourse.value=false; 
+                courseForm.value = {...c, id: '', name: c.name + ' (複製)', startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate)}; 
+                try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
+                showCourseModal.value=true; 
+            };
+
             const addEquipment = () => { courseEquipments.value.push({name:'', price:0}); };
             const removeEquipment = (i) => { courseEquipments.value.splice(i, 1); };
             const saveCourse = async () => { isLoading.value=true; try { courseForm.value.equipmentJson = JSON.stringify(courseEquipments.value); const act = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE'; await callApi(act, courseForm.value); alert('成功'); showCourseModal.value=false; fetchData(); } catch(e){ alert('失敗'); } finally { isLoading.value=false; } };
-
-            const fmtDate = d => { if (!d || d === '-') return ''; if (typeof d === 'string' && d.length >= 10) return d.substring(0, 10); return d; };
 
             const openMember = (u) => { editingMember.value = JSON.parse(JSON.stringify(u)); editingMember.value.birthday = fmtDate(editingMember.value.birthday); showMemberModal.value=true; };
             const saveMember = async () => { try { await callApi('ADMIN_UPDATE_MEMBER', {memberData:editingMember.value}); alert('成功'); showMemberModal.value=false; fetchData(); } catch(e){ alert('錯誤'); } };
@@ -362,10 +374,25 @@
             const saveOrder = async () => { try { await callApi('ADMIN_UPDATE_ORDER', {orderData:editingOrder.value}); alert('成功'); showOrderModal.value=false; fetchData(); } catch(e){ alert('失敗'); } };
 
             const tabName = computed(() => ({'courses':'課程管理','orders':'訂單管理','members':'會員管理'}[currentTab.value]));
+            
+            // 恢復過濾邏輯確保搜尋框運作
+            const filteredOrders = computed(() => { const s = searchTerm.value.toLowerCase(); return orders.value.filter(o => String(o.name || '').includes(s) || String(o.phone || '').includes(s) || String(o.orderId || '').includes(s)); });
+            const filteredUsers = computed(() => { const s = searchTerm.value.toLowerCase(); return users.value.filter(u => String(u.name || '').includes(s) || String(u.nationalId || '').includes(s) || String(u.phone || '').includes(s)); });
+
             const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已完款','CANCELLED':'已取消'}[s]||s);
             const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s]);
 
-            return { isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, showCourseModal, isEditingCourse, courseForm, courseEquipments, showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative, showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName, login, logout, fetchData, openAddCourse, openEditCourse, addEquipment, removeEquipment, saveCourse, openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative, getStatusLabel, getStatusClass, getPaidCount, getPendingCount, viewEnrollmentList, openOrderFromList };
+            // 確保所有變數都有輸出
+            return { 
+                isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, searchTerm,
+                filteredOrders, filteredUsers, showCourseModal, isEditingCourse, courseForm, courseEquipments, 
+                showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative, 
+                showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName,
+                login, logout, fetchData, openAddCourse, openEditCourse, copyCourse, addEquipment, removeEquipment, saveCourse, 
+                openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative, 
+                getStatusLabel, getStatusClass, getPaidCount, getPendingCount, viewEnrollmentList, openOrderFromList,
+                formatTime: d => d ? new Date(d).toLocaleString('zh-TW',{hour12:false}) : '-'
+            };
         }
     }).mount('#app');
 </script>
