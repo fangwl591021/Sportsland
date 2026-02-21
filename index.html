@@ -30,9 +30,9 @@
 <body class="bg-gray-50 min-h-screen text-gray-800 font-sans">
 
 <div id="app" v-cloak class="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative overflow-hidden">
-    <!-- Header -->
+    <!-- Header (更新標題名稱與精緻頭像) -->
     <header class="bg-[#06C755] text-white p-4 sticky top-0 z-30 flex items-center justify-between shadow-md">
-        <h1 class="text-[17px] font-black tracking-wide truncate">運動島綜合體能館</h1>
+        <h1 class="text-[17px] font-black tracking-wide truncate">運動島綜合運動體能館</h1>
         <div class="flex items-center bg-white/20 pl-1 pr-3 py-1 rounded-full shrink-0 shadow-inner">
             <img v-if="userProfile?.pictureUrl" :src="userProfile.pictureUrl" class="w-6 h-6 rounded-full object-cover mr-2 border border-white/50 shadow-sm">
             <i v-else class="fas fa-user text-sm mr-2 ml-2"></i>
@@ -56,22 +56,31 @@
             </div>
         </div>
 
-        <!-- View 1: Main Course List & Top Action Bar -->
+        <!-- View 1: Main Course List & Top Action Bar (全新佈局) -->
         <div v-else-if="view === 'course_list'" class="animate-fade-in pb-10">
-            <!-- 橫式功能操作列 -->
-            <div class="bg-white px-4 py-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] flex gap-3 border-b sticky top-0 z-20">
-                <button @click="editProfile" class="flex-1 bg-[#f0fbf5] text-[#06C755] border border-[#06C755]/20 rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition shadow-sm">
-                    <i class="fas fa-id-card text-lg"></i>
-                    <span class="text-sm font-bold">會員與子女資料</span>
-                </button>
-                <button @click="goToMyOrders" class="flex-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-3 flex items-center justify-center gap-2 active:scale-95 transition shadow-sm">
-                    <i class="fas fa-clipboard-list text-lg"></i>
-                    <span class="text-sm font-bold">報名紀錄</span>
-                </button>
+            <!-- 首頁 Banner 圖片 (跟隨捲動) -->
+            <div class="w-full bg-white">
+                <img src="https://aiwe.cc/wp-content/uploads/2026/02/17a931ba9905835dd08db446b3d33e1b.png" alt="運動島活動 Banner" class="w-full h-auto block object-cover">
             </div>
 
-            <!-- 課程清單 -->
-            <div class="p-4 space-y-5 pt-6">
+            <!-- 橫式功能操作列 (一排三個按鈕，釘選在頂部) -->
+            <div class="bg-white px-3 py-3 shadow-[0_4px_15px_rgba(0,0,0,0.05)] grid grid-cols-3 gap-2 border-b sticky top-0 z-20">
+                <button @click="editProfile" class="bg-[#f0fbf5] text-[#06C755] border border-[#06C755]/20 rounded-xl py-2 flex flex-col items-center justify-center gap-1 active:scale-95 transition shadow-sm">
+                    <i class="fas fa-id-card text-[22px]"></i>
+                    <span class="text-[11px] font-bold">會員專區</span>
+                </button>
+                <button @click="goToMyOrders" class="bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-2 flex flex-col items-center justify-center gap-1 active:scale-95 transition shadow-sm">
+                    <i class="fas fa-clipboard-list text-[22px]"></i>
+                    <span class="text-[11px] font-bold">報名紀錄</span>
+                </button>
+                <a href="https://www.facebook.com/profile.php?id=100057303465231" target="_blank" class="bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl py-2 flex flex-col items-center justify-center gap-1 active:scale-95 transition shadow-sm">
+                    <i class="fab fa-facebook text-[22px]"></i>
+                    <span class="text-[11px] font-bold">粉絲專頁</span>
+                </a>
+            </div>
+
+            <!-- 課程清單直接呈現 -->
+            <div class="p-4 space-y-5 pt-5">
                 <div class="flex items-center mb-2">
                     <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">最新開放課程</h2>
                 </div>
@@ -234,7 +243,7 @@
             </div>
         </div>
 
-        <!-- View 5: Order Detail Full Page (全頁面修改報名資料) -->
+        <!-- View 5: Order Detail Full Page -->
         <div v-else-if="view === 'order_detail'" class="p-4 animate-fade-in pb-24">
             <div class="flex items-center mb-4">
                 <button @click="view='my_orders'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-arrow-left"></i></button>
@@ -249,7 +258,6 @@
             </div>
 
             <form @submit.prevent="submitEditOrder" class="space-y-6">
-                <!-- 設備加購修改 -->
                 <div v-if="editEquipmentList.length > 0" class="border-t border-gray-200 pt-5">
                     <h3 class="font-bold text-gray-800 mb-3"><i class="fas fa-table-tennis mr-2 text-blue-500 text-lg"></i> 設備租用調整</h3>
                     <div v-for="(eq, idx) in editEquipmentList" :key="idx" class="checkbox-wrapper" :class="{'active': isEditEqSelected(eq)}" @click="toggleEditEquipment(eq)">
@@ -258,7 +266,6 @@
                     </div>
                 </div>
 
-                <!-- 請假修改 -->
                 <div v-if="editingOrder?.courseType === '多日營隊'" class="border-t border-gray-200 pt-5">
                     <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i class="far fa-calendar-times mr-2 text-red-500 text-lg"></i> 請假扣款修改 (最多3天)</h3>
                     <div class="grid grid-cols-2 gap-2">
@@ -269,7 +276,6 @@
                     </div>
                 </div>
 
-                <!-- 匯款回填 -->
                 <div class="border-t border-gray-200 pt-6">
                     <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
                     <input v-model="tempRemittance" class="form-input text-center font-mono text-2xl tracking-[0.2em] shadow-inner py-4" maxlength="5" placeholder="00000">
@@ -345,27 +351,23 @@
 
     createApp({
         setup() {
-            // -- 核心狀態 --
             const view = ref('loading');
             const error = ref('');
             const isSubmitting = ref(false);
             const isLoading = ref(true);
             
-            // -- 資料狀態 --
             const userProfile = ref(null);
             const userInfo = ref({});
             const courses = ref([]);
             const myOrders = ref([]);
             
-            // -- 註冊與報名表單 --
             const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', identity: '家長', gender: '男', familyMembers: [] });
             const selectedCourse = ref(null);
             const selectedAttendee = ref(null);
             const excludedDates = ref([]);
             const selectedEquipments = ref([]);
-            const registrationNote = ref(''); // 家長備註欄位
+            const registrationNote = ref('');
             
-            // -- 彈窗狀態 --
             const showFamilyModal = ref(false);
             const tempFamily = ref({});
             const editingFamilyIndex = ref(-1);
@@ -373,13 +375,12 @@
             const showDetailModal = ref(false);
             const detailCourse = ref({});
             
-            // -- 訂單編輯狀態 (全頁面) --
+            const showEditOrderModal = ref(false);
             const editingOrder = ref(null);
             const tempRemittance = ref('');
             const tempExcludedDates = ref([]);
             const tempSelectedEquipments = ref([]);
 
-            // -- API 呼叫器 --
             const callApi = async (act, pl = {}) => {
                 const res = await fetch(API_ENDPOINT, { 
                     method: 'POST', 
@@ -390,16 +391,11 @@
                 return json.data;
             };
 
-            // -- 初始化 --
             const loadCourses = async () => {
                 isLoading.value = true;
-                try {
-                    courses.value = await callApi('GET_COURSES');
-                } catch (e) {
-                    error.value = '讀取課程清單失敗';
-                } finally {
-                    isLoading.value = false;
-                }
+                try { courses.value = await callApi('GET_COURSES'); } 
+                catch (e) { error.value = '讀取課程清單失敗'; } 
+                finally { isLoading.value = false; }
             };
 
             const init = async () => {
@@ -425,7 +421,6 @@
                 }
             };
 
-            // -- 導覽與操作 --
             const goToCourses = async () => { await loadCourses(); view.value = 'course_list'; };
             
             const goToMyOrders = async () => { 
@@ -456,7 +451,6 @@
                 }
             };
 
-            // -- 會員資料存檔 --
             const submitMemberRegister = async () => {
                 isSubmitting.value = true;
                 try {
@@ -469,7 +463,6 @@
                 } catch (e) { alert('儲存失敗：' + e.message); } finally { isSubmitting.value = false; }
             };
 
-            // -- 子女名單邏輯 --
             const openFamilyModal = (idx) => {
                 editingFamilyIndex.value = idx;
                 if (idx === -1) {
@@ -491,15 +484,14 @@
             
             const removeFamilyMember = (i) => { if(confirm('確定要刪除此位子女資料嗎？')) regForm.value.familyMembers.splice(i, 1); };
 
-            // -- 課程報名邏輯 --
             const openDetail = (c) => { detailCourse.value = c; showDetailModal.value = true; };
             
             const selectCourse = (c) => { 
                 selectedCourse.value = c; 
-                selectedAttendee.value = userInfo.value; // 預設選取主帳號
+                selectedAttendee.value = userInfo.value;
                 excludedDates.value = []; 
                 selectedEquipments.value = []; 
-                registrationNote.value = ''; // 清空備註
+                registrationNote.value = ''; 
                 view.value = 'form'; 
             };
 
@@ -526,7 +518,6 @@
                 } catch(e) { alert(e.message); } finally { isSubmitting.value = false; }
             };
 
-            // -- 訂單全頁面修改邏輯 --
             const openOrderDetail = (o) => { 
                 editingOrder.value = o; 
                 tempRemittance.value = o.remittance || ''; 
@@ -553,7 +544,6 @@
                 } catch (e) { alert('儲存失敗：' + e.message); } finally { isSubmitting.value = false; }
             };
 
-            // -- 計算屬性 Computed (安全版) --
             const equipmentList = computed(() => { 
                 if(!selectedCourse.value?.equipmentJson) return []; 
                 try { return JSON.parse(selectedCourse.value.equipmentJson); } catch(e) { return []; } 
@@ -603,15 +593,13 @@
                 return Math.max(0, t);
             });
 
-            // 啟動點
             onMounted(init);
 
-            // -- 回傳給 Template --
             return {
                 view, error, isSubmitting, isLoading, userProfile, userInfo, courses, myOrders, 
                 regForm, selectedCourse, selectedAttendee, excludedDates, selectedEquipments, registrationNote,
                 showDetailModal, detailCourse, showFamilyModal, tempFamily, editingFamilyIndex, 
-                editingOrder, tempRemittance, tempExcludedDates, tempSelectedEquipments,
+                showEditOrderModal, editingOrder, tempRemittance, tempExcludedDates, tempSelectedEquipments,
                 
                 init, loadCourses, goToCourses, goToMyOrders, editProfile,
                 openDetail, selectCourse, submitMemberRegister, submitRegistration,
