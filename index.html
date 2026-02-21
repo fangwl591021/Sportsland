@@ -109,7 +109,11 @@
                 <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 space-y-3">
                     <h3 class="text-blue-800 font-bold text-sm mb-2"><i class="fas fa-user-circle mr-1"></i> 家長/本人資料 (必填)</h3>
                     <div><label class="form-label">真實姓名</label><input type="text" v-model="regForm.name" required class="form-input shadow-sm"></div>
-                    <div><label class="form-label">身分證字號</label><input type="text" v-model="regForm.nationalId" required class="form-input uppercase shadow-sm" :readonly="!!userInfo?.nationalId"></div>
+                    <div>
+                        <!-- 修改：加上 (辦理保險用) -->
+                        <label class="form-label">身分證字號 <span class="text-gray-500 font-normal text-[11px] ml-1">(辦理保險用)</span></label>
+                        <input type="text" v-model="regForm.nationalId" required class="form-input uppercase shadow-sm" :readonly="!!userInfo?.nationalId">
+                    </div>
                     <div><label class="form-label">出生年月日</label><input type="date" v-model="regForm.birthday" required class="form-input shadow-sm"></div>
                     <div><label class="form-label">聯絡電話</label><input type="tel" v-model="regForm.phone" required class="form-input shadow-sm"></div>
                     <div><label class="form-label">性別</label><select v-model="regForm.gender" required class="form-input shadow-sm"><option value="男">男</option><option value="女">女</option></select></div>
@@ -160,6 +164,12 @@
                             <span class="font-bold text-gray-800">{{ fam.name }} <span class="text-[10px] text-gray-500 ml-1 font-normal">({{ fam.relation }})</span></span>
                         </label>
                     </div>
+                </div>
+
+                <!-- 新增：家長備註欄位 -->
+                <div class="border-t pt-4 mt-2">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center"><i class="fas fa-comment-dots mr-2 text-blue-500"></i> 學員狀況備註 <span class="text-xs text-gray-400 font-normal ml-2">(選填)</span></h3>
+                    <textarea v-model="registrationNote" class="form-input shadow-sm text-sm" rows="2" placeholder="如有特殊身體狀況或需教練注意的事項，請在此說明..."></textarea>
                 </div>
 
                 <div v-if="equipmentList.length > 0" class="border-t pt-4">
@@ -281,7 +291,7 @@
                 <h3 class="text-xl font-black mb-6 text-gray-800">{{ editingFamilyIndex === -1 ? '新增子女' : '修改子女資訊' }}</h3>
                 <form @submit.prevent="saveFamilyMember" class="space-y-4">
                     <div><label class="form-label text-xs">真實姓名</label><input v-model="tempFamily.name" required class="form-input shadow-sm"></div>
-                    <div><label class="form-label text-gray-400 text-xs">身分證字號</label><input v-model="tempFamily.nationalId" required class="form-input uppercase shadow-sm" :readonly="editingFamilyIndex!==-1"></div>
+                    <div><label class="form-label text-gray-400 text-xs">身分證字號 <span class="font-normal">(辦理保險用)</span></label><input v-model="tempFamily.nationalId" required class="form-input uppercase shadow-sm" :readonly="editingFamilyIndex!==-1"></div>
                     <div><label class="form-label text-xs">出生年月日</label><input v-model="tempFamily.birthday" type="date" required class="form-input shadow-sm"></div>
                     <div><label class="form-label text-xs">關係</label><input v-model="tempFamily.relation" required class="form-input shadow-sm" placeholder="例：長男、次女"></div>
                     <div><label class="form-label text-xs">性別</label><select v-model="tempFamily.gender" required class="form-input shadow-sm"><option value="男">男</option><option value="女">女</option></select></div>
@@ -321,9 +331,6 @@
         </div>
     </transition>
 
-    <!-- 訂單修改彈窗 (保留) -->
-    <transition name="fade"><div v-if="showEditOrderModal" class="fixed inset-0 bg-black/60 z-[50] flex items-end sm:items-center justify-center p-4"><div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-8 shadow-2xl"><div class="flex justify-between items-center mb-6"><b>修改報名詳情</b><button @click="showEditOrderModal=false"><i class="fas fa-times text-gray-400"></i></button></div><div class="space-y-6"><div><label class="form-label text-xs">帳號後五碼</label><input v-model="tempRemittance" class="form-input text-center font-mono text-xl tracking-widest shadow-inner" maxlength="5" placeholder="00000"></div><button @click="submitEditOrder" :disabled="isSubmitting" class="btn-primary w-full shadow-lg">確認修改並回填</button></div></div></div></transition>
-
 </div>
 
 <script>
@@ -351,6 +358,7 @@
             const selectedAttendee = ref(null);
             const excludedDates = ref([]);
             const selectedEquipments = ref([]);
+            const registrationNote = ref(''); // 新增：家長備註欄位
             
             // -- 彈窗狀態 --
             const showFamilyModal = ref(false);
@@ -361,7 +369,7 @@
             const detailCourse = ref({});
             
             // -- 訂單編輯狀態 (全頁面/彈窗) --
-            const showEditOrderModal = ref(false); // FIXED ReferenceError
+            const showEditOrderModal = ref(false);
             const editingOrder = ref(null);
             const tempRemittance = ref('');
             const tempExcludedDates = ref([]);
@@ -488,6 +496,7 @@
                 selectedAttendee.value = userInfo.value; // 預設選取主帳號
                 excludedDates.value = []; 
                 selectedEquipments.value = []; 
+                registrationNote.value = ''; // 重置備註
                 view.value = 'form'; 
             };
 
@@ -506,7 +515,8 @@
                         nationalId: selectedAttendee.value.nationalId, 
                         phone: selectedAttendee.value.phone || userInfo.value.phone, 
                         excludedDates: excludedDates.value, 
-                        equipments: selectedEquipments.value 
+                        equipments: selectedEquipments.value,
+                        note: registrationNote.value // 傳送家長備註
                     };
                     await callApi('REGISTER', pl); 
                     view.value = 'success';
@@ -594,10 +604,9 @@
             onMounted(init);
 
             // -- 回傳給 Template --
-            // 注意：這裡必須包含所有模板使用到的變數與函數，漏一個都會導致白畫面崩潰。
             return {
                 view, error, isSubmitting, isLoading, userProfile, userInfo, courses, myOrders, 
-                regForm, selectedCourse, selectedAttendee, excludedDates, selectedEquipments,
+                regForm, selectedCourse, selectedAttendee, excludedDates, selectedEquipments, registrationNote,
                 showDetailModal, detailCourse, showFamilyModal, tempFamily, editingFamilyIndex, 
                 showEditOrderModal, editingOrder, tempRemittance, tempExcludedDates, tempSelectedEquipments,
                 
