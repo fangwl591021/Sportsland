@@ -26,11 +26,9 @@
         .btn-white { background: white; border: 1px solid #d1d5db; color: #374151; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; }
         .input-line { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 12px; font-size: 14px; outline: none; transition: border 0.2s; }
         .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .modal-pop { background: white; width: 95%; height: 95%; max-width: 1300px; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+        .modal-pop { background: white; width: 95%; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
         .section-header { font-size: 15px; font-weight: 700; color: #111827; border-left: 4px solid #06C755; padding-left: 10px; margin: 20px 0 15px; }
         .settings-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-        
-        /* 繳費狀況按鈕樣式 */
         .status-pill-btn { @apply border rounded-lg px-3 py-2 text-left hover:bg-gray-50 transition cursor-pointer border-gray-200 block w-full; }
     </style>
 </head>
@@ -98,15 +96,12 @@
                                         <div class="text-[10px] text-gray-400">{{ c.enrolled }} / {{ c.capacity }} 人</div>
                                     </td>
                                     <td class="w-48"> 
-                                        <!-- 點擊彈出名單 -->
                                         <button @click="viewEnrollmentList(c)" class="status-pill-btn group">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-green-600 font-bold text-xs">已付: {{ getPaidCount(c.id) }}</span>
                                                 <i class="fas fa-chevron-right text-[10px] text-gray-300 group-hover:text-[#06C755]"></i>
                                             </div>
-                                            <div class="text-[10px] text-orange-500">
-                                                待付: {{ getPendingCount(c.id) }}
-                                            </div>
+                                            <div class="text-[10px] text-orange-500">待付: {{ getPendingCount(c.id) }}</div>
                                         </button>
                                     </td>
                                     <td class="text-right">
@@ -158,85 +153,66 @@
 
     <!-- --- MODALS --- -->
 
-    <!-- 1. 課程報名學員名單 POP (新增) -->
+    <!-- 1. 報名名單 -->
     <div v-if="showEnrollmentModal" class="modal-mask">
         <div class="modal-pop" style="max-width:900px; height:80%;">
             <div class="h-14 border-b px-6 flex justify-between items-center shrink-0 bg-white shadow-sm">
-                <h3 class="font-black text-lg text-gray-800">
-                    <i class="fas fa-users text-[#06C755] mr-2"></i>{{ currentViewingCourseName }} - 報名名單
-                </h3>
+                <h3 class="font-black text-lg text-gray-800"><i class="fas fa-users text-[#06C755] mr-2"></i>{{ currentViewingCourseName }} - 報名名單</h3>
                 <button @click="showEnrollmentModal=false" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 bg-[#f9fafb]">
                 <div class="card shadow-none">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>學員姓名</th>
-                                <th>聯絡電話</th>
-                                <th>應收金額</th>
-                                <th>付款狀態</th>
-                                <th>匯款末五碼</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>學員姓名</th><th>聯絡電話</th><th>應收金額</th><th>付款狀態</th><th>匯款末五碼</th><th>操作</th></tr></thead>
                         <tbody>
                             <tr v-for="p in selectedCourseEnrollment" :key="p.orderId">
                                 <td class="font-bold">{{ p.name }}</td>
                                 <td class="text-xs text-gray-500">{{ p.phone }}</td>
                                 <td class="font-bold text-gray-700">${{ p.amount }}</td>
-                                <td>
-                                    <span :class="getStatusClass(p.status)" class="px-2 py-1 rounded text-[10px] font-bold">{{ getStatusLabel(p.status) }}</span>
-                                </td>
+                                <td><span :class="getStatusClass(p.status)" class="px-2 py-1 rounded text-[10px] font-bold">{{ getStatusLabel(p.status) }}</span></td>
                                 <td class="font-mono text-blue-600 font-bold">{{ p.remittance || '-' }}</td>
-                                <td>
-                                    <button @click="openOrderFromList(p)" class="text-blue-500 text-xs font-bold hover:underline">編輯訂單</button>
-                                </td>
+                                <td><button @click="openOrderFromList(p)" class="text-blue-500 text-xs font-bold hover:underline">編輯訂單</button></td>
                             </tr>
-                            <tr v-if="selectedCourseEnrollment.length === 0">
-                                <td colspan="6" class="text-center py-20 text-gray-400">目前尚無人報名此課程</td>
-                            </tr>
+                            <tr v-if="selectedCourseEnrollment.length === 0"><td colspan="6" class="text-center py-20 text-gray-400">目前尚無人報名此課程</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="h-14 border-t px-6 flex justify-end items-center bg-white">
-                <button @click="showEnrollmentModal=false" class="btn-white px-8">關閉名單</button>
-            </div>
+            <div class="h-14 border-t px-6 flex justify-end items-center bg-white"><button @click="showEnrollmentModal=false" class="btn-white px-8">關閉名單</button></div>
         </div>
     </div>
 
-    <!-- 2. 課程編輯彈窗 -->
+    <!-- 2. 課程編輯 (還原 19 個完整欄位) -->
     <div v-if="showCourseModal" class="modal-mask">
-        <div class="modal-pop">
+        <div class="modal-pop" style="max-width:1000px; height:85%;">
             <div class="h-14 border-b px-6 flex justify-between items-center shrink-0 bg-white"><h3 class="font-black text-lg text-gray-800">{{ isEditingCourse ? '編輯課程詳情' : '建立新課程' }}</h3><button @click="showCourseModal=false"><i class="fas fa-times"></i></button></div>
             <div class="flex-1 flex overflow-hidden">
-                <div class="w-1/2 p-8 overflow-y-auto border-r bg-white">
+                <div class="w-1/2 p-6 overflow-y-auto border-r bg-white">
                     <div class="section-header">基本資訊</div>
-                    <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div><label class="label-line">課程 ID</label><input v-model="courseForm.id" class="input-line" :readonly="isEditingCourse"></div>
                         <div><label class="label-line">課程名稱</label><input v-model="courseForm.name" class="input-line"></div>
                         <div><label class="label-line">類型</label><select v-model="courseForm.type" class="input-line"><option value="單日課程">單日課程</option><option value="多日營隊">多日營隊</option><option value="常態課後">常態課後</option></select></div>
-                        <div><label class="label-line">時段</label><select v-model="courseForm.timeSlotType" class="input-line"><option value="全日">全日 (09:00-16:00)</option><option value="上午">上午 (09:00-12:00)</option><option value="下午">下午 (13:30-16:30)</option><option value="晚間">晚間</option></select></div>
+                        <div><label class="label-line">時段</label><select v-model="courseForm.timeSlotType" class="input-line"><option value="全日">全日</option><option value="上午">上午</option><option value="下午">下午</option><option value="晚間">晚間</option></select></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div><label class="label-line">開始日期</label><input v-model="courseForm.startDate" type="date" class="input-line"></div>
                         <div><label class="label-line">結束日期</label><input v-model="courseForm.endDate" type="date" class="input-line"></div>
-                        <div><label class="label-line">上課時間</label><input v-model="courseForm.startTime" placeholder="09:00" class="input-line"></div>
-                        <div><label class="label-line">下課時間</label><input v-model="courseForm.endTime" placeholder="16:00" class="input-line"></div>
+                        <div><label class="label-line">開始時間</label><input v-model="courseForm.startTime" placeholder="09:00" class="input-line"></div>
+                        <div><label class="label-line">結束時間</label><input v-model="courseForm.endTime" placeholder="16:00" class="input-line"></div>
                     </div>
                     <div class="section-header">地點與師資</div>
-                    <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div><label class="label-line">上課地點</label><input v-model="courseForm.location" class="input-line"></div>
                         <div><label class="label-line">教練/老師</label><input v-model="courseForm.instructor" class="input-line"></div>
                     </div>
                 </div>
-                <div class="w-1/2 p-8 overflow-y-auto bg-[#fafafa]">
+                <div class="w-1/2 p-6 overflow-y-auto bg-[#fafafa]">
                     <div class="section-header">費用與設定</div>
-                    <div class="grid grid-cols-2 gap-6 mb-6">
-                        <div><label class="label-line">原價</label><input v-model="courseForm.price" type="number" class="input-line"></div>
-                        <div><label class="label-line">名額</label><input v-model="courseForm.capacity" type="number" class="input-line"></div>
-                        <div><label class="label-line">總堂數</label><input v-model="courseForm.totalSessions" type="number" class="input-line"></div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="label-line">原價</label><input v-model="courseForm.price" type="number" class="input-line font-bold"></div>
+                        <div><label class="label-line">總名額</label><input v-model="courseForm.capacity" type="number" class="input-line"></div>
+                        <div><label class="label-line">總堂數 (計算請假用)</label><input v-model="courseForm.totalSessions" type="number" class="input-line"></div>
                     </div>
                     <div class="settings-box">
                         <div class="font-bold text-xs mb-3 text-orange-600 flex items-center"><i class="fas fa-bolt mr-1"></i> 早鳥優惠</div>
@@ -247,41 +223,57 @@
                     </div>
                     <div class="section-header flex justify-between"><span>設備項目</span><button @click="addEquipment" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">新增設備</button></div>
                     <div v-for="(eq, idx) in courseEquipments" :key="idx" class="flex gap-2 items-center bg-white p-2 rounded border mb-2 shadow-sm">
-                        <input v-model="eq.name" placeholder="項目" class="input-line text-xs flex-1">
-                        <input v-model="eq.price" type="number" placeholder="金額" class="input-line text-xs w-20">
+                        <input v-model="eq.name" placeholder="名稱" class="input-line text-xs flex-1">
+                        <input v-model="eq.price" type="number" placeholder="金額" class="input-line text-xs w-24">
                         <button @click="removeEquipment(idx)" class="text-red-400 px-2"><i class="fas fa-trash"></i></button>
                     </div>
-                    <div class="section-header">宣傳圖與說明</div>
+                    <div class="section-header">宣傳與說明</div>
                     <div class="mb-4"><label class="label-line">圖片 URL</label><input v-model="courseForm.image" class="input-line text-xs"></div>
-                    <textarea v-model="courseForm.description" rows="5" class="input-line text-sm"></textarea>
+                    <textarea v-model="courseForm.description" rows="4" class="input-line text-sm"></textarea>
                 </div>
             </div>
             <div class="h-16 border-t px-8 flex justify-end items-center gap-4 bg-white"><button @click="showCourseModal=false" class="btn-white px-8">取消</button><button @click="saveCourse" :disabled="isLoading" class="btn-green px-12">{{ isLoading ? '儲存中...' : '確認儲存' }}</button></div>
         </div>
     </div>
 
-    <!-- 3. 會員詳情視窗 -->
+    <!-- 3. 會員詳情視窗 (尺寸修正，排版對齊圖片) -->
     <div v-if="showMemberModal" class="modal-mask">
-        <div class="modal-pop" style="max-width:1000px; height:80%;">
+        <div class="modal-pop" style="max-width:900px; height:75%;">
             <div class="h-14 border-b px-6 flex justify-between items-center shrink-0 bg-white"><h3 class="font-bold">會員資料管理</h3><button @click="showMemberModal=false"><i class="fas fa-times"></i></button></div>
             <div class="flex-1 flex overflow-hidden">
-                <div class="w-1/2 p-8 overflow-y-auto border-r bg-white">
-                    <div class="section-header">家長主帳號</div>
-                    <div class="grid grid-cols-2 gap-6">
+                <div class="w-1/2 p-6 overflow-y-auto border-r bg-white">
+                    <div class="section-header text-[#06C755]"><i class="fas fa-user mr-1"></i> 主帳號資料</div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div><label class="label-line">姓名</label><input v-model="editingMember.name" class="input-line"></div>
-                        <div><label class="label-line">手機</label><input v-model="editingMember.phone" class="input-line"></div>
+                        <div><label class="label-line text-gray-400">身分證 (不可修改)</label><input v-model="editingMember.nationalId" class="input-line bg-gray-50" readonly></div>
+                        <div><label class="label-line">性別</label><select v-model="editingMember.gender" class="input-line"><option value="男">男</option><option value="女">女</option></select></div>
                         <div><label class="label-line">生日</label><input v-model="editingMember.birthday" type="date" class="input-line"></div>
                     </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="label-line">聯絡電話</label><input v-model="editingMember.phone" class="input-line"></div>
+                        <div><label class="label-line">居住地址</label><input v-model="editingMember.address" class="input-line"></div>
+                    </div>
+                    <div><label class="label-line text-blue-600">健康備註 (對外顯示)</label><textarea v-model="editingMember.healthNote" rows="3" class="input-line"></textarea></div>
                 </div>
-                <div class="w-1/2 p-8 overflow-y-auto bg-[#f9fafb]">
-                    <div class="section-header">子女名單</div>
-                    <div v-for="fm in editingMember.familyMembers" :key="fm.userId" class="bg-white p-4 rounded-xl border mb-3 flex justify-between items-center shadow-sm">
-                        <div><div class="font-bold text-gray-800 text-base">{{ fm.name }} ({{ fm.relation }})</div><div class="text-[10px] text-gray-400">ID: {{ fm.nationalId }} | 生日: {{ fm.birthday }}</div></div>
-                        <button @click="openRelativeEdit(fm)" class="w-10 h-10 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-full transition shadow-sm border border-blue-100"><i class="fas fa-pen text-sm"></i></button>
+                <div class="w-1/2 p-6 overflow-y-auto bg-[#f9fafb]">
+                    <div class="section-header text-[#e85d04]"><i class="fas fa-users mr-1"></i> 家人名單 (共 {{ editingMember.familyMembers?.length || 0 }} 人)</div>
+                    <div v-for="fm in editingMember.familyMembers" :key="fm.userId" class="bg-white p-4 rounded-xl border mb-3 shadow-sm relative group">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-gray-800 text-base">{{ fm.name }}</h4>
+                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">{{ fm.relation }}</span>
+                        </div>
+                        <div class="flex gap-4 text-xs text-gray-500 mb-1">
+                            <span><i class="far fa-id-card w-4 text-center"></i> {{ fm.nationalId }}</span>
+                            <span><i class="fas fa-birthday-cake w-4 text-center"></i> {{ fm.birthday }}</span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <span><i class="fas fa-venus-mars w-4 text-center"></i> {{ fm.gender }}</span>
+                        </div>
+                        <button @click="openRelativeEdit(fm)" class="absolute bottom-4 right-4 text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-edit text-lg"></i></button>
                     </div>
                 </div>
             </div>
-            <div class="p-4 border-t flex justify-end bg-white shadow-lg"><button @click="saveMember" class="btn-green px-10">確認主帳號儲存</button></div>
+            <div class="p-4 border-t flex justify-end gap-3 bg-white shadow-lg"><button @click="showMemberModal=false" class="btn-white">取消</button><button @click="saveMember" class="btn-green px-10">確認儲存</button></div>
         </div>
     </div>
 
@@ -291,27 +283,30 @@
             <div class="h-14 px-6 border-b flex justify-between items-center bg-white shadow-sm"><b>修改子女資訊</b><button @click="showRelativeModal=false"><i class="fas fa-times text-gray-400"></i></button></div>
             <div class="p-6 space-y-4 bg-[#fafafa]">
                 <div><label class="label-line">姓名</label><input v-model="editingRelative.name" class="input-line"></div>
-                <div><label class="label-line">關係</label><input v-model="editingRelative.relation" class="input-line" placeholder="如：長子"></div>
                 <div><label class="label-line text-gray-400">身分證 (不可修改)</label><input v-model="editingRelative.nationalId" class="input-line bg-gray-100" readonly></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label-line">關係</label><input v-model="editingRelative.relation" class="input-line"></div>
+                    <div><label class="label-line">性別</label><select v-model="editingRelative.gender" class="input-line"><option value="男">男</option><option value="女">女</option></select></div>
+                </div>
                 <div><label class="label-line">生日</label><input v-model="editingRelative.birthday" type="date" class="input-line"></div>
             </div>
-            <div class="p-4 border-t flex justify-end gap-2 bg-white"><button @click="showRelativeModal=false" class="btn-white">取消</button><button @click="saveRelative" class="btn-green">確認修改</button></div>
+            <div class="p-4 border-t flex justify-end gap-2 bg-white"><button @click="showRelativeModal=false" class="btn-white">取消</button><button @click="saveRelative" class="btn-green px-8">儲存</button></div>
         </div>
     </div>
 
     <!-- 5. 訂單狀態編輯 -->
-    <div v-if="showOrderModal" class="modal-mask">
-        <div class="modal-pop" style="max-width:500px; height: auto;">
+    <div v-if="showOrderModal" class="modal-mask" style="z-index: 10000;">
+        <div class="modal-pop" style="max-width:450px; height: auto;">
             <div class="h-14 px-6 border-b flex justify-between items-center bg-white shadow-sm"><b>訂單維修</b><button @click="showOrderModal=false"><i class="fas fa-times text-gray-400"></i></button></div>
-            <div class="p-8 space-y-6 bg-[#fafafa]">
+            <div class="p-6 space-y-5 bg-[#fafafa]">
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-line">付款狀態</label><select v-model="editingOrder.status" class="input-line"><option value="PENDING">待付款</option><option value="PAID">已入帳</option><option value="CANCELLED">已取消</option></select></div>
+                    <div><label class="label-line">狀態</label><select v-model="editingOrder.status" class="input-line"><option value="PENDING">待付</option><option value="PAID">完款</option><option value="CANCELLED">取消</option></select></div>
                     <div><label class="label-line">實收金額</label><input v-model="editingOrder.amount" type="number" class="input-line font-bold text-[#06C755]"></div>
                 </div>
-                <div><label class="label-line">匯款後五碼</label><input v-model="editingOrder.remittance" class="input-line text-center font-mono" maxlength="5"></div>
-                <div><label class="label-line">內部管理備註</label><textarea v-model="editingOrder.note" class="input-line" rows="3"></textarea></div>
+                <div><label class="label-line">匯款後五碼</label><input v-model="editingOrder.remittance" class="input-line font-mono" maxlength="5"></div>
+                <div><label class="label-line">備註</label><textarea v-model="editingOrder.note" class="input-line" rows="2"></textarea></div>
             </div>
-            <div class="p-4 border-t flex justify-end gap-3 bg-white shadow-lg"><button @click="showOrderModal=false" class="btn-white">關閉</button><button @click="saveOrder" class="btn-green px-10">更新狀態</button></div>
+            <div class="p-4 border-t flex justify-end gap-3 bg-white"><button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-green">更新</button></div>
         </div>
     </div>
 
@@ -331,10 +326,7 @@
             const showOrderModal=ref(false), editingOrder=ref({});
             const showRelativeModal=ref(false), editingRelative=ref({});
             
-            // 名單檢視狀態
-            const showEnrollmentModal = ref(false);
-            const selectedCourseEnrollment = ref([]);
-            const currentViewingCourseName = ref('');
+            const showEnrollmentModal = ref(false), selectedCourseEnrollment = ref([]), currentViewingCourseName = ref('');
 
             const callApi = async (action, payload={}) => {
                 const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action, payload:{password:password.value, ...payload}}) });
@@ -347,39 +339,23 @@
             const logout = () => { isLoggedIn.value=false; password.value=''; };
             const fetchData = async () => { isLoading.value=true; try { const d = await callApi('ADMIN_GET_DATA'); courses.value=d.courses; orders.value=d.orders.reverse(); users.value=d.users; } catch(e){ alert('載入失敗'); } finally { isLoading.value=false; } };
 
-            // 統計邏輯
             const getPaidCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'PAID').length;
             const getPendingCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'PENDING').length;
 
-            // 名單檢視功能
-            const viewEnrollmentList = (course) => {
-                currentViewingCourseName.value = course.name;
-                selectedCourseEnrollment.value = orders.value.filter(o => o.courseId === course.id);
-                showEnrollmentModal.value = true;
-            };
+            const viewEnrollmentList = (course) => { currentViewingCourseName.value = course.name; selectedCourseEnrollment.value = orders.value.filter(o => o.courseId === course.id); showEnrollmentModal.value = true; };
+            const openOrderFromList = (order) => { editingOrder.value = {...order}; showOrderModal.value = true; };
 
-            const openOrderFromList = (order) => {
-                editingOrder.value = {...order};
-                showOrderModal.value = true;
-            };
-
-            // 課程邏輯
             const openAddCourse = () => { isEditingCourse.value=false; courseForm.value={id:'', name:'', startDate:'', endDate:'', price:0, capacity:0, totalSessions:1, type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]'}; courseEquipments.value=[]; showCourseModal.value=true; };
             const openEditCourse = (c) => { isEditingCourse.value=true; courseForm.value = {...c}; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
             const addEquipment = () => { courseEquipments.value.push({name:'', price:0}); };
             const removeEquipment = (i) => { courseEquipments.value.splice(i, 1); };
-            const saveCourse = async () => { 
-                isLoading.value=true;
-                try { 
-                    courseForm.value.equipmentJson = JSON.stringify(courseEquipments.value);
-                    const act = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE'; 
-                    await callApi(act, courseForm.value); alert('成功'); showCourseModal.value=false; fetchData(); 
-                } catch(e){ alert('失敗'); } finally { isLoading.value=false; }
-            };
+            const saveCourse = async () => { isLoading.value=true; try { courseForm.value.equipmentJson = JSON.stringify(courseEquipments.value); const act = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE'; await callApi(act, courseForm.value); alert('成功'); showCourseModal.value=false; fetchData(); } catch(e){ alert('失敗'); } finally { isLoading.value=false; } };
 
-            const openMember = (u) => { editingMember.value = JSON.parse(JSON.stringify(u)); showMemberModal.value=true; };
+            const fmtDate = d => { if (!d || d === '-') return ''; if (typeof d === 'string' && d.length >= 10) return d.substring(0, 10); return d; };
+
+            const openMember = (u) => { editingMember.value = JSON.parse(JSON.stringify(u)); editingMember.value.birthday = fmtDate(editingMember.value.birthday); showMemberModal.value=true; };
             const saveMember = async () => { try { await callApi('ADMIN_UPDATE_MEMBER', {memberData:editingMember.value}); alert('成功'); showMemberModal.value=false; fetchData(); } catch(e){ alert('錯誤'); } };
-            const openRelativeEdit = (fm) => { editingRelative.value = {...fm}; showRelativeModal.value=true; };
+            const openRelativeEdit = (fm) => { editingRelative.value = JSON.parse(JSON.stringify(fm)); editingRelative.value.birthday = fmtDate(editingRelative.value.birthday); showRelativeModal.value=true; };
             const saveRelative = async () => { try { await callApi('ADMIN_UPDATE_MEMBER', {memberData:editingRelative.value}); alert('已更新'); showRelativeModal.value=false; fetchData(); } catch(e){ alert('錯誤'); } };
 
             const openOrder = (o) => { editingOrder.value = {...o}; showOrderModal.value=true; };
@@ -389,15 +365,7 @@
             const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已完款','CANCELLED':'已取消'}[s]||s);
             const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s]);
 
-            return { 
-                isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, 
-                showCourseModal, isEditingCourse, courseForm, courseEquipments, 
-                showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative, 
-                showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName,
-                login, logout, fetchData, openAddCourse, openEditCourse, addEquipment, removeEquipment, saveCourse, 
-                openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative, 
-                getStatusLabel, getStatusClass, getPaidCount, getPendingCount, viewEnrollmentList, openOrderFromList
-            };
+            return { isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, showCourseModal, isEditingCourse, courseForm, courseEquipments, showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative, showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName, login, logout, fetchData, openAddCourse, openEditCourse, addEquipment, removeEquipment, saveCourse, openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative, getStatusLabel, getStatusClass, getPaidCount, getPendingCount, viewEnrollmentList, openOrderFromList };
         }
     }).mount('#app');
 </script>
