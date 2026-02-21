@@ -232,17 +232,35 @@
 
     createApp({
         setup() {
-            const view = ref('loading'), error = ref(''), isSubmitting = ref(false), isLoading = ref(true);
-            const userProfile = ref(null), userInfo = ref({}), courses = ref([]), myOrders = ref([]);
+            const view = ref('loading');
+            const error = ref('');
+            const isSubmitting = ref(false);
+            const isLoading = ref(true);
+            
+            const userProfile = ref(null);
+            const userInfo = ref({});
+            const courses = ref([]);
+            const myOrders = ref([]);
+            
             const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', identity: '家長', gender: '男', familyMembers: [] });
-            const selectedCourse = ref(null), selectedAttendee = ref(null);
+            const selectedCourse = ref(null);
+            const selectedAttendee = ref(null);
             
-            const excludedDates = ref([]), selectedEquipments = ref([]);
-            const showFamilyModal = ref(false), tempFamily = ref({}), editingFamilyIndex = ref(-1);
-            const showDetailModal = ref(false), detailCourse = ref({});
+            const excludedDates = ref([]);
+            const selectedEquipments = ref([]);
             
-            // 訂單修改狀態
-            const editingOrder = ref(null), tempRemittance = ref(''), tempExcludedDates = ref([]), tempSelectedEquipments = ref([]);
+            const showFamilyModal = ref(false);
+            const tempFamily = ref({});
+            const editingFamilyIndex = ref(-1);
+            
+            const showDetailModal = ref(false);
+            const detailCourse = ref({});
+            
+            const showEditOrderModal = ref(false);
+            const editingOrder = ref(null);
+            const tempRemittance = ref('');
+            const tempExcludedDates = ref([]);
+            const tempSelectedEquipments = ref([]);
 
             const callApi = async (act, pl = {}) => {
                 const res = await fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: act, userProfile: { userId: userProfile.value?.userId }, payload: pl }) });
@@ -259,11 +277,10 @@
                     if (!userProfile.value) throw new Error('無法取得身分');
                     const data = await callApi('CHECK_USER');
                     if (data?.registered) { userInfo.value = data.info; view.value = 'dashboard'; } 
-                    else { regForm.value.name = userProfile.value?.displayName; view.value = 'register'; }
+                    else { regForm.value.name = userProfile.value?.displayName || ''; view.value = 'register'; }
                 } catch (err) { error.value = '初始化失敗：' + err.message; } finally { isLoading.value = false; }
             };
 
-            // 防呆保護：修改個人資料不會因為 undefined 當機
             const editProfile = () => { 
                 try {
                     const info = userInfo.value ? JSON.parse(JSON.stringify(userInfo.value)) : {};
@@ -285,6 +302,7 @@
 
             const goToCourses = async () => { isLoading.value = true; try { courses.value = await callApi('GET_COURSES'); view.value = 'course_list'; } finally { isLoading.value = false; } };
             const goToMyOrders = async () => { isLoading.value = true; try { myOrders.value = await callApi('GET_USER_ORDERS'); view.value = 'my_orders'; } finally { isLoading.value = false; } };
+            
             const openDetail = (c) => { detailCourse.value = c; showDetailModal.value = true; };
             const selectCourse = (c) => { selectedCourse.value = c; selectedAttendee.value = userInfo.value; excludedDates.value = []; selectedEquipments.value = []; view.value = 'form'; };
 
@@ -293,7 +311,7 @@
                 try {
                     await callApi('REGISTER_USER', { userId: userProfile.value?.userId, ...regForm.value });
                     const data = await callApi('CHECK_USER');
-                    userInfo.value = data.info; alert('會員資料已成功同步'); view.value = 'dashboard';
+                    userInfo.value = data.info; alert('資料已成功同步'); view.value = 'dashboard';
                 } catch (e) { alert(e.message); } finally { isSubmitting.value = false; }
             };
 
@@ -316,6 +334,7 @@
                 else tempFamily.value = JSON.parse(JSON.stringify(regForm.value.familyMembers[idx]));
                 showFamilyModal.value = true;
             };
+            
             const saveFamilyMember = () => {
                 if (editingFamilyIndex.value === -1) regForm.value.familyMembers.push({...tempFamily.value});
                 else regForm.value.familyMembers[editingFamilyIndex.value] = {...tempFamily.value};
@@ -323,7 +342,6 @@
             };
             const removeFamilyMember = (i) => { if(confirm('確定刪除此位子女資料？')) regForm.value.familyMembers.splice(i, 1); };
 
-            // 訂單全頁面修改
             const openOrderDetail = (o) => { 
                 editingOrder.value = o; 
                 tempRemittance.value = o.remittance || ''; 
@@ -379,12 +397,22 @@
 
             onMounted(init);
 
+            // 確保所有變數、函式都被正確匯出給 Template
             return {
-                view, error, isSubmitting, isLoading, userProfile, userInfo, courses, myOrders, selectedCourse, selectedAttendee,
-                showDetailModal, detailCourse, showFamilyModal, tempFamily, editingFamilyIndex,
-                goToCourses, selectCourse, openDetail, submitRegistration, goToMyOrders, editProfile, submitMemberRegister, 
-                openFamilyModal, saveFamilyMember, removeFamilyMember, toggleDate, toggleEquipment, isEqSelected, equipmentList, generatedDates, calculatedTotal,
-                editingOrder, tempRemittance, tempExcludedDates, openOrderDetail, submitEditOrder, toggleEditDate, toggleEditEquipment, isEditEqSelected, editEquipmentList, editGeneratedDates, editOrderTotal,
+                view, error, isSubmitting, isLoading, userProfile, userInfo, courses, myOrders, 
+                regForm, selectedCourse, selectedAttendee, excludedDates, selectedEquipments,
+                showDetailModal, detailCourse, showFamilyModal, tempFamily, editingFamilyIndex, 
+                showEditOrderModal, editingOrder, tempRemittance, tempExcludedDates, tempSelectedEquipments,
+                
+                init, goToCourses, goToMyOrders, editProfile,
+                openDetail, selectCourse, submitMemberRegister, submitRegistration,
+                isEqSelected, toggleEquipment, toggleDate,
+                openFamilyModal, saveFamilyMember, removeFamilyMember, 
+                openOrderDetail, toggleEditDate, isEditEqSelected, toggleEditEquipment, submitEditOrder,
+                
+                equipmentList, generatedDates, calculatedTotal, 
+                editEquipmentList, editGeneratedDates, editOrderTotal,
+                
                 getStatusLabel: s => ({'PENDING':'待付款','PAID':'已完款','CANCELLED':'已取消'}[s]||s),
                 getStatusClass: s => ({'PENDING':'bg-yellow-100 text-yellow-800 border border-yellow-200','PAID':'bg-green-100 text-green-800 border border-green-200','CANCELLED':'bg-gray-100 text-gray-500 border border-gray-200'}[s])
             };
