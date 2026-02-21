@@ -20,7 +20,7 @@
         .content-scroll { flex: 1; overflow-y: auto; padding: 32px; }
         .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 24px; overflow: hidden; }
         .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { padding: 16px 24px; background: #f9fafb; color: #6b7280; font-size: 12px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
+        .data-table th { padding: 16px 24px; background: #f9fafb; color: #6b7280; font-size: 12px; font-weight: 700; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
         .data-table td { padding: 16px 24px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
         .btn-green { background: var(--line-green); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
         .btn-white { background: white; border: 1px solid #d1d5db; color: #374151; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; transition: all 0.2s; }
@@ -71,36 +71,40 @@
             
             <div class="content-scroll">
                 
-                <!-- 儀表板 / 營運統計 -->
+                <!-- 儀表板 / 營運統計 (包含退款) -->
                 <div v-if="currentTab==='dashboard'">
-                    <!-- 頂部四大指標 (UI 優化版) -->
-                    <div class="grid grid-cols-4 gap-6 mb-8">
+                    <div class="grid grid-cols-5 gap-4 mb-8">
                         <div class="stat-card">
-                            <p class="text-sm font-bold text-gray-500 mb-2 relative z-10">總實收金額 (已完款)</p>
-                            <h3 class="text-4xl font-black text-[#06C755] relative z-10">${{ dashboardStats.totalRevenue.toLocaleString() }}</h3>
+                            <p class="text-xs font-bold text-gray-500 mb-2 relative z-10">總實收金額 (已完款)</p>
+                            <h3 class="text-3xl font-black text-[#06C755] relative z-10">${{ dashboardStats.totalRevenue.toLocaleString() }}</h3>
                             <i class="fas fa-dollar-sign stat-watermark text-[#06C755]"></i>
                         </div>
                         <div class="stat-card">
-                            <p class="text-sm font-bold text-gray-500 mb-2 relative z-10">總待收金額 (待付款)</p>
-                            <h3 class="text-4xl font-black text-orange-500 relative z-10">${{ dashboardStats.pendingRevenue.toLocaleString() }}</h3>
+                            <p class="text-xs font-bold text-gray-500 mb-2 relative z-10">總待收金額 (待付款)</p>
+                            <h3 class="text-3xl font-black text-orange-500 relative z-10">${{ dashboardStats.pendingRevenue.toLocaleString() }}</h3>
                             <i class="fas fa-hourglass-half stat-watermark text-orange-500"></i>
                         </div>
                         <div class="stat-card">
-                            <p class="text-sm font-bold text-gray-500 mb-2 relative z-10">有效報名訂單</p>
-                            <h3 class="text-4xl font-black text-blue-600 relative z-10">{{ dashboardStats.totalOrders }} <span class="text-lg text-gray-400 font-bold">筆</span></h3>
+                            <p class="text-xs font-bold text-gray-500 mb-2 relative z-10">總退款金額 (已退款)</p>
+                            <h3 class="text-3xl font-black text-red-500 relative z-10">${{ dashboardStats.refundedRevenue.toLocaleString() }}</h3>
+                            <i class="fas fa-hand-holding-usd stat-watermark text-red-500"></i>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs font-bold text-gray-500 mb-2 relative z-10">有效報名訂單</p>
+                            <h3 class="text-3xl font-black text-blue-600 relative z-10">{{ dashboardStats.totalOrders }} <span class="text-sm text-gray-400 font-bold">筆</span></h3>
                             <i class="fas fa-file-signature stat-watermark text-blue-500"></i>
                         </div>
                         <div class="stat-card">
-                            <p class="text-sm font-bold text-gray-500 mb-2 relative z-10">系統總會員數</p>
-                            <h3 class="text-4xl font-black text-purple-600 relative z-10">{{ dashboardStats.totalMembers }} <span class="text-lg text-gray-400 font-bold">人</span></h3>
+                            <p class="text-xs font-bold text-gray-500 mb-2 relative z-10">系統總會員數</p>
+                            <h3 class="text-3xl font-black text-purple-600 relative z-10">{{ dashboardStats.totalMembers }} <span class="text-sm text-gray-400 font-bold">人</span></h3>
                             <i class="fas fa-users stat-watermark text-purple-500"></i>
                         </div>
                     </div>
 
-                    <!-- 各課程營收明細表 (數據置中與排序優化) -->
+                    <!-- 各課程營收明細表 -->
                     <h3 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-[#06C755] pl-3">各課程營收狀態統計</h3>
-                    <div class="card">
-                        <table class="data-table">
+                    <div class="card overflow-x-auto">
+                        <table class="data-table min-w-max">
                             <thead>
                                 <tr>
                                     <th class="text-left">課程名稱</th>
@@ -111,6 +115,8 @@
                                     <th class="text-center">待收金額</th>
                                     <th class="text-center border-l">已付人數</th>
                                     <th class="text-center">實收金額</th>
+                                    <th class="text-center border-l">退款人數</th>
+                                    <th class="text-center">退款金額</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -119,7 +125,6 @@
                                     <td class="text-center">
                                         <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[11px] font-bold">{{ stat.type }}</span>
                                     </td>
-                                    <!-- 總計 -->
                                     <td class="text-center font-bold text-gray-700 text-base">{{ stat.paidCount + stat.pendingCount }}</td>
                                     <td class="text-center font-bold text-gray-700 text-base">${{ (stat.paidRevenue + stat.pendingRevenue).toLocaleString() }}</td>
                                     <!-- 待收 -->
@@ -128,9 +133,12 @@
                                     <!-- 實收 -->
                                     <td class="text-center font-bold text-[#06C755] border-l">{{ stat.paidCount }}</td>
                                     <td class="text-center font-black text-[#06C755] text-lg">${{ stat.paidRevenue.toLocaleString() }}</td>
+                                    <!-- 退款 -->
+                                    <td class="text-center font-bold text-red-500 border-l">{{ stat.refundedCount }}</td>
+                                    <td class="text-center font-bold text-red-500">${{ stat.refundedRevenue.toLocaleString() }}</td>
                                 </tr>
                                 <tr v-if="courseStats.length === 0">
-                                    <td colspan="8" class="text-center py-10 text-gray-400">目前尚無課程資料</td>
+                                    <td colspan="10" class="text-center py-10 text-gray-400">目前尚無課程資料</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -143,8 +151,8 @@
                         <div class="text-lg font-bold text-gray-600">上架課程：{{ courses.length }}</div>
                         <button @click="openAddCourse" class="btn-green shadow-sm"><i class="fas fa-plus"></i> 新增課程</button>
                     </div>
-                    <div class="card">
-                        <table class="data-table">
+                    <div class="card overflow-x-auto">
+                        <table class="data-table min-w-max">
                             <thead>
                                 <tr>
                                     <th class="text-left">課程資訊</th>
@@ -174,7 +182,8 @@
                                                 <span class="text-green-600 font-bold text-xs">已付: {{ getPaidCount(c.id) }}</span>
                                                 <i class="fas fa-chevron-right text-[10px] text-gray-300 group-hover:text-[#06C755]"></i>
                                             </div>
-                                            <div class="text-[10px] text-orange-500">待付: {{ getPendingCount(c.id) }}</div>
+                                            <div class="text-[10px] text-orange-500 mb-0.5">待付: {{ getPendingCount(c.id) }}</div>
+                                            <div class="text-[10px] text-red-500" v-if="getRefundedCount(c.id) > 0">退款: {{ getRefundedCount(c.id) }}</div>
                                         </button>
                                     </td>
                                     <td class="text-right">
@@ -192,8 +201,8 @@
                     <div class="bg-white p-4 rounded-xl border border-gray-200 flex gap-4 shadow-sm mb-6">
                          <input v-model="searchTerm" placeholder="搜尋姓名、電話、訂單號..." class="input-line pl-4 border-gray-200 shadow-none flex-1">
                     </div>
-                    <div class="card">
-                        <table class="data-table">
+                    <div class="card overflow-x-auto">
+                        <table class="data-table min-w-max">
                             <thead><tr><th class="text-left">單號</th><th class="text-left">學員</th><th class="text-center">金額</th><th class="text-center">狀態</th><th class="text-center">後五碼</th><th class="text-right">操作</th></tr></thead>
                             <tbody>
                                 <tr v-for="o in filteredOrders" :key="o.orderId" class="hover:bg-gray-50 transition">
@@ -213,8 +222,8 @@
                 <!-- 會員管理列表 -->
                 <div v-if="currentTab==='members'">
                     <div class="mb-6 relative max-w-md"><input v-model="searchMemberTerm" class="input-line pl-10" placeholder="搜尋會員姓名、身分證..."><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i></div>
-                    <div class="card">
-                        <table class="data-table">
+                    <div class="card overflow-x-auto">
+                        <table class="data-table min-w-max">
                             <thead><tr><th class="text-left">姓名</th><th class="text-center">手機</th><th class="text-center">身分證</th><th class="text-center">家人數</th><th class="text-right">操作</th></tr></thead>
                             <tbody>
                                 <tr v-for="u in filteredUsers" :key="u.userId" class="hover:bg-gray-50 transition">
@@ -376,17 +385,26 @@
         </div>
     </div>
 
-    <!-- 5. 訂單狀態編輯 -->
+    <!-- 5. 訂單狀態編輯 (加入已退款選項) -->
     <div v-if="showOrderModal" class="modal-mask" style="z-index: 10000;">
         <div class="modal-pop" style="max-width:450px; height: auto;">
             <div class="h-14 px-6 border-b flex justify-between items-center bg-white shadow-sm"><b>訂單狀態維修</b><button @click="showOrderModal=false"><i class="fas fa-times text-gray-400"></i></button></div>
             <div class="p-6 space-y-5 bg-[#fafafa]">
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label-line">狀態</label><select v-model="editingOrder.status" class="input-line"><option value="PENDING">待付款</option><option value="PAID">已完款</option><option value="CANCELLED">已取消</option></select></div>
+                    <div>
+                        <label class="label-line">狀態</label>
+                        <select v-model="editingOrder.status" class="input-line">
+                            <option value="PENDING">待付款</option>
+                            <option value="PAID">已完款</option>
+                            <!-- 新增退款選項 -->
+                            <option value="REFUNDED">已退款</option>
+                            <option value="CANCELLED">已取消</option>
+                        </select>
+                    </div>
                     <div><label class="label-line">實收金額</label><input v-model="editingOrder.amount" type="number" class="input-line font-bold text-[#06C755]"></div>
                 </div>
                 <div><label class="label-line">匯款後五碼</label><input v-model="editingOrder.remittance" class="input-line font-mono text-center tracking-widest" maxlength="5"></div>
-                <div><label class="label-line">備註</label><textarea v-model="editingOrder.note" class="input-line" rows="2" placeholder="可填入管理員手動調整的備註"></textarea></div>
+                <div><label class="label-line">備註</label><textarea v-model="editingOrder.note" class="input-line" rows="2" placeholder="可填入管理員手動調整的備註 (如：請假2天)"></textarea></div>
             </div>
             <div class="p-4 border-t flex justify-end gap-3 bg-white"><button @click="showOrderModal=false" class="btn-white">取消</button><button @click="saveOrder" class="btn-green px-8">更新狀態</button></div>
         </div>
@@ -424,31 +442,34 @@
             const logout = () => { isLoggedIn.value=false; password.value=''; };
             const fetchData = async () => { isLoading.value=true; try { const d = await callApi('ADMIN_GET_DATA'); courses.value=d.courses; orders.value=d.orders.reverse(); users.value=d.users; } catch(e){ alert('載入失敗'); } finally { isLoading.value=false; } };
 
-            // --- 儀表板與統計 ---
+            // --- 儀表板與統計 (加入 REFUNDED) ---
             const dashboardStats = computed(() => {
-                let totalRev = 0, pendingRev = 0, validOrdersCount = 0;
+                let totalRev = 0, pendingRev = 0, refundedRev = 0, validOrdersCount = 0;
                 orders.value.forEach(o => {
                     if (o.status === 'PAID') { totalRev += Number(o.amount) || 0; validOrdersCount++; } 
                     else if (o.status === 'PENDING') { pendingRev += Number(o.amount) || 0; validOrdersCount++; }
+                    else if (o.status === 'REFUNDED') { refundedRev += Number(o.amount) || 0; }
                 });
-                return { totalRevenue: totalRev, pendingRevenue: pendingRev, totalOrders: validOrdersCount, totalMembers: users.value.length };
+                return { totalRevenue: totalRev, pendingRevenue: pendingRev, refundedRevenue: refundedRev, totalOrders: validOrdersCount, totalMembers: users.value.length };
             });
 
-            // 課程個別營收統計 (依照需求：總數 -> 應收 -> 待付 -> 待收 -> 已付 -> 實收)
+            // 課程個別營收統計 (加入 REFUNDED)
             const courseStats = computed(() => {
                 return courses.value.map(c => {
                     const cOrders = orders.value.filter(o => o.courseId === c.id);
-                    let paidCnt = 0, pendingCnt = 0, paidRev = 0, pendingRev = 0;
+                    let paidCnt = 0, pendingCnt = 0, refundedCnt = 0, paidRev = 0, pendingRev = 0, refundedRev = 0;
                     cOrders.forEach(o => {
                         if(o.status === 'PAID') { paidCnt++; paidRev += Number(o.amount) || 0; } 
                         else if(o.status === 'PENDING') { pendingCnt++; pendingRev += Number(o.amount) || 0; }
+                        else if(o.status === 'REFUNDED') { refundedCnt++; refundedRev += Number(o.amount) || 0; }
                     });
-                    return { id: c.id, name: c.name, type: c.type, paidCount: paidCnt, pendingCount: pendingCnt, paidRevenue: paidRev, pendingRevenue: pendingRev };
+                    return { id: c.id, name: c.name, type: c.type, paidCount: paidCnt, pendingCount: pendingCnt, refundedCount: refundedCnt, paidRevenue: paidRev, pendingRevenue: pendingRev, refundedRevenue: refundedRev };
                 });
             });
 
             const getPaidCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'PAID').length;
             const getPendingCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'PENDING').length;
+            const getRefundedCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'REFUNDED').length;
 
             const viewEnrollmentList = (course) => { currentViewingCourseName.value = course.name; selectedCourseEnrollment.value = orders.value.filter(o => o.courseId === course.id); showEnrollmentModal.value = true; };
             const openOrderFromList = (order) => { editingOrder.value = {...order}; showOrderModal.value = true; };
@@ -478,8 +499,8 @@
                     ...c, 
                     startDate: fmtDate(c.startDate), 
                     endDate: fmtDate(c.endDate),
-                    startTime: fmtTime(c.startTime), // 清洗開始時間
-                    endTime: fmtTime(c.endTime)      // 清洗結束時間
+                    startTime: fmtTime(c.startTime),
+                    endTime: fmtTime(c.endTime)
                 }; 
                 try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
                 showCourseModal.value=true; 
@@ -493,8 +514,8 @@
                     name: c.name + ' (複製)', 
                     startDate: fmtDate(c.startDate), 
                     endDate: fmtDate(c.endDate),
-                    startTime: fmtTime(c.startTime), // 清洗開始時間
-                    endTime: fmtTime(c.endTime)      // 清洗結束時間
+                    startTime: fmtTime(c.startTime),
+                    endTime: fmtTime(c.endTime)
                 }; 
                 try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
                 showCourseModal.value=true; 
@@ -517,8 +538,9 @@
             const filteredOrders = computed(() => { const s = searchTerm.value.toLowerCase(); return orders.value.filter(o => String(o.name || '').includes(s) || String(o.phone || '').includes(s) || String(o.orderId || '').includes(s)); });
             const filteredUsers = computed(() => { const s = searchMemberTerm.value.toLowerCase(); return users.value.filter(u => String(u.name || '').includes(s) || String(u.nationalId || '').includes(s) || String(u.phone || '').includes(s)); });
 
-            const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已完款','CANCELLED':'已取消'}[s]||s);
-            const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','CANCELLED':'bg-gray-100 text-gray-500'}[s]);
+            // 狀態顏色配置 (加入 REFUNDED)
+            const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已完款','REFUNDED':'已退款','CANCELLED':'已取消'}[s]||s);
+            const getStatusClass = s => ({'PENDING':'bg-yellow-100 text-yellow-800','PAID':'bg-green-100 text-green-800','REFUNDED':'bg-red-100 text-red-800','CANCELLED':'bg-gray-100 text-gray-500'}[s]);
 
             return { 
                 isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, 
@@ -529,7 +551,7 @@
                 showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName,
                 login, logout, fetchData, openAddCourse, openEditCourse, copyCourse, addEquipment, removeEquipment, saveCourse, 
                 openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative, 
-                getStatusLabel, getStatusClass, getPaidCount, getPendingCount, viewEnrollmentList, openOrderFromList,
+                getStatusLabel, getStatusClass, getPaidCount, getPendingCount, getRefundedCount, viewEnrollmentList, openOrderFromList,
                 formatTime: d => d ? new Date(d).toLocaleString('zh-TW',{hour12:false}) : '-'
             };
         }
