@@ -280,8 +280,8 @@
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div><label class="label-line">開始日期</label><input v-model="courseForm.startDate" type="date" class="input-line"></div>
                         <div><label class="label-line">結束日期</label><input v-model="courseForm.endDate" type="date" class="input-line"></div>
-                        <div><label class="label-line">開始時間</label><input v-model="courseForm.startTime" placeholder="09:00" class="input-line"></div>
-                        <div><label class="label-line">結束時間</label><input v-model="courseForm.endTime" placeholder="16:00" class="input-line"></div>
+                        <div><label class="label-line">開始時間</label><input v-model="courseForm.startTime" type="time" class="input-line"></div>
+                        <div><label class="label-line">結束時間</label><input v-model="courseForm.endTime" type="time" class="input-line"></div>
                     </div>
                     <div class="section-header">地點與師資</div>
                     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -454,10 +454,51 @@
             const openOrderFromList = (order) => { editingOrder.value = {...order}; showOrderModal.value = true; };
 
             const fmtDate = d => { if (!d || d === '-') return ''; if (typeof d === 'string' && d.length >= 10) return d.substring(0, 10); return d; };
+            
+            // 時間格式化函數 (防呆過濾)
+            const fmtTime = (t) => {
+                if (!t) return '';
+                const s = String(t).trim();
+                if (s.includes('T')) {
+                    const d = new Date(s);
+                    if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
+                if (s.includes(':')) {
+                    const p = s.split(':');
+                    return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}`;
+                }
+                return s;
+            };
 
             const openAddCourse = () => { isEditingCourse.value=false; courseForm.value={id:'', name:'', startDate:'', endDate:'', price:0, capacity:0, totalSessions:1, type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]'}; courseEquipments.value=[]; showCourseModal.value=true; };
-            const openEditCourse = (c) => { isEditingCourse.value=true; courseForm.value = {...c, startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate)}; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
-            const copyCourse = (c) => { isEditingCourse.value=false; courseForm.value = {...c, id: '', name: c.name + ' (複製)', startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate)}; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
+            
+            const openEditCourse = (c) => { 
+                isEditingCourse.value=true; 
+                courseForm.value = {
+                    ...c, 
+                    startDate: fmtDate(c.startDate), 
+                    endDate: fmtDate(c.endDate),
+                    startTime: fmtTime(c.startTime), // 清洗開始時間
+                    endTime: fmtTime(c.endTime)      // 清洗結束時間
+                }; 
+                try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
+                showCourseModal.value=true; 
+            };
+            
+            const copyCourse = (c) => { 
+                isEditingCourse.value=false; 
+                courseForm.value = {
+                    ...c, 
+                    id: '', 
+                    name: c.name + ' (複製)', 
+                    startDate: fmtDate(c.startDate), 
+                    endDate: fmtDate(c.endDate),
+                    startTime: fmtTime(c.startTime), // 清洗開始時間
+                    endTime: fmtTime(c.endTime)      // 清洗結束時間
+                }; 
+                try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
+                showCourseModal.value=true; 
+            };
 
             const addEquipment = () => { courseEquipments.value.push({name:'', price:0}); };
             const removeEquipment = (i) => { courseEquipments.value.splice(i, 1); };
