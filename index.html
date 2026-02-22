@@ -30,22 +30,17 @@
 <body class="bg-gray-50 min-h-screen text-gray-800 font-sans">
 
 <div id="app" v-cloak class="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative overflow-hidden">
-    <!-- Header -->
+    <!-- Header (全新標題名稱與縮小精緻頭像) -->
     <header class="bg-[#06C755] text-white p-3 sticky top-0 z-30 flex items-center justify-between shadow-md">
         <h1 class="text-[16px] font-black tracking-widest truncate pl-1">運動島綜合運動體能館</h1>
         <div class="flex items-center bg-white/20 pl-1 pr-3 py-1 rounded-full shrink-0 shadow-inner">
             <img v-if="userProfile?.pictureUrl" :src="userProfile.pictureUrl" class="w-7 h-7 rounded-full object-cover mr-2 border border-white/50 shadow-sm">
             <i v-else class="fas fa-user text-sm mr-2 ml-2"></i>
-            <span class="text-[12px] font-bold truncate max-w-[80px]">{{ userInfo?.name || userProfile?.displayName || '用戶' }}</span>
+            <span class="text-[12px] font-bold truncate max-w-[80px]">{{ userInfo?.name || userProfile?.displayName || '載入中...' }}</span>
         </div>
     </header>
 
     <main class="flex-grow p-0 relative pb-24 overflow-y-auto bg-gray-50">
-        <!-- 初始畫面全域 Loading -->
-        <div v-if="isLoading" class="absolute inset-0 z-50 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-500 font-bold animate-pulse tracking-widest">系統載入中...</p>
-        </div>
 
         <!-- Error Area -->
         <div v-if="error" class="p-6">
@@ -56,90 +51,105 @@
             </div>
         </div>
 
-        <!-- View 1: Main Course List -->
+        <!-- View 1: Main Course List & Top Action Bar (全新折疊分類佈局 & 漸進式載入) -->
         <div v-else-if="view === 'course_list'" class="animate-fade-in pb-10">
-            <!-- 頂部宣傳 Banner -->
+            <!-- 頂部宣傳 Banner (瞬間顯示) -->
             <div class="w-full bg-white relative">
                 <img src="https://aiwe.cc/wp-content/uploads/2026/02/17a931ba9905835dd08db446b3d33e1b.png" alt="運動島活動 Banner" class="w-full h-auto block object-cover">
                 <div class="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
             </div>
 
-            <!-- 橫式功能操作列 -->
+            <!-- 橫式功能操作列 (一排三個按鈕，釘選在頂部，瞬間顯示) -->
             <div class="bg-white px-3 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.04)] grid grid-cols-3 gap-2 border-b sticky top-0 z-20">
-                <button @click="editProfile" class="bg-[#f0fbf5] text-[#06C755] border border-[#06C755]/20 rounded-xl py-2.5 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition shadow-sm">
+                <button @click="editProfile" :class="{'opacity-50 cursor-not-allowed': isAuthLoading}" class="bg-[#f0fbf5] text-[#06C755] border border-[#06C755]/20 rounded-xl py-2.5 flex flex-col items-center justify-center gap-1.5 transition shadow-sm">
                     <i class="fas fa-id-card text-[22px]"></i>
                     <span class="text-[12px] font-bold">會員專區</span>
                 </button>
-                <button @click="goToMyOrders" class="bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-2.5 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition shadow-sm">
+                <button @click="goToMyOrders" :class="{'opacity-50 cursor-not-allowed': isAuthLoading}" class="bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-2.5 flex flex-col items-center justify-center gap-1.5 transition shadow-sm">
                     <i class="fas fa-clipboard-list text-[22px]"></i>
                     <span class="text-[12px] font-bold">報名紀錄</span>
                 </button>
+                <!-- 粉絲專頁按鈕 -->
                 <a href="https://www.facebook.com/profile.php?id=100057303465231" target="_blank" class="bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl py-2.5 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition shadow-sm">
                     <i class="fab fa-facebook text-[22px]"></i>
                     <span class="text-[12px] font-bold">粉絲專頁</span>
                 </a>
             </div>
 
-            <!-- 課程分類 BOX (點擊展開設計) -->
+            <!-- 課程分類 BOX 區塊 -->
             <div class="p-4 space-y-4 pt-6">
                 <div class="flex items-center mb-2">
                     <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">選擇活動類型</h2>
                 </div>
                 
-                <div v-for="cat in categories" :key="cat.id" class="border rounded-2xl shadow-sm bg-white overflow-hidden transition-all duration-300">
-                    <button @click="toggleCategory(cat.id)" class="w-full px-5 py-4 flex items-center justify-between bg-white hover:bg-gray-50 transition active:bg-gray-100">
-                        <div class="flex items-center gap-4">
-                            <div :class="[cat.bg, cat.color, 'w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner']">
-                                <i :class="cat.icon"></i>
-                            </div>
-                            <h3 class="font-bold text-lg text-gray-800 tracking-wide">{{ cat.name }}</h3>
-                        </div>
-                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 transition-transform duration-300 border" :class="{'rotate-180 bg-[#06C755] text-white border-none shadow-md': expandedCategory === cat.id}">
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                    </button>
-                    
-                    <div v-if="expandedCategory === cat.id" class="border-t border-gray-100 bg-[#f9fafb] px-3 py-5 space-y-4 shadow-inner">
-                        <div v-if="isCoursesLoading" class="text-center py-8">
-                            <div class="loader mx-auto mb-3 border-t-[#06C755] w-8 h-8 border-4"></div>
-                            <p class="text-sm font-bold text-gray-400 tracking-widest">課程資料同步中...</p>
-                        </div>
-                        <div v-else-if="filteredCourses.length === 0" class="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
-                            <i class="fas fa-box-open text-4xl text-gray-200 mb-3 block"></i>
-                            <p class="text-sm text-gray-500 font-bold">目前沒有開放此類型的課程</p>
-                        </div>
-                        <div v-else v-for="c in filteredCourses" :key="c.id" class="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition relative overflow-hidden">
-                            <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="cat.bg.replace('bg-', 'bg-').replace('50', '400')"></div>
-                            
-                            <div class="flex justify-between items-start mb-2 pl-2">
-                                <div>
-                                    <div class="flex gap-2 mb-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded border" :class="[cat.bg, cat.color, cat.border]">{{ c.type }}</span></div>
-                                    <h3 class="font-bold text-[17px] text-gray-800 leading-tight">{{ c.name }}</h3>
+                <!-- 骨架載入中提示 (等待身分與課程時顯示) -->
+                <div v-if="isAuthLoading || isCoursesLoading" class="text-center py-12 bg-white rounded-2xl border shadow-sm border-gray-100">
+                    <div class="loader mx-auto mb-4 border-t-[#06C755] w-10 h-10 border-4"></div>
+                    <p class="text-sm font-bold text-gray-500 tracking-widest animate-pulse">正在為您準備精彩課程...</p>
+                </div>
+                
+                <!-- 載入完成後顯示分類清單 -->
+                <template v-else>
+                    <div v-for="cat in categories" :key="cat.id" class="border rounded-2xl shadow-sm bg-white overflow-hidden transition-all duration-300">
+                        <!-- 分類點擊標題 -->
+                        <button @click="toggleCategory(cat.id)" class="w-full px-5 py-4 flex items-center justify-between bg-white hover:bg-gray-50 transition active:bg-gray-100">
+                            <div class="flex items-center gap-4">
+                                <div :class="[cat.bg, cat.color, 'w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner']">
+                                    <i :class="cat.icon"></i>
                                 </div>
-                                <span class="text-[#06C755] font-black text-xl">${{ c.price }}</span>
+                                <h3 class="font-bold text-lg text-gray-800 tracking-wide">{{ cat.name }}</h3>
                             </div>
-                            <div class="text-sm text-gray-500 space-y-1 mb-5 pl-2">
-                                <p><i class="far fa-calendar-alt w-4 text-center mr-1 text-gray-400"></i> {{ c.startDate }} ~ {{ c.endDate }}</p>
-                                <p><i class="fas fa-users w-4 text-center mr-1 text-gray-400"></i> 名額剩餘: <span class="font-bold text-gray-700">{{ Math.max(0, c.capacity - c.enrolled) }}</span> 人 <span class="text-xs font-normal">(共 {{ c.capacity }})</span></p>
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 transition-transform duration-300 border" :class="{'rotate-180 bg-[#06C755] text-white border-none shadow-md': expandedCategory === cat.id}">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </button>
+                        
+                        <!-- 展開的課程清單內容 -->
+                        <div v-if="expandedCategory === cat.id" class="border-t border-gray-100 bg-[#f9fafb] px-3 py-5 space-y-4 shadow-inner">
+                            
+                            <!-- 該分類無課程 -->
+                            <div v-if="filteredCourses.length === 0" class="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+                                <i class="fas fa-box-open text-4xl text-gray-200 mb-3 block"></i>
+                                <p class="text-sm text-gray-500 font-bold">目前沒有開放此類型的課程</p>
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-gray-200 ml-2">
-                                <button @click="openDetail(c)" class="bg-[#06C755] hover:bg-[#05b34c] text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                    <i class="fas fa-info-circle text-lg"></i> 詳細內容
-                                </button>
-                                <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity" class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                    <i class="fas fa-check-circle text-lg"></i> {{ c.enrolled >= c.capacity ? '名額已滿' : '立即報名' }}
-                                </button>
+                            <!-- 該分類有課程 -->
+                            <div v-else v-for="c in filteredCourses" :key="c.id" class="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition relative overflow-hidden">
+                                <!-- 裝飾邊條 -->
+                                <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="cat.bg.replace('bg-', 'bg-').replace('50', '400')"></div>
+                                
+                                <div class="flex justify-between items-start mb-2 pl-2">
+                                    <div>
+                                        <div class="flex gap-2 mb-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded border" :class="[cat.bg, cat.color, cat.border]">{{ c.type }}</span></div>
+                                        <h3 class="font-bold text-[17px] text-gray-800 leading-tight">{{ c.name }}</h3>
+                                    </div>
+                                    <span class="text-[#06C755] font-black text-xl">${{ c.price }}</span>
+                                </div>
+                                <div class="text-sm text-gray-500 space-y-1 mb-5 pl-2">
+                                    <p><i class="far fa-calendar-alt w-4 text-center mr-1 text-gray-400"></i> {{ c.startDate }} ~ {{ c.endDate }}</p>
+                                    <p><i class="fas fa-users w-4 text-center mr-1 text-gray-400"></i> 名額剩餘: <span class="font-bold text-gray-700">{{ Math.max(0, c.capacity - c.enrolled) }}</span> 人 <span class="text-xs font-normal">(共 {{ c.capacity }})</span></p>
+                                </div>
+                                
+                                <!-- 課程按鈕區 (綠色詳細、紅色報名，均分並排) -->
+                                <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-gray-200 ml-2">
+                                    <button @click="openDetail(c)" class="bg-[#06C755] hover:bg-[#05b34c] text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
+                                        <i class="fas fa-info-circle text-lg"></i> 詳細內容
+                                    </button>
+                                    <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity" class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
+                                        <i class="fas fa-check-circle text-lg"></i> {{ c.enrolled >= c.capacity ? '名額已滿' : '立即報名' }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </template>
             </div>
         </div>
 
         <!-- View 2: Register & Profile Edit -->
         <div v-else-if="view === 'register'" class="p-6 animate-fade-in pb-10">
             <div class="flex items-center mb-6">
+                <!-- 返回按鈕導向 course_list -->
                 <button v-if="userInfo?.name" @click="view='course_list'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition"><i class="fas fa-arrow-left"></i></button>
                 <h2 class="text-2xl font-black text-gray-800">{{ userInfo?.name ? '修改個人與子女資料' : '新會員註冊' }}</h2>
             </div>
@@ -241,31 +251,39 @@
                 <button @click="view='course_list'" class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition"><i class="fas fa-arrow-left"></i></button>
                 <h2 class="text-xl font-bold">我的報名紀錄</h2>
             </div>
-            <div v-if="myOrders.length === 0" class="text-center py-20 text-gray-400 flex flex-col items-center">
-                <i class="fas fa-box-open text-5xl mb-3 text-gray-300"></i>
-                <p>目前尚無報名紀錄</p>
+            
+            <div v-if="isOrdersLoading" class="text-center py-16">
+                <div class="loader mx-auto mb-3 border-t-blue-500 w-8 h-8 border-4"></div>
+                <p class="text-sm font-bold text-gray-400 tracking-widest">載入訂單中...</p>
             </div>
-            <div v-for="o in myOrders" :key="o.orderId" class="bg-white border rounded-2xl p-5 shadow-sm mb-4 relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="o.status==='PAID'?'bg-green-500':(o.status==='PENDING'?'bg-yellow-400':(o.status==='REFUNDED'?'bg-red-500':'bg-gray-300'))"></div>
-                <div class="flex justify-between items-start mb-3 pl-2">
-                    <div>
-                        <h3 class="font-bold text-gray-800 text-[17px] leading-tight">{{ o.courseName }}</h3>
-                        <div class="text-[11px] text-gray-400 mt-1 font-medium">{{ o.courseDate }}</div>
+            
+            <template v-else>
+                <div v-if="myOrders.length === 0" class="text-center py-20 text-gray-400 flex flex-col items-center">
+                    <i class="fas fa-box-open text-5xl mb-3 text-gray-300"></i>
+                    <p>目前尚無報名紀錄</p>
+                </div>
+                <div v-for="o in myOrders" :key="o.orderId" class="bg-white border rounded-2xl p-5 shadow-sm mb-4 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="o.status==='PAID'?'bg-green-500':(o.status==='PENDING'?'bg-yellow-400':(o.status==='REFUNDED'?'bg-red-500':'bg-gray-300'))"></div>
+                    <div class="flex justify-between items-start mb-3 pl-2">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-[17px] leading-tight">{{ o.courseName }}</h3>
+                            <div class="text-[11px] text-gray-400 mt-1 font-medium">{{ o.courseDate }}</div>
+                        </div>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold shadow-sm" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span>
                     </div>
-                    <span class="px-2 py-1 rounded text-[10px] font-bold shadow-sm" :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span>
+                    <div class="border-t border-dashed my-3 ml-2"></div>
+                    <div class="flex justify-between items-center mb-4 pl-2">
+                        <span class="text-sm text-gray-500">學員: <b class="text-gray-800">{{ o.name }}</b></span>
+                        <span class="font-black text-[#06C755] text-xl">${{ o.amount }}</span>
+                    </div>
+                    <div class="pl-2">
+                        <!-- 若已取消或已退款，不顯示修改按鈕 -->
+                        <button v-if="!['CANCELLED', 'REFUNDED'].includes(o.status)" @click="openOrderDetail(o)" class="text-sm bg-blue-50 text-blue-600 px-4 py-3 rounded-xl font-bold w-full border border-blue-100 shadow-sm active:scale-95 transition flex justify-center items-center gap-2">
+                            <i class="fas fa-edit"></i> 修改資料 / 回填五碼
+                        </button>
+                    </div>
                 </div>
-                <div class="border-t border-dashed my-3 ml-2"></div>
-                <div class="flex justify-between items-center mb-4 pl-2">
-                    <span class="text-sm text-gray-500">學員: <b class="text-gray-800">{{ o.name }}</b></span>
-                    <span class="font-black text-[#06C755] text-xl">${{ o.amount }}</span>
-                </div>
-                <div class="pl-2">
-                    <!-- 若已取消或已退款，不顯示修改按鈕 -->
-                    <button v-if="!['CANCELLED', 'REFUNDED'].includes(o.status)" @click="openOrderDetail(o)" class="text-sm bg-blue-50 text-blue-600 px-4 py-3 rounded-xl font-bold w-full border border-blue-100 shadow-sm active:scale-95 transition flex justify-center items-center gap-2">
-                        <i class="fas fa-edit"></i> 修改資料 / 回填五碼
-                    </button>
-                </div>
-            </div>
+            </template>
         </div>
 
         <!-- View 5: Order Detail Full Page -->
@@ -386,11 +404,16 @@
     createApp({
         setup() {
             // -- 核心狀態 --
-            const view = ref('loading');
+            // 預設一進來就先顯示首頁骨架
+            const view = ref('course_list');
             const error = ref('');
             const isSubmitting = ref(false);
-            const isLoading = ref(true);
+            const isLoading = ref(false); // 取消全域阻擋的 loading
+            
+            // 漸進式載入狀態
+            const isAuthLoading = ref(true);
             const isCoursesLoading = ref(true);
+            const isOrdersLoading = ref(false);
             
             // -- 資料狀態 --
             const userProfile = ref(null);
@@ -413,7 +436,7 @@
             const showDetailModal = ref(false);
             const detailCourse = ref({});
             
-            // -- 訂單編輯狀態 (全頁面/彈窗) --
+            // -- 訂單編輯狀態 --
             const showEditOrderModal = ref(false);
             const editingOrder = ref(null);
             const tempRemittance = ref('');
@@ -448,24 +471,26 @@
 
             const init = async () => {
                 try {
+                    // 1. 初始化 LIFF
                     await liff.init({ liffId: LIFF_ID });
                     if (!liff.isLoggedIn()) { liff.login(); return; }
                     userProfile.value = await liff.getIDToken() ? await liff.getProfile() : null;
                     if (!userProfile.value) throw new Error('無法取得身分認證');
                     
+                    // 2. 背景驗證身分 (此時畫面已經有 Header 跟 Banner)
                     const data = await callApi('CHECK_USER');
                     if (data?.registered) { 
                         userInfo.value = data.info; 
-                        view.value = 'course_list'; 
-                        loadCourses(); 
+                        isAuthLoading.value = false; // 解除驗證中狀態
+                        loadCourses(); // 背景繼續抓課程
                     } else { 
                         regForm.value.name = userProfile.value?.displayName || ''; 
-                        view.value = 'register'; 
+                        isAuthLoading.value = false;
+                        view.value = 'register'; // 新戶強制跳轉註冊
                     }
                 } catch (err) { 
                     error.value = '系統初始化失敗：' + err.message; 
-                } finally { 
-                    isLoading.value = false; 
+                    isAuthLoading.value = false;
                 }
             };
 
@@ -475,13 +500,17 @@
             };
             
             const goToMyOrders = async () => { 
-                isLoading.value = true; 
-                try { myOrders.value = await callApi('GET_USER_ORDERS'); view.value = 'my_orders'; } 
-                catch (e) { error.value = '讀取訂單失敗'; } 
-                finally { isLoading.value = false; } 
+                if (isAuthLoading.value) return alert('系統載入中，請稍候');
+                isOrdersLoading.value = true;
+                view.value = 'my_orders'; 
+                try { 
+                    myOrders.value = await callApi('GET_USER_ORDERS'); 
+                } catch (e) { error.value = '讀取訂單失敗'; } 
+                finally { isOrdersLoading.value = false; } 
             };
 
             const editProfile = () => { 
+                if (isAuthLoading.value) return alert('系統載入中，請稍候');
                 try {
                     const info = userInfo.value ? JSON.parse(JSON.stringify(userInfo.value)) : {};
                     regForm.value = {
@@ -637,7 +666,8 @@
             onMounted(init);
 
             return {
-                view, error, isSubmitting, isLoading, isCoursesLoading, userProfile, userInfo, courses, myOrders, 
+                view, error, isSubmitting, isLoading, isAuthLoading, isCoursesLoading, isOrdersLoading, 
+                userProfile, userInfo, courses, myOrders, 
                 regForm, selectedCourse, selectedAttendee, excludedDates, selectedEquipments, registrationNote,
                 showDetailModal, detailCourse, showFamilyModal, tempFamily, editingFamilyIndex, 
                 showEditOrderModal, editingOrder, tempRemittance, tempExcludedDates, tempSelectedEquipments,
@@ -652,7 +682,6 @@
                 equipmentList, generatedDates, calculatedTotal, 
                 editEquipmentList, editGeneratedDates, editOrderTotal,
                 
-                // 加入 REFUNDED 標籤支援
                 getStatusLabel: s => ({'PENDING':'尚未繳費','PAID':'已完成繳費','REFUNDED':'已退款','CANCELLED':'已取消'}[s]||s),
                 getStatusClass: s => ({'PENDING':'bg-yellow-100 text-yellow-800 border border-yellow-200','PAID':'bg-green-100 text-green-800 border border-green-200','REFUNDED':'bg-red-100 text-red-800 border border-red-200','CANCELLED':'bg-gray-100 text-gray-500 border border-gray-200'}[s])
             };
