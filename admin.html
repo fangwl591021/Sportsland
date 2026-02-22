@@ -32,7 +32,6 @@
         .settings-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
         .status-pill-btn { @apply border rounded-lg px-3 py-2 text-left hover:bg-gray-50 transition cursor-pointer border-gray-200 block w-full; }
         
-        /* 統計卡片現代化特效 */
         .stat-card { @apply relative overflow-hidden bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center transition hover:shadow-md; }
         .stat-watermark { @apply absolute -right-4 -bottom-4 text-7xl opacity-10 pointer-events-none; }
     </style>
@@ -155,7 +154,7 @@
                                     <th class="text-left">課程資訊</th>
                                     <th class="text-left">類型/時間</th>
                                     <th class="text-left">費用/名額</th>
-                                    <th class="text-left">繳費狀況 (點擊查看名單)</th>
+                                    <th class="text-left">繳費狀況 (點擊名單)</th>
                                     <th class="text-right">操作</th>
                                 </tr>
                             </thead>
@@ -183,9 +182,11 @@
                                             <div class="text-sm text-red-600 font-medium" v-if="getRefundedCount(c.id) > 0">退款: {{ getRefundedCount(c.id) }}</div>
                                         </button>
                                     </td>
-                                    <td class="text-right">
-                                        <button @click="copyCourse(c)" class="text-gray-600 hover:text-blue-600 px-2 text-sm font-bold" title="複製此課程"><i class="far fa-copy"></i> 複製</button>
-                                        <button @click="openEditCourse(c)" class="text-blue-600 hover:underline px-2 text-sm font-bold"><i class="fas fa-edit"></i> 編輯</button>
+                                    <td class="text-right space-x-3">
+                                        <!-- 新增簽到按鈕 -->
+                                        <button @click="openAttendance(c)" class="text-[#06C755] hover:text-[#05b34c] bg-green-50 px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm border border-green-100"><i class="fas fa-user-check"></i> 簽到</button>
+                                        <button @click="copyCourse(c)" class="text-gray-600 hover:text-blue-600 text-sm font-bold" title="複製此課程"><i class="far fa-copy"></i> 複製</button>
+                                        <button @click="openEditCourse(c)" class="text-blue-600 hover:underline text-sm font-bold"><i class="fas fa-edit"></i> 編輯</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -276,6 +277,57 @@
     </template>
 
     <!-- --- MODALS --- -->
+
+    <!-- 新增：簽到管理彈窗 -->
+    <div v-if="showAttendanceModal" class="modal-mask">
+        <div class="modal-pop" style="max-width:800px; height:85%;">
+            <div class="h-14 border-b px-6 flex justify-between items-center shrink-0 bg-white shadow-sm">
+                <h3 class="font-black text-lg text-gray-800"><i class="fas fa-user-check text-[#06C755] mr-2"></i>簽到管理 - {{ attendanceCourse?.name }}</h3>
+                <button @click="showAttendanceModal=false" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="p-4 bg-white border-b flex flex-wrap items-center gap-4 shrink-0 shadow-sm z-10">
+                <label class="font-bold text-gray-700 text-sm">選擇上課日期：</label>
+                <input type="date" v-model="attendanceDate" @change="loadAttendanceList" class="input-line w-48 font-bold text-base text-[#06C755]">
+                <span class="text-sm font-bold text-gray-500 ml-auto bg-gray-100 px-3 py-1 rounded-full">共 {{ attendanceList.length }} 位學員</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 bg-[#f9fafb]">
+                <div class="card shadow-sm border border-gray-200">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left w-1/4">學員姓名</th>
+                                <th class="text-center w-1/4">聯絡電話</th>
+                                <th class="text-center">出席狀態設定</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="p in attendanceList" :key="p.orderId" class="hover:bg-gray-50 transition border-b border-gray-100">
+                                <td class="font-bold text-gray-800 text-base">{{ p.name }}</td>
+                                <td class="text-center text-gray-600 font-medium">{{ p.phone }}</td>
+                                <td class="text-center">
+                                    <div class="inline-flex rounded-lg shadow-sm" role="group">
+                                        <button @click="p.status='PRESENT'" type="button" :class="p.status==='PRESENT' ? 'bg-green-500 text-white border-green-500 z-10' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'" class="px-5 py-2 text-sm font-bold border rounded-l-lg transition focus:outline-none">出席</button>
+                                        <button @click="p.status='ABSENT'" type="button" :class="p.status==='ABSENT' ? 'bg-red-500 text-white border-red-500 z-10' : 'bg-white text-gray-700 border-gray-200 border-l-0 hover:bg-gray-50'" class="px-5 py-2 text-sm font-bold border transition focus:outline-none">缺席</button>
+                                        <button @click="p.status='LEAVE'" type="button" :class="p.status==='LEAVE' ? 'bg-yellow-500 text-white border-yellow-500 z-10' : 'bg-white text-gray-700 border-gray-200 border-l-0 hover:bg-gray-50'" class="px-5 py-2 text-sm font-bold border rounded-r-lg transition focus:outline-none">請假</button>
+                                    </div>
+                                    <button v-if="p.status !== 'NONE'" @click="p.status='NONE'" class="ml-4 text-xs text-gray-400 hover:text-gray-600 font-bold underline transition focus:outline-none">清除</button>
+                                </td>
+                            </tr>
+                            <tr v-if="attendanceList.length === 0">
+                                <td colspan="3" class="text-center py-20 text-gray-400 font-bold text-base">此課程目前尚無有效報名學員</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="h-16 border-t px-6 flex justify-end items-center bg-white gap-3 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                <button @click="showAttendanceModal=false" class="btn-white px-8">取消返回</button>
+                <button @click="saveAttendance" :disabled="isLoading" class="btn-green px-10 text-lg"><i class="fas fa-save mr-1"></i>儲存簽到表</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 1. 報名名單彈窗 -->
     <div v-if="showEnrollmentModal" class="modal-mask">
@@ -394,7 +446,6 @@
                         </div>
                         <div class="text-xs text-gray-500">
                             <span><i class="fas fa-venus-mars w-4 text-center"></i> {{ fm.gender }}</span>
-                            <!-- 顯示學校與年級 -->
                             <span v-if="fm.school" class="ml-3"><i class="fas fa-school w-4 text-center"></i> {{ fm.school }} {{ fm.grade }}</span>
                         </div>
                         <button @click="openRelativeEdit(fm)" class="absolute bottom-4 right-4 text-blue-500 hover:bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-blue-100"><i class="fas fa-edit"></i></button>
@@ -454,16 +505,15 @@
 </div>
 
 <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed, onMounted, watch } = Vue;
     const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/'; 
 
     createApp({
         setup() {
             const isLoggedIn=ref(false), password=ref(''), isLoading=ref(false), error=ref('');
-            const currentTab=ref('orders'); // 預設顯示訂單管理，方便對帳
+            const currentTab=ref('orders'); 
             const courses=ref([]), orders=ref([]), users=ref([]);
             
-            // 篩選與過濾狀態
             const searchTerm=ref(''); 
             const filterStatus=ref('ALL');
             const filterCourse=ref('ALL');
@@ -476,6 +526,12 @@
             
             const showEnrollmentModal = ref(false), selectedCourseEnrollment = ref([]), currentViewingCourseName = ref('');
 
+            // --- 新增：簽到系統狀態 ---
+            const showAttendanceModal = ref(false);
+            const attendanceCourse = ref(null);
+            const attendanceDate = ref('');
+            const attendanceList = ref([]);
+
             const callApi = async (action, payload={}) => {
                 const res = await fetch(API_ENDPOINT, { method:'POST', body:JSON.stringify({action, payload:{password:password.value, ...payload}}) });
                 const json = await res.json();
@@ -487,7 +543,6 @@
             const logout = () => { isLoggedIn.value=false; password.value=''; };
             const fetchData = async () => { isLoading.value=true; try { const d = await callApi('ADMIN_GET_DATA'); courses.value=d.courses; orders.value=d.orders.reverse(); users.value=d.users; } catch(e){ alert('載入失敗'); } finally { isLoading.value=false; } };
 
-            // --- 儀表板與統計 ---
             const dashboardStats = computed(() => {
                 let totalRev = 0, pendingRev = 0, refundedRev = 0, validOrdersCount = 0;
                 orders.value.forEach(o => {
@@ -511,11 +566,7 @@
                 });
             });
 
-            const getCourseName = (courseId) => {
-                const c = courses.value.find(c => c.id === courseId);
-                return c ? c.name : '未知課程 (' + courseId + ')';
-            };
-
+            const getCourseName = (courseId) => { const c = courses.value.find(c => c.id === courseId); return c ? c.name : '未知課程 (' + courseId + ')'; };
             const getPaidCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'PAID').length;
             const getPendingCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'PENDING').length;
             const getRefundedCount = (courseId) => orders.value.filter(o => o.courseId === courseId && o.status === 'REFUNDED').length;
@@ -524,36 +575,16 @@
             const openOrderFromList = (order) => { editingOrder.value = {...order}; showOrderModal.value = true; };
 
             const fmtDate = d => { if (!d || d === '-') return ''; if (typeof d === 'string' && d.length >= 10) return d.substring(0, 10); return d; };
-            
             const fmtTime = (t) => {
-                if (!t) return '';
-                const s = String(t).trim();
-                if (s.includes('T')) {
-                    const d = new Date(s);
-                    if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                }
-                if (s.includes(':')) {
-                    const p = s.split(':');
-                    return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}`;
-                }
+                if (!t) return ''; const s = String(t).trim();
+                if (s.includes('T')) { const d = new Date(s); if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+                if (s.includes(':')) { const p = s.split(':'); return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}`; }
                 return s;
             };
 
             const openAddCourse = () => { isEditingCourse.value=false; courseForm.value={id:'', name:'', startDate:'', endDate:'', price:0, capacity:0, totalSessions:1, type:'單日課程', timeSlotType:'全日', earlyBirdPrice:0, earlyBirdDate:'', equipmentJson:'[]'}; courseEquipments.value=[]; showCourseModal.value=true; };
-            
-            const openEditCourse = (c) => { 
-                isEditingCourse.value=true; 
-                courseForm.value = { ...c, startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate), startTime: fmtTime(c.startTime), endTime: fmtTime(c.endTime) }; 
-                try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
-                showCourseModal.value=true; 
-            };
-            
-            const copyCourse = (c) => { 
-                isEditingCourse.value=false; 
-                courseForm.value = { ...c, id: '', name: c.name + ' (複製)', startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate), startTime: fmtTime(c.startTime), endTime: fmtTime(c.endTime) }; 
-                try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } 
-                showCourseModal.value=true; 
-            };
+            const openEditCourse = (c) => { isEditingCourse.value=true; courseForm.value = { ...c, startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate), startTime: fmtTime(c.startTime), endTime: fmtTime(c.endTime) }; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
+            const copyCourse = (c) => { isEditingCourse.value=false; courseForm.value = { ...c, id: '', name: c.name + ' (複製)', startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate), startTime: fmtTime(c.startTime), endTime: fmtTime(c.endTime) }; try { courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); } catch(e){ courseEquipments.value=[]; } showCourseModal.value=true; };
 
             const addEquipment = () => { courseEquipments.value.push({name:'', price:0}); };
             const removeEquipment = (i) => { courseEquipments.value.splice(i, 1); };
@@ -567,27 +598,60 @@
             const openOrder = (o) => { editingOrder.value = {...o}; showOrderModal.value=true; };
             const saveOrder = async () => { try { await callApi('ADMIN_UPDATE_ORDER', {orderData:editingOrder.value}); alert('成功'); showOrderModal.value=false; fetchData(); } catch(e){ alert('失敗'); } };
 
+            // --- 新增：簽到管理邏輯 ---
+            const loadAttendanceList = () => {
+                if (!attendanceCourse.value) return;
+                // 篩選出該課程有效訂單 (排除已取消與退款)
+                const courseOrders = orders.value.filter(o => o.courseId === attendanceCourse.value.id && !['CANCELLED', 'REFUNDED'].includes(o.status));
+                
+                attendanceList.value = courseOrders.map(o => {
+                    const att = o.extraData?.attendance || {};
+                    return {
+                        orderId: o.orderId,
+                        name: o.name,
+                        phone: o.phone,
+                        status: att[attendanceDate.value] || 'NONE'
+                    };
+                });
+            };
+
+            const openAttendance = (c) => {
+                attendanceCourse.value = c;
+                // 預設當天日期 (YYYY-MM-DD)
+                attendanceDate.value = new Date().toISOString().split('T')[0];
+                loadAttendanceList();
+                showAttendanceModal.value = true;
+            };
+
+            const saveAttendance = async () => {
+                isLoading.value = true;
+                try {
+                    await callApi('ADMIN_UPDATE_ATTENDANCE', {
+                        courseId: attendanceCourse.value.id,
+                        date: attendanceDate.value,
+                        // 只需要傳送有更動或有狀態的項目
+                        attendanceData: attendanceList.value.map(a => ({ orderId: a.orderId, status: a.status }))
+                    });
+                    alert('簽到資料已成功儲存！');
+                    showAttendanceModal.value = false;
+                    fetchData(); // 重新拉取最新的資料 (包含簽到狀態)
+                } catch (e) {
+                    alert('儲存失敗：' + e.message);
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
             const tabName = computed(() => ({'dashboard':'營運統計', 'courses':'課程管理','orders':'訂單管理','members':'會員管理'}[currentTab.value]));
             
-            // --- 多重過濾器：訂單列表 ---
             const filteredOrders = computed(() => { 
                 let res = orders.value;
-                // 狀態過濾
-                if (filterStatus.value !== 'ALL') {
-                    res = res.filter(o => o.status === filterStatus.value);
-                }
-                // 課程過濾
-                if (filterCourse.value !== 'ALL') {
-                    res = res.filter(o => o.courseId === filterCourse.value);
-                }
-                // 關鍵字搜尋
+                if (filterStatus.value !== 'ALL') res = res.filter(o => o.status === filterStatus.value);
+                if (filterCourse.value !== 'ALL') res = res.filter(o => o.courseId === filterCourse.value);
                 const s = searchTerm.value.toLowerCase(); 
-                if (s) {
-                    res = res.filter(o => String(o.name || '').toLowerCase().includes(s) || String(o.phone || '').toLowerCase().includes(s) || String(o.orderId || '').toLowerCase().includes(s)); 
-                }
+                if (s) res = res.filter(o => String(o.name || '').toLowerCase().includes(s) || String(o.phone || '').toLowerCase().includes(s) || String(o.orderId || '').toLowerCase().includes(s)); 
                 return res;
             });
-            
             const filteredUsers = computed(() => { const s = searchMemberTerm.value.toLowerCase(); return users.value.filter(u => String(u.name || '').includes(s) || String(u.nationalId || '').includes(s) || String(u.phone || '').includes(s)); });
 
             const getStatusLabel = s => ({'PENDING':'待付款','PAID':'已完款','REFUNDED':'已退款','CANCELLED':'已取消'}[s]||s);
@@ -600,6 +664,11 @@
                 showCourseModal, isEditingCourse, courseForm, courseEquipments, 
                 showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative, 
                 showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName,
+                
+                // 簽到管理匯出變數
+                showAttendanceModal, attendanceCourse, attendanceDate, attendanceList,
+                openAttendance, loadAttendanceList, saveAttendance,
+
                 login, logout, fetchData, openAddCourse, openEditCourse, copyCourse, addEquipment, removeEquipment, saveCourse, 
                 openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative, 
                 getStatusLabel, getStatusClass, getPaidCount, getPendingCount, getRefundedCount, viewEnrollmentList, openOrderFromList,
