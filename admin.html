@@ -120,7 +120,10 @@
                             </thead>
                             <tbody>
                                 <tr v-for="stat in courseStats" :key="stat.id" class="hover:bg-gray-50 transition">
-                                    <td class="font-bold text-gray-800 text-left">{{ stat.name }}</td>
+                                    <td class="text-left text-gray-800">
+                                        <div class="font-bold text-base">{{ splitCourseName(stat.name).mainName }}</div>
+                                        <div v-if="splitCourseName(stat.name).subName" class="text-xs text-gray-500 mt-0.5">{{ splitCourseName(stat.name).subName }}</div>
+                                    </td>
                                     <td class="text-center">
                                         <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[11px] font-bold">{{ stat.type }}</span>
                                     </td>
@@ -154,15 +157,16 @@
                                     <th class="text-left">課程資訊</th>
                                     <th class="text-left">類型/時間</th>
                                     <th class="text-left">費用/名額</th>
-                                    <th class="text-left">繳費狀況 (點擊名單)</th>
+                                    <th class="text-left">繳費狀況 (點擊查看名單)</th>
                                     <th class="text-right">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="c in courses" :key="c.id" class="hover:bg-gray-50 transition">
-                                    <td class="font-bold w-1/4 text-left text-gray-800">
-                                        <div class="text-base mb-1">{{ c.name }}</div>
-                                        <span class="text-sm text-gray-800 font-mono font-normal bg-gray-100 px-1.5 py-0.5 rounded">{{ c.id }}</span>
+                                    <td class="w-1/4 text-left text-gray-800">
+                                        <div class="text-base font-bold text-gray-800">{{ splitCourseName(c.name).mainName }}</div>
+                                        <div v-if="splitCourseName(c.name).subName" class="text-xs text-gray-500 mb-1 font-medium">{{ splitCourseName(c.name).subName }}</div>
+                                        <span class="text-xs text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{{ c.id }}</span>
                                     </td>
                                     <td class="text-left">
                                         <span class="text-sm bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold">{{ c.type }}</span>
@@ -183,7 +187,6 @@
                                         </button>
                                     </td>
                                     <td class="text-right space-x-3">
-                                        <!-- 新增簽到按鈕 -->
                                         <button @click="openAttendance(c)" class="text-[#06C755] hover:text-[#05b34c] bg-green-50 px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-sm border border-green-100"><i class="fas fa-user-check"></i> 簽到</button>
                                         <button @click="copyCourse(c)" class="text-gray-600 hover:text-blue-600 text-sm font-bold" title="複製此課程"><i class="far fa-copy"></i> 複製</button>
                                         <button @click="openEditCourse(c)" class="text-blue-600 hover:underline text-sm font-bold"><i class="fas fa-edit"></i> 編輯</button>
@@ -198,12 +201,10 @@
                 <div v-if="currentTab==='orders'">
                     <!-- 搜尋與過濾區塊 -->
                     <div class="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-4 shadow-sm mb-6">
-                         <!-- 關鍵字搜尋 -->
                          <div class="flex-1 min-w-[200px]">
                              <label class="block text-xs font-bold text-gray-500 mb-1">關鍵字搜尋</label>
                              <input v-model="searchTerm" placeholder="搜尋姓名、電話、訂單號..." class="input-line border-gray-200 shadow-none w-full">
                          </div>
-                         <!-- 狀態篩選 -->
                          <div class="w-40">
                              <label class="block text-xs font-bold text-gray-500 mb-1">付款狀態篩選</label>
                              <select v-model="filterStatus" class="input-line border-gray-200 shadow-none w-full font-bold text-gray-700">
@@ -214,7 +215,6 @@
                                  <option value="CANCELLED">已取消</option>
                              </select>
                          </div>
-                         <!-- 課程篩選 -->
                          <div class="w-72">
                              <label class="block text-xs font-bold text-gray-500 mb-1">課程活動篩選</label>
                              <select v-model="filterCourse" class="input-line border-gray-200 shadow-none w-full font-bold text-gray-700">
@@ -240,8 +240,11 @@
                             <tbody>
                                 <tr v-for="o in filteredOrders" :key="o.orderId" class="hover:bg-gray-50 transition">
                                     <td class="text-sm font-mono text-left text-gray-800 font-bold">{{ o.orderId.slice(0,8) }}</td>
-                                    <td class="font-bold text-left text-gray-800 text-base">{{ getCourseName(o.courseId) }}</td>
-                                    <td class="font-bold text-left text-gray-800 text-base">{{ o.name }}<br><span class="text-sm text-gray-800 font-normal">{{ o.phone }}</span></td>
+                                    <td class="text-left text-gray-800">
+                                        <div class="font-bold text-base">{{ splitCourseName(getCourseName(o.courseId)).mainName }}</div>
+                                        <div v-if="splitCourseName(getCourseName(o.courseId)).subName" class="text-xs text-gray-500 mt-0.5">{{ splitCourseName(getCourseName(o.courseId)).subName }}</div>
+                                    </td>
+                                    <td class="font-bold text-left text-gray-800 text-base">{{ o.name }}<br><span class="text-sm text-gray-500 font-normal">{{ o.phone }}</span></td>
                                     <td class="text-[#06C755] font-bold text-center text-base">${{ o.amount }}</td>
                                     <td class="text-center"><span :class="getStatusClass(o.status)" class="px-2 py-1 rounded text-sm font-bold inline-block">{{ getStatusLabel(o.status) }}</span></td>
                                     <td class="font-mono text-center text-blue-600 font-bold text-base">{{ o.remittance || '-' }}</td>
@@ -526,7 +529,6 @@
             
             const showEnrollmentModal = ref(false), selectedCourseEnrollment = ref([]), currentViewingCourseName = ref('');
 
-            // --- 新增：簽到系統狀態 ---
             const showAttendanceModal = ref(false);
             const attendanceCourse = ref(null);
             const attendanceDate = ref('');
@@ -542,6 +544,17 @@
             const login = async () => { isLoading.value=true; try { await callApi('ADMIN_LOGIN'); isLoggedIn.value=true; fetchData(); } catch(e){ error.value='密碼錯誤'; } finally { isLoading.value=false; } };
             const logout = () => { isLoggedIn.value=false; password.value=''; };
             const fetchData = async () => { isLoading.value=true; try { const d = await callApi('ADMIN_GET_DATA'); courses.value=d.courses; orders.value=d.orders.reverse(); users.value=d.users; } catch(e){ alert('載入失敗'); } finally { isLoading.value=false; } };
+
+            const splitCourseName = (name) => {
+                if (!name) return { mainName: '', subName: '' };
+                const parts = name.split(/(?=[(（])/); 
+                if (parts.length > 1) {
+                    const mainName = parts[0].trim();
+                    const subName = parts.slice(1).join('').trim();
+                    return { mainName, subName };
+                }
+                return { mainName: name, subName: '' };
+            };
 
             const dashboardStats = computed(() => {
                 let totalRev = 0, pendingRev = 0, refundedRev = 0, validOrdersCount = 0;
@@ -575,10 +588,17 @@
             const openOrderFromList = (order) => { editingOrder.value = {...order}; showOrderModal.value = true; };
 
             const fmtDate = d => { if (!d || d === '-') return ''; if (typeof d === 'string' && d.length >= 10) return d.substring(0, 10); return d; };
+            
             const fmtTime = (t) => {
                 if (!t) return ''; const s = String(t).trim();
-                if (s.includes('T')) { const d = new Date(s); if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
-                if (s.includes(':')) { const p = s.split(':'); return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}`; }
+                if (s.includes('T')) {
+                    const d = new Date(s);
+                    if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
+                if (s.includes(':')) {
+                    const p = s.split(':');
+                    return `${p[0].padStart(2, '0')}:${p[1].padStart(2, '0')}`;
+                }
                 return s;
             };
 
@@ -598,10 +618,8 @@
             const openOrder = (o) => { editingOrder.value = {...o}; showOrderModal.value=true; };
             const saveOrder = async () => { try { await callApi('ADMIN_UPDATE_ORDER', {orderData:editingOrder.value}); alert('成功'); showOrderModal.value=false; fetchData(); } catch(e){ alert('失敗'); } };
 
-            // --- 新增：簽到管理邏輯 ---
             const loadAttendanceList = () => {
                 if (!attendanceCourse.value) return;
-                // 篩選出該課程有效訂單 (排除已取消與退款)
                 const courseOrders = orders.value.filter(o => o.courseId === attendanceCourse.value.id && !['CANCELLED', 'REFUNDED'].includes(o.status));
                 
                 attendanceList.value = courseOrders.map(o => {
@@ -617,7 +635,6 @@
 
             const openAttendance = (c) => {
                 attendanceCourse.value = c;
-                // 預設當天日期 (YYYY-MM-DD)
                 attendanceDate.value = new Date().toISOString().split('T')[0];
                 loadAttendanceList();
                 showAttendanceModal.value = true;
@@ -629,12 +646,11 @@
                     await callApi('ADMIN_UPDATE_ATTENDANCE', {
                         courseId: attendanceCourse.value.id,
                         date: attendanceDate.value,
-                        // 只需要傳送有更動或有狀態的項目
                         attendanceData: attendanceList.value.map(a => ({ orderId: a.orderId, status: a.status }))
                     });
                     alert('簽到資料已成功儲存！');
                     showAttendanceModal.value = false;
-                    fetchData(); // 重新拉取最新的資料 (包含簽到狀態)
+                    fetchData(); 
                 } catch (e) {
                     alert('儲存失敗：' + e.message);
                 } finally {
@@ -660,12 +676,11 @@
             return { 
                 isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users, 
                 searchTerm, searchMemberTerm, filteredOrders, filteredUsers, filterStatus, filterCourse,
-                dashboardStats, courseStats, getCourseName,
+                dashboardStats, courseStats, getCourseName, splitCourseName,
                 showCourseModal, isEditingCourse, courseForm, courseEquipments, 
                 showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative, 
                 showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName,
                 
-                // 簽到管理匯出變數
                 showAttendanceModal, attendanceCourse, attendanceDate, attendanceList,
                 openAttendance, loadAttendanceList, saveAttendance,
 
