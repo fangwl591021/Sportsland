@@ -120,22 +120,21 @@
                 <div
                     class="bg-white px-3 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.04)] grid grid-cols-3 gap-2 border-b sticky top-0 z-20">
                     <button @click="editProfile" :class="{'opacity-50 cursor-not-allowed': isAuthLoading}"
-                        class="bg-green-50 text-[#06C755] border border-green-100 rounded-xl py-2 flex flex-col items-center justify-center transition shadow-sm relative">
+                        class="bg-green-50 text-[#06C755] border border-green-100 rounded-xl py-2.5 flex flex-col items-center justify-center transition shadow-sm relative">
                         <i class="fas fa-user-edit text-xl mb-1"></i>
                         <span class="text-[10px] font-bold">基本資料</span>
                         <div v-if="isAuthLoading" class="absolute inset-0 bg-white/50 rounded-xl cursor-not-allowed">
                         </div>
                     </button>
                     <button @click="goToMyOrders" :class="{'opacity-50 cursor-not-allowed': isAuthLoading}"
-                        class="bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-2 flex flex-col items-center justify-center transition shadow-sm relative">
+                        class="bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-2.5 flex flex-col items-center justify-center transition shadow-sm relative">
                         <i class="fas fa-history text-xl mb-1"></i>
                         <span class="text-[10px] font-bold">報名紀錄</span>
                         <div v-if="isAuthLoading" class="absolute inset-0 bg-white/50 rounded-xl cursor-not-allowed">
                         </div>
                     </button>
-                    <!-- 客服小幫手連結 -->
                     <a href="https://lin.ee/Y0FKXqD" target="_blank"
-                        class="bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl py-2 flex flex-col items-center justify-center active:scale-95 transition shadow-sm">
+                        class="bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl py-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-sm">
                         <i class="fab fa-line text-xl mb-1"></i>
                         <span class="text-[10px] font-bold">客服小幫手</span>
                     </a>
@@ -146,8 +145,6 @@
                     <div class="flex items-center justify-between mb-2">
                         <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">
                             選擇活動類型</h2>
-                        
-                        <!-- 手動更新課程按鈕，突破 LINE 快取 -->
                         <button @click="loadCourses" :disabled="isCoursesLoading"
                             class="flex items-center text-[11px] text-gray-600 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition font-bold">
                             <i class="fas fa-sync-alt mr-1.5 text-[#06C755]" :class="{'fa-spin': isCoursesLoading}"></i> {{ isCoursesLoading ? '同步中' : '更新課程' }}
@@ -213,13 +210,12 @@
 
                                 <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-gray-200 ml-2">
                                     <button @click="openDetail(c)"
-                                        class="bg-[#06C755] hover:bg-[#05b34c] text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                        <i class="fas fa-info-circle text-lg"></i> 詳細內容
+                                        class="bg-gray-100 text-gray-600 py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5">
+                                        查看詳情
                                     </button>
                                     <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity"
-                                        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                        <i class="fas fa-check-circle text-lg"></i> {{ c.enrolled >= c.capacity ? '名額已滿'
-                                        : '立即報名' }}
+                                        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5">
+                                        {{ c.enrolled >= c.capacity ? '名額已滿' : '立即報名' }}
                                     </button>
                                 </div>
                             </div>
@@ -887,14 +883,14 @@
                         regForm.value = {
                             name: info.name || userProfile.value?.displayName || '',
                             nationalId: info.nationalId || '',
-                            birthday: info.birthday ? info.birthday.substring(0, 10) : '', // 修正日期格式防呆
+                            birthday: info.birthday ? info.birthday.substring(0, 10) : '',
                             phone: info.phone || '',
                             address: info.address || '',
                             identity: info.identity || '家長',
                             gender: info.gender || '男',
                             familyMembers: Array.isArray(info.familyMembers) ? info.familyMembers.filter(Boolean) : []
                         };
-                        
+
                         // 修復：家人的生日也一併轉為短格式
                         regForm.value.familyMembers.forEach(fm => {
                             if (fm.birthday) fm.birthday = fm.birthday.substring(0, 10);
@@ -1200,7 +1196,7 @@
 
                 onMounted(init);
 
-                // 修正重點：確保所有在模板使用到的變數與函數都有回傳！
+                // 確保所有在模板使用到的變數與函數都有回傳！
                 return {
                     view, error, isSubmitting, isLoading, isAuthLoading, isCoursesLoading, isOrdersLoading,
                     userProfile, userInfo, courses, myOrders,
