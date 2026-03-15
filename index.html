@@ -44,7 +44,7 @@
         }
 
         .btn-primary {
-            @apply bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3 rounded-lg shadow active:scale-95 transition duration-150 disabled:bg-gray-300;
+            @apply bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3 rounded-lg shadow active:scale-95 transition duration-150 disabled:bg-gray-300 disabled:shadow-none;
         }
 
         .btn-secondary {
@@ -140,7 +140,7 @@
                         <span class="text-[10px] font-bold">客服小幫手</span>
                     </a>
                     
-                    <!-- 修改：透過按鈕觸發 goToAdmin 寫入快取，達成無密碼登入 -->
+                    <!-- 管理員專屬的切換後台按鈕 -->
                     <button v-if="isAdmin" @click="goToAdmin"
                         class="bg-gray-800 text-white border border-gray-700 rounded-xl py-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-sm">
                         <i class="fas fa-cogs text-xl mb-1"></i>
@@ -154,6 +154,7 @@
                         <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">
                             選擇活動類型</h2>
                         
+                        <!-- 手動更新課程按鈕，突破 LINE 快取 -->
                         <button @click="loadCourses" :disabled="isCoursesLoading"
                             class="flex items-center text-[11px] text-gray-600 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition font-bold">
                             <i class="fas fa-sync-alt mr-1.5 text-[#06C755]" :class="{'fa-spin': isCoursesLoading}"></i> {{ isCoursesLoading ? '同步中' : '更新課程' }}
@@ -219,11 +220,11 @@
 
                                 <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-gray-200 ml-2">
                                     <button @click="openDetail(c)"
-                                        class="bg-gray-100 text-gray-600 py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5">
+                                        class="bg-gray-100 text-gray-600 py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5 hover:bg-gray-200">
                                         查看詳情
                                     </button>
                                     <button @click="selectCourse(c)" :disabled="c.enrolled >= c.capacity"
-                                        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5">
+                                        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
                                         <i class="fas fa-check-circle text-lg"></i> {{ c.enrolled >= c.capacity ? '名額已滿'
                                         : '立即報名' }}
                                     </button>
@@ -425,36 +426,41 @@
                     <div v-for="o in myOrders" :key="o.orderId"
                         class="bg-white border rounded-2xl p-5 shadow-sm mb-4 relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1.5"
-                            :class="o.status==='PAID'?'bg-green-500':(o.status==='PENDING'?'bg-yellow-400':(o.status==='REFUNDED'?'bg-red-500':'bg-gray-300'))">
+                            :class="o.status==='PAID'?'bg-[#06C755]':(o.status==='PENDING'?'bg-[#F5A623]':(o.status==='REFUNDED'?'bg-red-500':'bg-gray-400'))">
                         </div>
                         <div class="flex justify-between items-start mb-3 pl-2">
                             <div class="pr-2">
                                 <h3 class="font-bold text-gray-800 text-[17px] leading-tight">{{
                                     splitCourseName(o.courseName).mainName }}</h3>
                                 <div v-if="splitCourseName(o.courseName).subName"
-                                    class="text-[12px] text-gray-500 mt-1 font-bold">{{
+                                    class="text-[13px] text-gray-500 mt-1 font-bold">{{
                                     splitCourseName(o.courseName).subName }}</div>
-                                <div class="text-[11px] text-gray-400 mt-1.5 font-medium">{{ o.courseDate }}</div>
+                                <div class="text-[12px] text-gray-400 mt-1.5 font-medium">{{ o.courseDate }}</div>
                             </div>
-                            <span class="px-2 py-1 rounded text-[10px] font-bold shadow-sm shrink-0"
-                                :class="getStatusClass(o.status)">{{ getStatusLabel(o.status) }}</span>
+                            
+                            <!-- 修改：狀態標籤變大變明顯，並套用強烈底色 -->
+                            <span class="px-3 py-1.5 rounded-md text-xs font-bold shadow-sm shrink-0 tracking-wide"
+                                :class="getStatusBadgeClass(o.status)">{{ getStatusLabel(o.status) }}</span>
                         </div>
-                        <div class="border-t border-dashed my-3 ml-2"></div>
+                        <div class="border-t border-gray-100 my-3 ml-2"></div>
                         <div class="flex justify-between items-center mb-4 pl-2">
                             <span class="text-sm text-gray-500">學員: <b class="text-gray-800">{{ o.name }}</b></span>
-                            <span class="font-black text-[#06C755] text-xl">${{ o.amount }}</span>
+                            <span class="font-black text-[#06C755] text-2xl">${{ o.amount }}</span>
                         </div>
-                        <div class="pl-2 space-y-2">
+                        <div class="pl-2 space-y-3 mt-2">
+                            <!-- 修改：動作按鈕改用顯眼色彩 -->
+                            
                             <!-- PENDING + 尚未回填 → 修改報名與回填 -->
                             <button v-if="o.status === 'PENDING' && !o.remittance" @click="openOrderDetail(o)"
-                                class="text-sm bg-blue-50 text-blue-600 px-4 py-3 rounded-xl font-bold w-full border border-blue-100 shadow-sm active:scale-95 transition flex justify-center items-center gap-2">
-                                <i class="fas fa-edit"></i> 修改報名與回填
+                                class="text-[15px] bg-blue-500 hover:bg-blue-600 text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-md active:scale-95 transition flex justify-center items-center gap-2 tracking-wide">
+                                <i class="fas fa-edit"></i> 填寫匯款後五碼
                             </button>
+                            
                             <!-- PENDING + 已回填，或其他已付款狀態 → 確認資料與申請退款 (進入申退、已退款、取消狀態則不再顯示) -->
                             <button v-else-if="!['CANCELLED', 'REFUNDED', 'REFUND_REQUESTED'].includes(o.status)"
                                 @click="openOrderInfo(o)"
-                                class="text-sm bg-purple-50 text-purple-600 px-4 py-3 rounded-xl font-bold w-full border border-purple-100 shadow-sm active:scale-95 transition flex justify-center items-center gap-2">
-                                <i class="fas fa-file-invoice"></i> 確認資料與申請退款
+                                class="text-[15px] bg-gray-100 text-gray-700 px-4 py-3.5 rounded-xl font-bold w-full border border-gray-200 shadow-sm active:scale-95 transition flex justify-center items-center gap-2 hover:bg-gray-200 tracking-wide">
+                                <i class="fas fa-file-invoice"></i> 報名詳情 / 申請退費
                             </button>
                         </div>
                     </div>
@@ -529,35 +535,39 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
+                        <!-- 修改：輸入框放大字體 -->
                         <input v-model="tempRemittance" :readonly="remittanceConfirmed"
-                            class="form-input text-center font-mono text-2xl tracking-[0.3em] shadow-inner py-4"
+                            class="form-input text-center font-mono text-3xl tracking-[0.3em] shadow-inner py-5"
                             :class="{'bg-gray-100 text-gray-500': remittanceConfirmed}" maxlength="5"
                             placeholder="00000">
                         <p class="text-[11px] text-gray-400 mt-2 text-center">請於 24 小時內完成匯款並回填，確保名額。</p>
-                        <!-- 確認回填後五碼按鈕 -->
+                        
+                        <!-- 修改：確認回填按鈕顏色加強 -->
                         <button v-if="!remittanceConfirmed" type="button" @click="confirmRemittance"
                             :disabled="tempRemittance.length !== 5"
-                            class="mt-3 w-full py-3 bg-[#06C755] disabled:bg-gray-300 disabled:text-gray-400 text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2">
+                            class="mt-4 w-full py-4 bg-blue-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[15px] tracking-wide">
                             <i class="fas fa-check-circle"></i> 確認回填後五碼
                         </button>
+                        
                         <div v-else
-                            class="mt-3 flex items-center justify-center gap-2 text-green-600 font-bold text-sm py-2">
+                            class="mt-4 flex items-center justify-center gap-2 text-green-600 font-bold text-base py-2">
                             <i class="fas fa-check-circle"></i> 後五碼已確認：{{ tempRemittance }}
                         </div>
                     </div>
 
                     <!-- 鎖定後：取消/確認按鈕整合為申請退款 -->
-                    <div v-if="remittanceConfirmed" class="mt-4 pb-6">
+                    <div v-if="remittanceConfirmed" class="mt-6 pb-6">
                         <button @click="applyRefund" type="button" :disabled="isSubmitting"
-                            class="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-lg">
+                            class="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:shadow-none text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[15px] tracking-wide">
                             <i class="fas fa-undo-alt"></i> {{ isSubmitting ? '申請中...' : '申請退款' }}
                         </button>
-                        <p class="text-[10px] text-gray-400 mt-2 text-center">申請後工作人員將於 3 個工作日內與您聯繫。</p>
+                        <p class="text-[10px] text-gray-400 mt-3 text-center">申請後工作人員將於 3 個工作日內與您聯繫。</p>
                     </div>
-                    <!-- 未鎖定：取消報名按鈕 -->
-                    <div v-else class="mt-4 text-center pb-6">
+                    
+                    <!-- 修改：未鎖定：取消報名按鈕改為滿版框線樣式 -->
+                    <div v-else class="mt-6 text-center pb-6">
                         <button v-if="editingOrder?.status === 'PENDING'" @click="cancelOrder" type="button"
-                            class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-6 py-3 rounded-xl transition shadow-sm border border-red-100">
+                            class="w-full py-4 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 text-[15px]">
                             <i class="fas fa-trash-alt mr-1.5"></i> 取消此筆報名紀錄
                         </button>
                     </div>
@@ -633,8 +643,9 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
+                        <!-- 修改：唯讀框也放大字體 -->
                         <div
-                            class="form-input text-center font-mono text-2xl tracking-[0.3em] bg-gray-100 text-gray-500 py-4 rounded-lg border">
+                            class="form-input text-center font-mono text-3xl tracking-[0.3em] bg-gray-100 text-gray-500 py-5 rounded-lg border">
                             {{ editingOrder?.remittance || '尚未回填' }}
                         </div>
                     </div>
@@ -646,7 +657,7 @@
                         <p class="text-[12px] text-gray-500 mb-4 leading-relaxed">退款申請送出後，工作人員將於 3
                             個工作日內與您聯繫確認退款細節。退款金額依課程規定計算。</p>
                         <button @click="applyRefund" type="button" :disabled="isSubmitting"
-                            class="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-lg">
+                            class="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:shadow-none text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[15px] tracking-wide">
                             <i class="fas fa-undo-alt"></i> {{ isSubmitting ? '申請中...' : '申請退款' }}
                         </button>
                         <p class="text-[10px] text-gray-400 mt-3 text-center">申請後此筆訂單將標記為「申請退款中」，請等候工作人員聯繫。</p>
@@ -759,7 +770,7 @@
                     <div class="p-4 border-t bg-white shrink-0">
                         <button @click="selectCourse(detailCourse); showDetailModal=false"
                             :disabled="detailCourse?.enrolled >= detailCourse?.capacity"
-                            class="bg-red-500 text-white w-full shadow-lg text-lg py-3 rounded-xl font-bold active:scale-95 transition disabled:bg-gray-300 disabled:active:scale-100">
+                            class="bg-red-500 text-white w-full shadow-lg text-lg py-3 rounded-xl font-bold active:scale-95 transition disabled:bg-gray-300 disabled:active:scale-100 disabled:shadow-none">
                             {{ detailCourse?.enrolled >= detailCourse?.capacity ? '名額已滿' : '立即報名此課程' }}
                         </button>
                     </div>
@@ -1204,12 +1215,12 @@
                     return Math.max(0, t);
                 });
 
-                // 新增：判斷是否為管理員
+                // 判斷是否為管理員
                 const isAdmin = computed(() => {
                     return userInfo.value?.adminMark?.toUpperCase() === 'OK';
                 });
 
-                // 新增：跳轉至後台並寫入快取
+                // 跳轉至後台並寫入快取
                 const goToAdmin = () => {
                     localStorage.setItem('sportIsland_sso_uid', userProfile.value?.userId);
                     window.location.href = 'admin.html';
@@ -1217,7 +1228,6 @@
 
                 onMounted(init);
 
-                // 確保所有在模板使用到的變數與函數都有回傳！
                 return {
                     view, error, isSubmitting, isLoading, isAuthLoading, isCoursesLoading, isOrdersLoading,
                     userProfile, userInfo, courses, myOrders, isAdmin,
@@ -1231,14 +1241,21 @@
                     isEqSelected, toggleEquipment, toggleDate,
                     openFamilyModal, saveFamilyMember, removeFamilyMember,
                     openOrderDetail, openOrderInfo, toggleEditDate, isEditEqSelected, toggleEditEquipment, submitEditOrder,
-                    cancelOrder, remittanceConfirmed, confirmRemittance, applyRefund, goToAdmin, // 匯出新增的 goToAdmin
+                    cancelOrder, remittanceConfirmed, confirmRemittance, applyRefund, goToAdmin,
 
                     equipmentList, generatedDates, calculatedTotal,
                     editEquipmentList, editGeneratedDates, editOrderTotal,
 
+                    // 修改：狀態標籤改用實體底色與白字，視覺更強烈
                     getStatusLabel: s => ({ 'PENDING': '尚未繳費', 'PAID': '已完成繳費', 'REFUND_REQUESTED': '申請退款中', 'REFUNDED': '已退款', 'CANCELLED': '已取消' }[s] || s),
+                    getStatusBadgeClass: s => ({ 
+                        'PENDING': 'bg-yellow-400 text-white', 
+                        'PAID': 'bg-[#06C755] text-white', 
+                        'REFUND_REQUESTED': 'bg-orange-500 text-white', 
+                        'REFUNDED': 'bg-red-500 text-white', 
+                        'CANCELLED': 'bg-gray-400 text-white' 
+                    }[s]),
                     getStatusClass: s => ({ 'PENDING': 'bg-yellow-100 text-yellow-800 border border-yellow-200', 'PAID': 'bg-green-100 text-green-800 border border-green-200', 'REFUND_REQUESTED': 'bg-orange-100 text-orange-700 border border-orange-300', 'REFUNDED': 'bg-red-100 text-red-800 border border-red-200', 'CANCELLED': 'bg-gray-100 text-gray-500 border border-gray-200' }[s]),
-                    getStatusBadgeClass: s => ({ 'PENDING': 'bg-yellow-100 text-yellow-800', 'PAID': 'bg-green-100 text-green-800', 'REFUND_REQUESTED': 'bg-orange-100 text-orange-700', 'REFUNDED': 'bg-red-100 text-red-800', 'CANCELLED': 'bg-gray-100 text-gray-500' }[s]),
                     getStatusBorderClass: s => ({ 'PENDING': 'bg-yellow-400', 'PAID': 'bg-green-500', 'REFUND_REQUESTED': 'bg-orange-500', 'REFUNDED': 'bg-red-500', 'CANCELLED': 'bg-gray-300' }[s])
                 };
             }
