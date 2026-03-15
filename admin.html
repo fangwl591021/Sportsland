@@ -601,8 +601,7 @@
                                             <div class="flex justify-between items-center"><span
                                                     class="text-red-500">退款</span><span class="text-gray-800">{{
                                                     getRefundedCount(c.id) }}</span></div>
-                                            <!-- 修改：手機版的綠色 Click 按鈕 -->
-                                            <button @click="viewEnrollmentList(c)" class="mt-2 w-full text-[13px] bg-[#06C755] text-white py-1.5 rounded shadow-sm transition hover:bg-[#05b34c] font-bold tracking-widest"><i class="fas fa-mouse-pointer mr-1"></i>查看名單</button>
+                                            <button @click="viewEnrollmentList(c)" class="mt-2 w-full text-xs bg-gray-100 text-gray-600 py-1.5 rounded transition hover:bg-gray-200">查看名單</button>
                                         </div>
                                     </div>
 
@@ -626,8 +625,18 @@
                             <table class="data-table min-w-max">
                                 <thead>
                                     <tr>
-                                        <th class="text-left">課程資訊</th>
-                                        <th class="text-left">類型/時間</th>
+                                        <th class="text-left w-1/4">課程資訊</th>
+                                        <!-- 修改重點：加入可點擊排序的類型/時間標題 -->
+                                        <th class="text-left cursor-pointer hover:bg-gray-200 transition select-none group rounded-lg relative" @click="toggleCourseSort" title="點擊依課程類型排序">
+                                            <div class="flex items-center gap-2">
+                                                類型/時間
+                                                <span class="flex items-center justify-center w-5 h-5 rounded-full bg-white group-hover:bg-gray-100 transition shadow-sm">
+                                                    <i class="fas fa-sort text-gray-300" v-if="courseSortOrder === ''"></i>
+                                                    <i class="fas fa-sort-up text-[#06C755] mt-1.5" v-else-if="courseSortOrder === 'asc'"></i>
+                                                    <i class="fas fa-sort-down text-[#06C755] mb-1.5" v-else></i>
+                                                </span>
+                                            </div>
+                                        </th>
                                         <th class="text-left">費用/名額</th>
                                         <th class="text-left">繳費狀況 (點擊查看名單)</th>
                                         <th class="text-right">操作</th>
@@ -636,7 +645,7 @@
                                 <tbody>
                                     <tr v-for="c in filteredCourses" :key="c.id"
                                         class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
-                                        <td class="w-1/4 text-left text-gray-800">
+                                        <td class="text-left text-gray-800">
                                             <div class="text-base font-bold">{{ splitCourseName(c.name).mainName }}</div>
                                             <div v-if="splitCourseName(c.name).subName"
                                                 class="text-xs text-gray-500 mb-1 font-medium">{{
@@ -651,7 +660,7 @@
                                             <div class="text-[#06C755] font-bold text-base mb-1">${{ c.price }}</div>
                                             <div class="text-sm text-gray-800 font-medium">{{ c.enrolled }} / {{ c.capacity }} 人</div>
                                         </td>
-                                        <!-- 修改：加入 Click 綠色提示按鈕並拉開距離 -->
+                                        <!-- 修改重點：加入 Click 綠色提示按鈕並拉開距離 -->
                                         <td class="w-56 text-left">
                                             <button @click="viewEnrollmentList(c)" class="status-pill-btn group hover:border-[#06C755] hover:shadow-sm w-full">
                                                 <div class="flex justify-between items-center mb-1.5 w-full">
@@ -1407,6 +1416,9 @@
                 const searchMemberTerm = ref('');
                 const searchCourseTerm = ref('');
 
+                // 排序控制變數 ('', 'asc', 'desc')
+                const courseSortOrder = ref('');
+
                 const showCourseModal = ref(false), isEditingCourse = ref(false), courseForm = ref({}), courseEquipments = ref([]);
                 const showMemberModal = ref(false), editingMember = ref({});
                 const showOrderModal = ref(false), editingOrder = ref({});
@@ -1646,8 +1658,34 @@
                     if (s) res = res.filter(o => String(o.name || '').toLowerCase().includes(s) || String(o.phone || '').toLowerCase().includes(s) || String(o.orderId || '').toLowerCase().includes(s));
                     return res;
                 });
+                
                 const filteredUsers = computed(() => { const s = searchMemberTerm.value.toLowerCase(); return users.value.filter(u => String(u.name || '').includes(s) || String(u.nationalId || '').includes(s) || String(u.phone || '').includes(s)); });
-                const filteredCourses = computed(() => { const s = searchCourseTerm.value.toLowerCase(); return courses.value.filter(c => String(c.name || '').toLowerCase().includes(s) || String(c.id || '').toLowerCase().includes(s)); });
+                
+                // --- 新增：切換排序狀態函式 ---
+                const toggleCourseSort = () => {
+                    if (courseSortOrder.value === '') courseSortOrder.value = 'asc';
+                    else if (courseSortOrder.value === 'asc') courseSortOrder.value = 'desc';
+                    else courseSortOrder.value = '';
+                };
+
+                // --- 修改：加入過濾與排序邏輯 ---
+                const filteredCourses = computed(() => { 
+                    const s = searchCourseTerm.value.toLowerCase(); 
+                    let arr = courses.value.filter(c => String(c.name || '').toLowerCase().includes(s) || String(c.id || '').toLowerCase().includes(s));
+                    
+                    if (courseSortOrder.value === 'asc') {
+                        arr.sort((a, b) => {
+                            const cmp = (a.type || '').localeCompare(b.type || '', 'zh-TW');
+                            return cmp !== 0 ? cmp : (a.startDate || '').localeCompare(b.startDate || '');
+                        });
+                    } else if (courseSortOrder.value === 'desc') {
+                        arr.sort((a, b) => {
+                            const cmp = (b.type || '').localeCompare(a.type || '', 'zh-TW');
+                            return cmp !== 0 ? cmp : (a.startDate || '').localeCompare(b.startDate || '');
+                        });
+                    }
+                    return arr;
+                });
 
                 const getStatusLabel = s => ({ 'PENDING': '待付款', 'PAID': '已完款', 'REFUND_REQUESTED': '申退款', 'REFUNDED': '已退款', 'CANCELLED': '已取消' }[s] || s);
                 const getStatusClass = s => ({
@@ -1669,6 +1707,8 @@
 
                     showAttendanceModal, showAttendanceOverview, attendanceCourse, attendanceDate, attendanceList, attendanceOverviewList, courseDatesList,
                     openAttendance, loadAttendanceList, saveAttendance, getDayOfWeek, countAttendance, exportOrdersCSV, 
+                    
+                    courseSortOrder, toggleCourseSort, // 匯出排序控制變數
 
                     login, logout, fetchData, openAddCourse, openEditCourse, copyCourse, addEquipment, removeEquipment, saveCourse,
                     openMember, saveMember, openOrder, saveOrder, openRelativeEdit, saveRelative,
