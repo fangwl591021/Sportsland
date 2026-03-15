@@ -521,7 +521,8 @@
 
                     <!-- ================== 課程管理列表 ================== -->
                     <div v-if="currentTab==='courses'">
-                        <div class="flex flex-col sm:flex-row justify-between mb-4 sm:mb-6 items-start sm:items-end gap-3">
+                        <div
+                            class="flex flex-col sm:flex-row justify-between mb-4 sm:mb-6 items-start sm:items-end gap-3">
                             <div class="text-lg font-bold text-gray-600">上架課程：{{ filteredCourses.length }}</div>
                             <div class="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
                                 <div class="relative flex-1 sm:w-64"><input v-model="searchCourseTerm"
@@ -597,7 +598,7 @@
                                             <div class="flex justify-between items-center"><span
                                                     class="text-orange-500">待付</span><span class="text-gray-800">{{
                                                     getPendingCount(c.id) }}</span></div>
-                                            <div class="flex justify-between items-center" v-if="getRefundedCount(c.id) > 0"><span
+                                            <div class="flex justify-between items-center"><span
                                                     class="text-red-500">退款</span><span class="text-gray-800">{{
                                                     getRefundedCount(c.id) }}</span></div>
                                             <!-- 修改：手機版的綠色 Click 按鈕 -->
@@ -650,17 +651,17 @@
                                             <div class="text-[#06C755] font-bold text-base mb-1">${{ c.price }}</div>
                                             <div class="text-sm text-gray-800 font-medium">{{ c.enrolled }} / {{ c.capacity }} 人</div>
                                         </td>
-                                        <!-- 修改：加入 Click 綠色提示按鈕 -->
+                                        <!-- 修改：加入 Click 綠色提示按鈕並拉開距離 -->
                                         <td class="w-56 text-left">
-                                            <button @click="viewEnrollmentList(c)" class="status-pill-btn group hover:border-[#06C755] hover:shadow-sm">
-                                                <div class="flex justify-between items-center mb-1.5">
+                                            <button @click="viewEnrollmentList(c)" class="status-pill-btn group hover:border-[#06C755] hover:shadow-sm w-full">
+                                                <div class="flex justify-between items-center mb-1.5 w-full">
                                                     <span class="text-green-600 font-bold text-sm">已付: {{ getPaidCount(c.id) }}</span>
                                                 </div>
-                                                <div class="flex justify-between items-center mb-1">
+                                                <div class="flex justify-between items-center mb-1 w-full">
                                                     <span class="text-sm text-orange-600 font-medium">待付: {{ getPendingCount(c.id) }}</span>
-                                                    <span class="bg-[#06C755] text-white text-[10px] px-2 py-0.5 rounded shadow-sm transition tracking-wide flex items-center gap-1 group-hover:bg-[#05b34c] group-hover:scale-105"><i class="fas fa-mouse-pointer"></i> Click</span>
+                                                    <span class="ml-6 bg-[#06C755] text-white text-[10px] px-2 py-0.5 rounded shadow-sm transition tracking-wide flex items-center gap-1 group-hover:bg-[#05b34c] group-hover:scale-105 shrink-0"><i class="fas fa-mouse-pointer"></i> Click</span>
                                                 </div>
-                                                <div class="text-sm text-red-600 font-medium mt-1" v-if="getRefundedCount(c.id) > 0">退款: {{ getRefundedCount(c.id) }}</div>
+                                                <div class="text-sm text-red-600 font-medium mt-1 w-full text-left" v-if="getRefundedCount(c.id) > 0">退款: {{ getRefundedCount(c.id) }}</div>
                                             </button>
                                         </td>
                                         <td class="text-right space-x-3">
@@ -1680,4 +1681,3 @@
 </body>
 
 </html>
-這個版本完全不能用耶?完全沒有按鈕啊?
