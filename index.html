@@ -438,7 +438,7 @@
                                 <div class="text-[12px] text-gray-400 mt-1.5 font-medium">{{ o.courseDate }}</div>
                             </div>
                             
-                            <!-- 修改：狀態標籤變大變明顯，並套用強烈底色 -->
+                            <!-- 狀態標籤變大變明顯，並套用強烈底色 -->
                             <span class="px-3 py-1.5 rounded-md text-xs font-bold shadow-sm shrink-0 tracking-wide"
                                 :class="getStatusBadgeClass(o.status)">{{ getStatusLabel(o.status) }}</span>
                         </div>
@@ -448,15 +448,13 @@
                             <span class="font-black text-[#06C755] text-2xl">${{ o.amount }}</span>
                         </div>
                         <div class="pl-2 space-y-3 mt-2">
-                            <!-- 修改：動作按鈕改用顯眼色彩 -->
-                            
                             <!-- PENDING + 尚未回填 → 修改報名與回填 -->
                             <button v-if="o.status === 'PENDING' && !o.remittance" @click="openOrderDetail(o)"
                                 class="text-[15px] bg-blue-500 hover:bg-blue-600 text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-md active:scale-95 transition flex justify-center items-center gap-2 tracking-wide">
                                 <i class="fas fa-edit"></i> 填寫匯款後五碼
                             </button>
                             
-                            <!-- PENDING + 已回填，或其他已付款狀態 → 確認資料與申請退款 (進入申退、已退款、取消狀態則不再顯示) -->
+                            <!-- PENDING + 已回填，或其他已付款狀態 → 確認資料與申請退款 -->
                             <button v-else-if="!['CANCELLED', 'REFUNDED', 'REFUND_REQUESTED'].includes(o.status)"
                                 @click="openOrderInfo(o)"
                                 class="text-[15px] bg-gray-100 text-gray-700 px-4 py-3.5 rounded-xl font-bold w-full border border-gray-200 shadow-sm active:scale-95 transition flex justify-center items-center gap-2 hover:bg-gray-200 tracking-wide">
@@ -468,7 +466,8 @@
             </div>
 
             <!-- View 5: 修改報名與回填 (PENDING 狀態) -->
-            <div v-else-if="view === 'order_detail'" class="p-4 animate-fade-in pb-24">
+            <!-- 修改點：加大 pb-40 讓畫面底部有足夠空間被推上去 -->
+            <div v-else-if="view === 'order_detail'" class="p-4 animate-fade-in pb-40">
                 <div class="flex items-center mb-4">
                     <button @click="view='my_orders'"
                         class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition"><i
@@ -535,14 +534,14 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
-                        <!-- 修改：輸入框放大字體 -->
-                        <input v-model="tempRemittance" :readonly="remittanceConfirmed"
+                        <!-- 修改點：加上 @focus 捲動事件，並加入 inputmode="numeric" 喚醒數字鍵盤 -->
+                        <input v-model="tempRemittance" :readonly="remittanceConfirmed" @focus="scrollToInput"
                             class="form-input text-center font-mono text-3xl tracking-[0.3em] shadow-inner py-5"
                             :class="{'bg-gray-100 text-gray-500': remittanceConfirmed}" maxlength="5"
-                            placeholder="00000">
+                            placeholder="00000" inputmode="numeric">
                         <p class="text-[11px] text-gray-400 mt-2 text-center">請於 24 小時內完成匯款並回填，確保名額。</p>
                         
-                        <!-- 修改：確認回填按鈕顏色加強 -->
+                        <!-- 確認回填後五碼按鈕 -->
                         <button v-if="!remittanceConfirmed" type="button" @click="confirmRemittance"
                             :disabled="tempRemittance.length !== 5"
                             class="mt-4 w-full py-4 bg-blue-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[15px] tracking-wide">
@@ -564,7 +563,7 @@
                         <p class="text-[10px] text-gray-400 mt-3 text-center">申請後工作人員將於 3 個工作日內與您聯繫。</p>
                     </div>
                     
-                    <!-- 修改：未鎖定：取消報名按鈕改為滿版框線樣式 -->
+                    <!-- 未鎖定：取消報名按鈕滿版框線樣式 -->
                     <div v-else class="mt-6 text-center pb-6">
                         <button v-if="editingOrder?.status === 'PENDING'" @click="cancelOrder" type="button"
                             class="w-full py-4 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 text-[15px]">
@@ -643,7 +642,7 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
-                        <!-- 修改：唯讀框也放大字體 -->
+                        <!-- 唯讀框也放大字體 -->
                         <div
                             class="form-input text-center font-mono text-3xl tracking-[0.3em] bg-gray-100 text-gray-500 py-5 rounded-lg border">
                             {{ editingOrder?.remittance || '尚未回填' }}
@@ -1085,6 +1084,13 @@
                     }
                 };
 
+                // 修改：當輸入框取得焦點時，畫面往上滑動
+                const scrollToInput = (event) => {
+                    setTimeout(() => {
+                        event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300); // 延遲 300ms 等待手機鍵盤彈出
+                };
+
                 const confirmRemittance = async () => {
                     if (tempRemittance.value.length !== 5) return alert('請輸入完整的後五碼');
                     if (!confirm(`確認回填匯款後五碼：${tempRemittance.value}？\n確認後設備調整、請假與取消功能將鎖定。`)) return;
@@ -1241,12 +1247,11 @@
                     isEqSelected, toggleEquipment, toggleDate,
                     openFamilyModal, saveFamilyMember, removeFamilyMember,
                     openOrderDetail, openOrderInfo, toggleEditDate, isEditEqSelected, toggleEditEquipment, submitEditOrder,
-                    cancelOrder, remittanceConfirmed, confirmRemittance, applyRefund, goToAdmin,
+                    cancelOrder, remittanceConfirmed, confirmRemittance, applyRefund, goToAdmin, scrollToInput, // 匯出捲動函式
 
                     equipmentList, generatedDates, calculatedTotal,
                     editEquipmentList, editGeneratedDates, editOrderTotal,
 
-                    // 修改：狀態標籤改用實體底色與白字，視覺更強烈
                     getStatusLabel: s => ({ 'PENDING': '尚未繳費', 'PAID': '已完成繳費', 'REFUND_REQUESTED': '申請退款中', 'REFUNDED': '已退款', 'CANCELLED': '已取消' }[s] || s),
                     getStatusBadgeClass: s => ({ 
                         'PENDING': 'bg-yellow-400 text-white', 
