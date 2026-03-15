@@ -116,7 +116,7 @@
                     <div class="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
                 </div>
 
-                <!-- 橫式功能操作列 -->
+                <!-- 橫式功能操作列 (動態依照是否為管理員切換欄數) -->
                 <div
                     class="bg-white px-3 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.04)] grid gap-2 border-b sticky top-0 z-20"
                     :class="isAdmin ? 'grid-cols-4' : 'grid-cols-3'">
@@ -140,12 +140,12 @@
                         <span class="text-[10px] font-bold">客服小幫手</span>
                     </a>
                     
-                    <!-- 管理員專屬入口 (當 Q 欄位為 OK 時顯示) -->
-                    <a v-if="isAdmin" href="admin.html"
+                    <!-- 修改：透過按鈕觸發 goToAdmin 寫入快取，達成無密碼登入 -->
+                    <button v-if="isAdmin" @click="goToAdmin"
                         class="bg-gray-800 text-white border border-gray-700 rounded-xl py-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-sm">
                         <i class="fas fa-cogs text-xl mb-1"></i>
                         <span class="text-[10px] font-bold">切換後台</span>
-                    </a>
+                    </button>
                 </div>
 
                 <!-- 課程分類 BOX 區塊 -->
@@ -153,6 +153,7 @@
                     <div class="flex items-center justify-between mb-2">
                         <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">
                             選擇活動類型</h2>
+                        
                         <button @click="loadCourses" :disabled="isCoursesLoading"
                             class="flex items-center text-[11px] text-gray-600 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition font-bold">
                             <i class="fas fa-sync-alt mr-1.5 text-[#06C755]" :class="{'fa-spin': isCoursesLoading}"></i> {{ isCoursesLoading ? '同步中' : '更新課程' }}
@@ -1142,7 +1143,7 @@
                     } catch (e) { alert('儲存失敗：' + e.message); } finally { isSubmitting.value = false; }
                 };
 
-                // --- 新增：取消報名邏輯 ---
+                // --- 取消報名邏輯 ---
                 const cancelOrder = async () => {
                     if (editingOrder.value.status !== 'PENDING') {
                         return alert('只有「待付款」的訂單可以直接取消。若需退費請聯繫客服人員辦理。');
@@ -1203,10 +1204,16 @@
                     return Math.max(0, t);
                 });
 
-                // 加入判斷是否為管理員
+                // 新增：判斷是否為管理員
                 const isAdmin = computed(() => {
                     return userInfo.value?.adminMark?.toUpperCase() === 'OK';
                 });
+
+                // 新增：跳轉至後台並寫入快取
+                const goToAdmin = () => {
+                    localStorage.setItem('sportIsland_sso_uid', userProfile.value?.userId);
+                    window.location.href = 'admin.html';
+                };
 
                 onMounted(init);
 
@@ -1224,7 +1231,7 @@
                     isEqSelected, toggleEquipment, toggleDate,
                     openFamilyModal, saveFamilyMember, removeFamilyMember,
                     openOrderDetail, openOrderInfo, toggleEditDate, isEditEqSelected, toggleEditEquipment, submitEditOrder,
-                    cancelOrder, remittanceConfirmed, confirmRemittance, applyRefund,
+                    cancelOrder, remittanceConfirmed, confirmRemittance, applyRefund, goToAdmin, // 匯出新增的 goToAdmin
 
                     equipmentList, generatedDates, calculatedTotal,
                     editEquipmentList, editGeneratedDates, editOrderTotal,
