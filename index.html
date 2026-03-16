@@ -116,7 +116,7 @@
                     <div class="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
                 </div>
 
-                <!-- 橫式功能操作列 -->
+                <!-- 橫式功能操作列 (動態依照是否為管理員切換欄數) -->
                 <div
                     class="bg-white px-3 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.04)] grid gap-2 border-b sticky top-0 z-20"
                     :class="isAdmin ? 'grid-cols-4' : 'grid-cols-3'">
@@ -154,6 +154,7 @@
                         <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">
                             選擇活動類型</h2>
                         
+                        <!-- 手動更新課程按鈕，突破 LINE 快取 -->
                         <button @click="loadCourses" :disabled="isCoursesLoading"
                             class="flex items-center text-[11px] text-gray-600 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition font-bold">
                             <i class="fas fa-sync-alt mr-1.5 text-[#06C755]" :class="{'fa-spin': isCoursesLoading}"></i> {{ isCoursesLoading ? '同步中' : '更新課程' }}
@@ -210,7 +211,7 @@
                                                     class="text-[13px] text-gray-500 mt-1 font-bold bg-gray-50 inline-block px-2 py-0.5 rounded">
                                                     {{ splitCourseName(c.name).subName }}</div>
                                             </div>
-                                            <!-- 加入早鳥價顯示邏輯 -->
+                                            <!-- 早鳥價顯示邏輯 -->
                                             <div class="flex flex-col items-end shrink-0">
                                                 <span v-if="isEarlyBird(c)" class="text-[11px] text-gray-400 line-through mb-0.5">原價 ${{ c.price }}</span>
                                                 <span class="text-[#06C755] font-black text-xl">
@@ -241,59 +242,83 @@
                                     </div>
                                 </div>
 
-                                <!-- [2] 營隊課程呈現方式 (三層漏斗選單) -->
+                                <!-- [2] 營隊課程呈現方式 (三層漏斗選單 + 豐富視覺) -->
                                 <div v-if="cat.id === '多日營隊'">
                                     
                                     <!-- A. 正規三層營隊 (解析成功的) -->
-                                    <div v-for="(themeData, themeName) in groupedCampCourses" :key="themeName" class="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition relative overflow-hidden mb-4">
-                                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400"></div>
-                                        <div class="flex justify-between items-start mb-4 pl-2">
-                                            <h3 class="font-black text-lg text-gray-800 leading-tight">{{ themeName }}</h3>
-                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border bg-green-50 text-green-600 border-green-100 shadow-sm shrink-0">主題營隊</span>
-                                        </div>
-
-                                        <div class="pl-2 space-y-3" v-if="campSelections[themeName]">
-                                            <div>
-                                                <label class="text-xs text-gray-500 font-bold mb-1.5 block"><i class="fas fa-calendar-alt mr-1"></i> 1. 請選擇參加梯次 (日期)</label>
-                                                <select v-model="campSelections[themeName].batch" @change="resetCampItem(themeName)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 p-2.5 rounded-lg focus:ring-2 focus:ring-[#06C755] outline-none transition text-sm font-bold shadow-sm">
-                                                    <option value="">-- 點擊選擇梯次 --</option>
-                                                    <option v-for="batch in Object.keys(themeData)" :key="batch" :value="batch">{{ batch }}</option>
-                                                </select>
-                                            </div>
-
-                                            <div v-if="campSelections[themeName].batch" class="animate-fade-in pt-1">
-                                                <label class="text-xs text-gray-500 font-bold mb-1.5 block"><i class="fas fa-running mr-1"></i> 2. 選擇該梯次上課項目</label>
-                                                <select v-model="campSelections[themeName].item" class="w-full bg-gray-50 border border-gray-200 text-gray-700 p-2.5 rounded-lg focus:ring-2 focus:ring-[#06C755] outline-none transition text-sm font-bold shadow-sm">
-                                                    <option value="">-- 點擊選擇課程項目 --</option>
-                                                    <option v-for="item in themeData[campSelections[themeName].batch]" :key="item.id" :value="item.id">
-                                                        {{ item.itemName }} (剩餘 {{ Math.max(0, item.capacity - item.enrolled) }} 名額)
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <!-- 當梯次與項目都選好後，顯示詳情與報名按鈕 -->
-                                        <div v-if="getCampSelectedCourse(themeName)" class="mt-5 pt-4 border-t border-gray-100 pl-2 animate-fade-in">
-                                            <div class="flex justify-between items-center mb-3">
-                                                <div class="text-xs text-gray-500 font-medium">
-                                                    日期：{{ getCampSelectedCourse(themeName).startDate }} ~ {{ getCampSelectedCourse(themeName).endDate }}
-                                                </div>
-                                                <!-- 加入早鳥價顯示邏輯 -->
-                                                <div class="flex flex-col items-end">
-                                                    <span v-if="isEarlyBird(getCampSelectedCourse(themeName))" class="text-[10px] text-gray-400 line-through mb-0.5">原價 ${{ getCampSelectedCourse(themeName).price }}</span>
-                                                    <span class="text-[#06C755] font-black text-xl">
-                                                        <span v-if="isEarlyBird(getCampSelectedCourse(themeName))" class="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded mr-1 align-middle shadow-sm">早鳥</span>${{ getActualPrice(getCampSelectedCourse(themeName)) }}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                    <div v-for="(themeData, themeName) in groupedCampCourses" :key="themeName" class="bg-white border rounded-2xl shadow-sm hover:shadow-md transition relative overflow-hidden mb-5">
+                                        
+                                        <!-- 頂部圖片與標題 -->
+                                        <div class="relative h-36 bg-gray-200">
+                                            <img v-if="getCampBaseInfo(themeName)?.image" :src="getCampBaseInfo(themeName).image" class="w-full h-full object-cover">
+                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-400 bg-[#e6f4ea]"><i class="fas fa-campground text-4xl text-[#06C755]/50"></i></div>
                                             
-                                            <div class="grid grid-cols-2 gap-3">
-                                                <button @click="openDetail(getCampSelectedCourse(themeName))" class="bg-gray-100 text-gray-600 py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5 hover:bg-gray-200">
-                                                    查看詳情
-                                                </button>
-                                                <button @click="selectCourse(getCampSelectedCourse(themeName))" :disabled="getCampSelectedCourse(themeName).enrolled >= getCampSelectedCourse(themeName).capacity" class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                                    <i class="fas fa-check-circle text-lg"></i> {{ getCampSelectedCourse(themeName).enrolled >= getCampSelectedCourse(themeName).capacity ? '名額已滿' : '立即報名' }}
-                                                </button>
+                                            <!-- 漸層遮罩讓文字清楚 -->
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                            
+                                            <!-- 標題與標籤 -->
+                                            <div class="absolute bottom-3 left-4 right-4 flex justify-between items-end gap-2">
+                                                <h3 class="font-black text-xl text-white leading-tight drop-shadow-md flex-1">{{ themeName }}</h3>
+                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#06C755] text-white shadow-sm shrink-0 mb-0.5">主題營隊</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-4">
+                                            <!-- 營隊基本資訊列 -->
+                                            <div class="flex gap-4 text-xs text-gray-500 mb-3 font-medium px-1">
+                                                <span v-if="getCampBaseInfo(themeName)?.location"><i class="fas fa-map-marker-alt text-gray-400 w-3 text-center mr-1"></i>{{ getCampBaseInfo(themeName).location }}</span>
+                                                <span v-if="getCampBaseInfo(themeName)?.instructor"><i class="fas fa-user-tie text-gray-400 w-3 text-center mr-1"></i>{{ getCampBaseInfo(themeName).instructor }}</span>
+                                            </div>
+
+                                            <!-- 營隊簡介預覽 -->
+                                            <p v-if="getCampBaseInfo(themeName)?.description" class="text-[13px] text-gray-600 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                                {{ getCampBaseInfo(themeName).description }}
+                                            </p>
+
+                                            <!-- 選擇區塊 -->
+                                            <div class="space-y-3 bg-white" v-if="campSelections[themeName]">
+                                                <div>
+                                                    <label class="text-xs text-[#06C755] font-black mb-1.5 block pl-1"><i class="fas fa-calendar-alt mr-1"></i> 1. 請選擇參加梯次 (日期)</label>
+                                                    <select v-model="campSelections[themeName].batch" @change="resetCampItem(themeName)" class="w-full bg-white border-2 border-green-100 text-gray-700 p-3 rounded-xl focus:border-[#06C755] focus:ring-0 outline-none transition text-[15px] font-bold shadow-sm">
+                                                        <option value="">-- 點擊選擇梯次 --</option>
+                                                        <option v-for="batch in Object.keys(themeData)" :key="batch" :value="batch">{{ batch }}</option>
+                                                    </select>
+                                                </div>
+
+                                                <div v-if="campSelections[themeName].batch" class="animate-fade-in pt-1">
+                                                    <label class="text-xs text-[#06C755] font-black mb-1.5 block pl-1"><i class="fas fa-running mr-1"></i> 2. 選擇該梯次上課項目</label>
+                                                    <select v-model="campSelections[themeName].item" class="w-full bg-white border-2 border-green-100 text-gray-700 p-3 rounded-xl focus:border-[#06C755] focus:ring-0 outline-none transition text-[15px] font-bold shadow-sm">
+                                                        <option value="">-- 點擊選擇課程項目 --</option>
+                                                        <option v-for="item in themeData[campSelections[themeName].batch]" :key="item.id" :value="item.id">
+                                                            {{ item.itemName }} (剩餘 {{ Math.max(0, item.capacity - item.enrolled) }} 名額)
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <!-- 當梯次與項目都選好後，顯示詳情與報名按鈕 -->
+                                            <div v-if="getCampSelectedCourse(themeName)" class="mt-5 pt-4 border-t border-gray-100 px-1 animate-fade-in">
+                                                <div class="flex justify-between items-center mb-4">
+                                                    <div class="text-xs text-gray-500 font-medium">
+                                                        日期：{{ getCampSelectedCourse(themeName).startDate }} ~ {{ getCampSelectedCourse(themeName).endDate }}
+                                                    </div>
+                                                    <!-- 早鳥價顯示邏輯 -->
+                                                    <div class="flex flex-col items-end">
+                                                        <span v-if="isEarlyBird(getCampSelectedCourse(themeName))" class="text-[11px] text-gray-400 line-through mb-0.5">原價 ${{ getCampSelectedCourse(themeName).price }}</span>
+                                                        <span class="text-[#06C755] font-black text-2xl leading-none">
+                                                            <span v-if="isEarlyBird(getCampSelectedCourse(themeName))" class="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded mr-1 align-middle shadow-sm relative -top-1">早鳥</span>${{ getActualPrice(getCampSelectedCourse(themeName)) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <button @click="openDetail(getCampSelectedCourse(themeName))" class="bg-gray-100 text-gray-600 py-3 rounded-xl text-[15px] font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5 hover:bg-gray-200">
+                                                        查看詳情
+                                                    </button>
+                                                    <button @click="selectCourse(getCampSelectedCourse(themeName))" :disabled="getCampSelectedCourse(themeName).enrolled >= getCampSelectedCourse(themeName).capacity" class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-3 rounded-xl text-[15px] font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
+                                                        <i class="fas fa-check-circle text-lg"></i> {{ getCampSelectedCourse(themeName).enrolled >= getCampSelectedCourse(themeName).capacity ? '名額已滿' : '立即報名' }}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -310,9 +335,9 @@
                                                 <h3 class="font-bold text-[17px] text-gray-800 leading-tight">{{
                                                     splitCourseName(c.name).mainName }}</h3>
                                             </div>
-                                            <!-- 加入早鳥價顯示邏輯 -->
+                                            <!-- 早鳥價顯示邏輯 -->
                                             <div class="flex flex-col items-end shrink-0">
-                                                <span v-if="isEarlyBird(c)" class="text-[10px] text-gray-400 line-through mb-0.5">原價 ${{ c.price }}</span>
+                                                <span v-if="isEarlyBird(c)" class="text-[11px] text-gray-400 line-through mb-0.5">原價 ${{ c.price }}</span>
                                                 <span class="text-[#06C755] font-black text-xl">
                                                     <span v-if="isEarlyBird(c)" class="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded mr-1 align-middle shadow-sm">早鳥</span>${{ getActualPrice(c) }}
                                                 </span>
@@ -492,7 +517,7 @@
                     <div v-if="selectedCourse?.type === '多日營隊'" class="border-t border-gray-200 pt-5">
                         <h3 class="font-bold text-gray-800 mb-2 flex items-center"><i
                                 class="far fa-calendar-times mr-2 text-red-500 text-lg"></i> 請假扣款 (最多 1 天)</h3>
-                        <!-- 修正：將產生的日期顯示為 MMDD (週幾) 格式，更直覺 -->
+                        <!-- 帶有捲動軸的區域以適應可能產生的長日期列表，並顯示為 MMDD (週幾) 格式 -->
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 max-h-56 overflow-y-auto pr-2 pb-2">
                             <div v-for="d in generatedDates" :key="d.val" class="checkbox-wrapper text-sm mb-0 shadow-sm"
                                 :class="{'active': excludedDates.includes(d.val)}" @click="toggleDate(d.val)">
@@ -582,6 +607,7 @@
             </div>
 
             <!-- View 5: 修改報名與回填 (PENDING 狀態) -->
+            <!-- 加大 pb-40 讓畫面底部有足夠空間被推上去 -->
             <div v-else-if="view === 'order_detail'" class="p-4 animate-fade-in pb-40">
                 <div class="flex items-center mb-4">
                     <button @click="view='my_orders'"
@@ -911,7 +937,7 @@
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, watch } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
         const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/';
         const LIFF_ID = '2008786875-7COWtgtL';
 
@@ -1133,6 +1159,16 @@
                     if (!sel || !sel.batch || !sel.item) return null;
                     const batchCourses = groupedCampCourses.value[themeName][sel.batch];
                     return batchCourses ? batchCourses.find(c => c.id === sel.item) : null;
+                };
+
+                // --- 取得營隊的基礎介紹資訊 (從第一筆資料抓取) ---
+                const getCampBaseInfo = (themeName) => {
+                    const batches = groupedCampCourses.value[themeName];
+                    if (!batches) return null;
+                    const firstBatchKey = Object.keys(batches)[0];
+                    if (!firstBatchKey) return null;
+                    const firstItem = batches[firstBatchKey][0];
+                    return firstItem || null;
                 };
 
                 // --- 新增：早鳥價判斷邏輯 ---
@@ -1419,7 +1455,7 @@
 
                 const equipmentList = computed(() => { if (!selectedCourse.value?.equipmentJson) return []; try { return JSON.parse(selectedCourse.value.equipmentJson); } catch (e) { return []; } });
                 
-                // --- 新增：將日期轉換並加上星期幾標示 ---
+                // --- 將日期轉換並加上星期幾標示 ---
                 const getWeekday = (dateStr) => {
                     const d = new Date(dateStr);
                     const days = ['日', '一', '二', '三', '四', '五', '六'];
@@ -1434,7 +1470,7 @@
                     let curr = new Date(s);
                     while (curr <= e && safety < 60) { 
                         const dateStr = curr.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-                        const mmdd = dateStr.substring(5); // 取出 MM-DD
+                        const mmdd = dateStr.substring(5); 
                         l.push({
                             val: dateStr,
                             display: `${mmdd} ${getWeekday(dateStr)}`
@@ -1464,7 +1500,7 @@
                     return l;
                 });
 
-                // --- 新增：計算明細金額，讓畫面顯示更清楚 ---
+                // --- 計算明細金額 ---
                 const baseCoursePrice = computed(() => {
                     if (!selectedCourse.value) return 0;
                     return getActualPrice(selectedCourse.value);
@@ -1534,7 +1570,7 @@
                     isLeaveDateChanged, updateLeaveDateOnly,
                     
                     campSelections, groupedCampCourses, unparsedCampCourses, resetCampItem, getCampSelectedCourse,
-                    isEarlyBird, getActualPrice,
+                    isEarlyBird, getActualPrice, getCampBaseInfo,
 
                     equipmentList, generatedDates, calculatedTotal, baseCoursePrice, totalEquipmentPrice, leaveDeduction,
                     editEquipmentList, editGeneratedDates, editOrderTotal,
