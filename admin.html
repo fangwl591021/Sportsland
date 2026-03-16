@@ -666,7 +666,7 @@
                                         </td>
                                     </tr>
                                     <tr v-if="normalCourses.length === 0">
-                                        <td colspan="5" class="text-center py-10 text-gray-400 font-bold">無符合的一般課程資料</td>
+                                        <td colspan="5" class="text-center py-20 text-gray-400 font-bold">無符合的一般課程資料</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1309,18 +1309,27 @@
                                     <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                         <div class="flex justify-between items-center mb-2">
                                             <label class="font-bold text-sm text-gray-700"><i class="fas fa-running text-orange-500 mr-1"></i> 此梯次的課程項目</label>
-                                            <button type="button" @click="b.items.push({name:'', price:0, capacity:0})" class="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-bold"><i class="fas fa-plus mr-1"></i>新增項目</button>
+                                            <button type="button" @click="b.items.push({name:'', price:'', capacity:''})" class="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-bold"><i class="fas fa-plus mr-1"></i>新增項目</button>
                                         </div>
                                         <div v-for="(item, iIdx) in b.items" :key="'i'+iIdx" class="flex flex-wrap gap-2 items-end mb-2 pb-2 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0">
-                                            <div class="flex-1 min-w-[120px]"><input v-model="item.name" class="input-line text-sm" placeholder="項目名稱 (如: 籃球特訓營)"></div>
-                                            <div class="w-24"><input v-model="item.price" type="number" class="input-line text-sm font-bold text-[#06C755]" placeholder="單價"></div>
-                                            <div class="w-20"><input v-model="item.capacity" type="number" class="input-line text-sm" placeholder="名額"></div>
-                                            <button type="button" @click="b.items.splice(iIdx, 1)" v-if="b.items.length > 1" class="text-red-400 p-2 hover:text-red-600"><i class="fas fa-times"></i></button>
+                                            <div class="flex-1 min-w-[120px]">
+                                                <label class="text-[10px] text-gray-500 font-bold block mb-1">項目名稱</label>
+                                                <input v-model="item.name" class="input-line text-sm" placeholder="如: 籃球特訓營">
+                                            </div>
+                                            <div class="w-24">
+                                                <label class="text-[10px] text-gray-500 font-bold block mb-1">單價 (元)</label>
+                                                <input v-model="item.price" type="number" class="input-line text-sm font-bold text-[#06C755]" placeholder="例如: 6500">
+                                            </div>
+                                            <div class="w-20">
+                                                <label class="text-[10px] text-gray-500 font-bold block mb-1">名額 (人)</label>
+                                                <input v-model="item.capacity" type="number" class="input-line text-sm" placeholder="例如: 20">
+                                            </div>
+                                            <button type="button" @click="b.items.splice(iIdx, 1)" v-if="b.items.length > 1" class="text-red-400 p-2 hover:text-red-600 mb-1"><i class="fas fa-times"></i></button>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <button type="button" @click="campBatches.push({name:'', startDate:'', endDate:'', items:[{name:'', price:0, capacity:0}]})" class="w-full py-3 border-2 border-dashed border-blue-300 text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition">
+                                <button type="button" @click="campBatches.push({name:'', startDate:'', endDate:'', items:[{name:'', price:'', capacity:''}]})" class="w-full py-3 border-2 border-dashed border-blue-300 text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition">
                                     <i class="fas fa-plus mr-1"></i> 新增下一梯次
                                 </button>
 
@@ -1587,7 +1596,7 @@
                 const campTheme = ref('');
                 const campBatch = ref(''); 
                 const campItem = ref('');  
-                const campBatches = ref([{ name: '', startDate: '', endDate: '', items: [{ name: '', price: 0, capacity: 0 }] }]);
+                const campBatches = ref([{ name: '', startDate: '', endDate: '', items: [{ name: '', price: '', capacity: '' }] }]);
                 const createProgress = ref({ current: 0, total: 0, isCreating: false });
 
                 const showCourseModal = ref(false), isEditingCourse = ref(false), courseForm = ref({}), courseEquipments = ref([]);
@@ -1821,7 +1830,7 @@
                     campTheme.value = '';
                     campBatch.value = '';
                     campItem.value = '';
-                    campBatches.value = [{ name: '', startDate: '', endDate: '', items: [{ name: '', price: 0, capacity: 0 }] }];
+                    campBatches.value = [{ name: '', startDate: '', endDate: '', items: [{ name: '', price: '', capacity: '' }] }];
                     showCourseModal.value = true; 
                 };
 
@@ -1855,7 +1864,7 @@
                         campTheme.value = '';
                         campBatch.value = '';
                         campItem.value = '';
-                        campBatches.value = [{ name: '', startDate: '', endDate: '', items: [{ name: '', price: 0, capacity: 0 }] }];
+                        campBatches.value = [{ name: '', startDate: '', endDate: '', items: [{ name: '', price: '', capacity: '' }] }];
                     }
                     try { 
                         courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); 
