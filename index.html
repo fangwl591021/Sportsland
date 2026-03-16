@@ -253,13 +253,17 @@
                                             <img v-if="getCampBaseInfo(themeName)?.image" :src="getCampBaseInfo(themeName).image" class="w-full h-full object-cover">
                                             <div v-else class="w-full h-full flex items-center justify-center text-gray-400 bg-[#e6f4ea]"><i class="fas fa-campground text-4xl text-[#06C755]/50"></i></div>
                                             
-                                            <!-- 漸層遮罩讓文字清楚 -->
-                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                            <!-- 漸層遮罩讓文字清楚 (加深以確保白字明顯) -->
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                                             
                                             <!-- 標題與標籤 -->
                                             <div class="absolute bottom-3 left-4 right-4 flex justify-between items-end gap-2">
                                                 <h3 class="font-black text-xl text-white leading-tight drop-shadow-md flex-1">{{ themeName }}</h3>
-                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#06C755] text-white shadow-sm shrink-0 mb-0.5">主題營隊</span>
+                                                <div class="flex flex-col items-end">
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#06C755] text-white shadow-sm shrink-0 mb-1 inline-block">主題營隊</span>
+                                                    <!-- 新增：第一層顯示營隊最低起價 -->
+                                                    <span class="text-white font-black text-lg drop-shadow-md leading-none">${{ getCampThemeMinPrice(themeName) }}<span class="text-[10px] font-medium ml-0.5 opacity-90">起</span></span>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1043,6 +1047,7 @@
                             view.value = 'register';
                         }
                     } catch (err) {
+                        // 解決常見的 code_verifier 錯誤，通常發生在重複登入導向
                         if (err.message && err.message.includes('code_verifier')) {
                             const newUrl = window.location.href.split('?')[0];
                             window.history.replaceState({}, document.title, newUrl);
@@ -1184,6 +1189,20 @@
 
                 const getActualPrice = (c) => {
                     return isEarlyBird(c) ? c.earlyBirdPrice : c.price;
+                };
+
+                // --- 新增：計算營隊起價 ---
+                const getCampThemeMinPrice = (themeName) => {
+                    const batches = groupedCampCourses.value[themeName];
+                    if (!batches) return 0;
+                    let minPrice = Infinity;
+                    Object.values(batches).forEach(items => {
+                        items.forEach(item => {
+                            const actualPrice = getActualPrice(item);
+                            if (actualPrice < minPrice) minPrice = actualPrice;
+                        });
+                    });
+                    return minPrice === Infinity ? 0 : minPrice;
                 };
 
                 const splitCourseName = (name) => {
@@ -1455,7 +1474,6 @@
 
                 const equipmentList = computed(() => { if (!selectedCourse.value?.equipmentJson) return []; try { return JSON.parse(selectedCourse.value.equipmentJson); } catch (e) { return []; } });
                 
-                // --- 將日期轉換並加上星期幾標示 ---
                 const getWeekday = (dateStr) => {
                     const d = new Date(dateStr);
                     const days = ['日', '一', '二', '三', '四', '五', '六'];
@@ -1500,7 +1518,6 @@
                     return l;
                 });
 
-                // --- 計算明細金額 ---
                 const baseCoursePrice = computed(() => {
                     if (!selectedCourse.value) return 0;
                     return getActualPrice(selectedCourse.value);
@@ -1570,7 +1587,7 @@
                     isLeaveDateChanged, updateLeaveDateOnly,
                     
                     campSelections, groupedCampCourses, unparsedCampCourses, resetCampItem, getCampSelectedCourse,
-                    isEarlyBird, getActualPrice, getCampBaseInfo,
+                    isEarlyBird, getActualPrice, getCampBaseInfo, getCampThemeMinPrice, // 新增匯出 getCampThemeMinPrice
 
                     equipmentList, generatedDates, calculatedTotal, baseCoursePrice, totalEquipmentPrice, leaveDeduction,
                     editEquipmentList, editGeneratedDates, editOrderTotal,
