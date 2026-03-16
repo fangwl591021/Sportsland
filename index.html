@@ -187,7 +187,7 @@
                                 <p class="text-sm font-bold text-gray-400 tracking-widest">載入課程中...</p>
                             </div>
 
-                            <div v-else-if="filteredCourses.length === 0"
+                            <div v-else-if="filteredCourses.length === 0 && Object.keys(groupedCampCourses).length === 0"
                                 class="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
                                 <i class="fas fa-box-open text-4xl text-gray-200 mb-3 block"></i>
                                 <p class="text-sm text-gray-500 font-bold">目前沒有開放此類型的課程</p>
@@ -249,7 +249,8 @@
                                             <span class="text-[10px] font-bold px-2 py-0.5 rounded border bg-green-50 text-green-600 border-green-100 shadow-sm shrink-0">主題營隊</span>
                                         </div>
 
-                                        <div class="pl-2 space-y-3">
+                                        <!-- 加入保護：確保變數有正確初始化才顯示 -->
+                                        <div class="pl-2 space-y-3" v-if="campSelections[themeName]">
                                             <div>
                                                 <label class="text-xs text-gray-500 font-bold mb-1.5 block"><i class="fas fa-calendar-alt mr-1"></i> 1. 請選擇參加梯次 (日期)</label>
                                                 <select v-model="campSelections[themeName].batch" @change="resetCampItem(themeName)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 p-2.5 rounded-lg focus:ring-2 focus:ring-[#06C755] outline-none transition text-sm font-bold shadow-sm">
@@ -258,7 +259,7 @@
                                                 </select>
                                             </div>
 
-                                            <div v-if="campSelections[themeName]?.batch" class="animate-fade-in pt-1">
+                                            <div v-if="campSelections[themeName].batch" class="animate-fade-in pt-1">
                                                 <label class="text-xs text-gray-500 font-bold mb-1.5 block"><i class="fas fa-running mr-1"></i> 2. 選擇該梯次上課項目</label>
                                                 <select v-model="campSelections[themeName].item" class="w-full bg-gray-50 border border-gray-200 text-gray-700 p-2.5 rounded-lg focus:ring-2 focus:ring-[#06C755] outline-none transition text-sm font-bold shadow-sm">
                                                     <option value="">-- 點擊選擇課程項目 --</option>
@@ -561,6 +562,7 @@
             </div>
 
             <!-- View 5: 修改報名與回填 (PENDING 狀態) -->
+            <!-- 加大 pb-40 讓畫面底部有足夠空間被推上去 -->
             <div v-else-if="view === 'order_detail'" class="p-4 animate-fade-in pb-40">
                 <div class="flex items-center mb-4">
                     <button @click="view='my_orders'"
@@ -618,8 +620,8 @@
                         </div>
                         <p v-if="editGeneratedDates.length > 12" class="text-[10px] text-gray-400 mt-2 text-center"><i class="fas fa-hand-pointer mr-1"></i>上下滑動查看更多日期</p>
                         
-                        <!-- 獨立儲存請假變更按鈕 -->
-                        <div v-if="isLeaveDateChanged" class="mt-4 text-center">
+                        <!-- 獨立儲存請假變更按鈕 (當日期被事後修改且不在未回填的狀態下顯示) -->
+                        <div v-if="remittanceConfirmed && isLeaveDateChanged" class="mt-4 text-center">
                             <button @click="updateLeaveDateOnly" type="button" :disabled="isSubmitting" class="w-full bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition border border-red-200">
                                 <i class="fas fa-save mr-1"></i> 立即儲存請假變更
                             </button>
@@ -630,6 +632,7 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
+                        <!-- 加上 @focus 捲動事件，並加入 inputmode="numeric" 喚醒數字鍵盤 -->
                         <input v-model="tempRemittance" :readonly="remittanceConfirmed" @focus="scrollToInput"
                             class="form-input text-center font-mono text-3xl tracking-[0.3em] shadow-inner py-5"
                             :class="{'bg-gray-100 text-gray-500': remittanceConfirmed}" maxlength="5"
@@ -649,8 +652,21 @@
                         </div>
                     </div>
 
-                    <!-- 取消按鈕滿版框線樣式 -->
-                    <div v-if="!remittanceConfirmed" class="mt-6 text-center pb-6">
+                    <!-- 鎖定後提示聯繫客服，不開放直接按退費 -->
+                    <div v-if="remittanceConfirmed" class="mt-6 pb-6 text-center">
+                        <div class="bg-gray-100 rounded-xl p-4 border border-gray-200">
+                            <i class="fas fa-headset text-gray-400 text-2xl mb-2"></i>
+                            <p class="text-sm font-bold text-gray-700 mb-1">訂單已鎖定處理中</p>
+                            <p class="text-xs text-gray-500 mb-3">為保障您的權益，如需退費或變更內容，請直接聯繫客服人員為您服務。</p>
+                            <a href="https://lin.ee/Y0FKXqD" target="_blank"
+                                class="inline-block bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg text-sm font-bold transition hover:bg-indigo-100">
+                                <i class="fab fa-line mr-1"></i> 聯繫客服小幫手
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 未鎖定：取消報名按鈕滿版框線樣式 -->
+                    <div v-else class="mt-6 text-center pb-6">
                         <button v-if="editingOrder?.status === 'PENDING'" @click="cancelOrder" type="button"
                             class="w-full py-4 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 text-[15px]">
                             <i class="fas fa-trash-alt mr-1.5"></i> 取消此筆報名紀錄
@@ -872,7 +888,7 @@
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted, watch } = Vue;
         const API_ENDPOINT = 'https://sport-island.fangwl591021.workers.dev/';
         const LIFF_ID = '2008786875-7COWtgtL';
 
@@ -892,7 +908,7 @@
                 const courses = ref([]);
                 const myOrders = ref([]);
                 
-                // 新增：儲存營隊三層選單的選擇狀態
+                // 儲存營隊三層選單的選擇狀態
                 const campSelections = ref({});
 
                 const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', address: '', identity: '家長', gender: '男', familyMembers: [] });
@@ -931,7 +947,22 @@
                 const loadCourses = async () => {
                     isCoursesLoading.value = true;
                     try {
-                        courses.value = await callApi('GET_COURSES');
+                        const fetchedCourses = await callApi('GET_COURSES');
+                        
+                        // 【防呆保護】預先初始化營隊的下拉選單變數，避免畫面渲染崩潰
+                        const newSelections = { ...campSelections.value };
+                        fetchedCourses.filter(c => c.type === '多日營隊').forEach(c => {
+                            const parts = c.name.split(/\s*-\s*/);
+                            if (parts.length >= 3) {
+                                const theme = parts[0];
+                                if (!newSelections[theme]) {
+                                    newSelections[theme] = { batch: '', item: '' };
+                                }
+                            }
+                        });
+                        campSelections.value = newSelections;
+                        courses.value = fetchedCourses;
+                        
                         if (!expandedCategory.value && courses.value.length > 0) {
                             const catWithCourses = categories.find(cat => courses.value.some(c => c.type === cat.id));
                             if (catWithCourses) expandedCategory.value = catWithCourses.id;
@@ -963,7 +994,6 @@
                             view.value = 'register';
                         }
                     } catch (err) {
-                        // 解決常見的 code_verifier 錯誤，通常發生在重複登入導向
                         if (err.message && err.message.includes('code_verifier')) {
                             const newUrl = window.location.href.split('?')[0];
                             window.history.replaceState({}, document.title, newUrl);
@@ -1036,18 +1066,16 @@
                     return courses.value.filter(c => c.type === expandedCategory.value && c.type !== '多日營隊');
                 });
                 
-                // --- 新增：將營隊資料解析並群組化 (三層選單邏輯) ---
+                // 將營隊資料解析並群組化 (三層選單邏輯)
                 const groupedCampCourses = computed(() => {
                     const groups = {};
                     courses.value.filter(c => c.type === '多日營隊').forEach(c => {
-                        // 使用正則表達式，依照「-」分割並忽略前後空白
                         const parts = c.name.split(/\s*-\s*/);
                         
-                        // 確保格式正確 (至少有: 主題, 梯次, 項目)
                         if (parts.length >= 3) {
                             const theme = parts[0];
-                            const item = parts[parts.length - 1]; // 取最後一段為項目
-                            const batch = parts.slice(1, parts.length - 1).join('-'); // 中間全部為梯次，避免日期中有 - 被切斷
+                            const item = parts[parts.length - 1]; 
+                            const batch = parts.slice(1, parts.length - 1).join('-'); 
 
                             if (!groups[theme]) {
                                 groups[theme] = {};
@@ -1063,13 +1091,6 @@
                         }
                     });
                     
-                    // 初始化 campSelections (每個主題都有自己的一組選擇狀態)
-                    Object.keys(groups).forEach(theme => {
-                         if (!campSelections.value[theme]) {
-                             campSelections.value[theme] = { batch: '', item: '' };
-                         }
-                    });
-
                     return groups;
                 });
                 
@@ -1078,14 +1099,12 @@
                     return courses.value.filter(c => c.type === '多日營隊' && c.name.split(/\s*-\s*/).length < 3);
                 });
                 
-                // 當營隊梯次改變時，重置項目的選擇
                 const resetCampItem = (themeName) => {
                     if(campSelections.value[themeName]) {
                         campSelections.value[themeName].item = '';
                     }
                 };
 
-                // 取得目前選中的具體營隊課程資料
                 const getCampSelectedCourse = (themeName) => {
                     const sel = campSelections.value[themeName];
                     if (!sel || !sel.batch || !sel.item) return null;
@@ -1129,7 +1148,6 @@
                     view.value = 'form';
                 };
 
-                // 修改：強制只能選一天
                 const toggleDate = d => { 
                     const i = excludedDates.value.indexOf(d); 
                     if (i > -1) excludedDates.value.splice(i, 1); 
@@ -1144,7 +1162,8 @@
                     isSubmitting.value = true;
                     try {
                         const userOrders = await callApi('GET_USER_ORDERS');
-                        myOrders.value = userOrders;
+
+                        myOrders.value = userOrders; 
 
                         const parseDateStr = (dStr) => dStr ? new Date(dStr).getTime() : 0;
                         const parseTimeStr = (tStr) => {
@@ -1169,7 +1188,7 @@
                             let eEnd = parseDateStr(exCourse.endDate);
                             if (!eEnd) eEnd = eStart;
 
-                            if (nStart > eEnd || nEnd < eStart) return false;
+                            if (nStart > eEnd || nEnd < eStart) return false; 
 
                             const ntStart = parseTimeStr(selectedCourse.value.startTime);
                             const ntEnd = parseTimeStr(selectedCourse.value.endTime);
@@ -1178,7 +1197,7 @@
 
                             if (ntStart && ntEnd && etStart && etEnd) {
                                 if (ntStart >= etEnd || ntEnd <= etStart) return false;
-                                return true;
+                                return true; 
                             }
                             return true;
                         });
@@ -1231,7 +1250,7 @@
                 const scrollToInput = (event) => {
                     setTimeout(() => {
                         event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 300);
+                    }, 300); 
                 };
 
                 const confirmRemittance = async () => {
@@ -1279,7 +1298,6 @@
                     } catch (e) { alert('申請失敗：' + e.message); } finally { isSubmitting.value = false; }
                 };
 
-                // 修改：強制只能修改一天
                 const toggleEditDate = d => { 
                     const i = tempExcludedDates.value.indexOf(d); 
                     if (i > -1) tempExcludedDates.value.splice(i, 1); 
