@@ -369,7 +369,7 @@
                             <i class="fas fa-file-export"></i> <span class="hidden sm:inline">匯出 CSV</span>
                         </button>
                         <button @click="fetchData" class="btn-white"><i class="fas fa-sync-alt"
-                                :class="{'fa-spin':isLoading}"></i> <span class="hidden sm:inline">資料同步</span></button>
+                                :class="{'fa-spin':isLoading && !createProgress.isCreating}"></i> <span class="hidden sm:inline">資料同步</span></button>
                     </div>
                 </header>
 
@@ -548,7 +548,6 @@
                                 class="bg-white border border-gray-100 rounded-xl shadow-sm relative overflow-hidden">
                                 <div class="p-4 flex justify-between items-start" @click="toggleCourseExpand(c.id)">
                                     <div class="flex-1 pr-4">
-                                        <!-- 修改：手機版套用營隊專屬名稱排版 -->
                                         <template v-if="c.type === '多日營隊'">
                                             <span class="text-[10px] text-green-600 font-bold mb-0.5 block">{{ parseCampName(c.name).theme }}</span>
                                             <div class="font-bold text-base text-gray-800 leading-tight">{{ parseCampName(c.name).item }}</div>
@@ -660,7 +659,6 @@
                                     <tr v-for="c in filteredCourses" :key="c.id"
                                         class="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
                                         <td class="text-left text-gray-800">
-                                            <!-- 修改：電腦版套用營隊專屬名稱排版 -->
                                             <template v-if="c.type === '多日營隊'">
                                                 <div class="text-[11px] text-green-600 font-bold mb-0.5">{{ parseCampName(c.name).theme }}</div>
                                                 <div class="text-base font-bold leading-tight">{{ parseCampName(c.name).item }}</div>
@@ -1181,7 +1179,7 @@
             </div>
         </div>
 
-        <!-- 課程編輯彈窗 -->
+        <!-- 課程編輯/新增彈窗 -->
         <div v-if="showCourseModal" class="modal-mask">
             <div class="modal-pop" style="max-width:1000px; height:85%;">
                 <div class="h-14 border-b px-6 flex justify-between items-center shrink-0 bg-white">
@@ -1198,27 +1196,65 @@
                                     class="input-line bg-gray-50" readonly placeholder="系統自動生成"></div>
                             
                             <div><label class="label-line">類型</label><select v-model="courseForm.type"
-                                    class="input-line">
+                                    class="input-line" :disabled="isEditingCourse">
                                     <option value="單日課程">單日課程</option>
                                     <option value="多日營隊">多日營隊</option>
                                     <option value="常態課後">常態課後</option>
                                 </select></div>
                                 
-                            <!-- 一般課程名稱 -->
+                            <!-- 一般課程 名稱 (非營隊) -->
                             <div v-if="courseForm.type !== '多日營隊'" class="col-span-1 sm:col-span-2">
                                 <label class="label-line">課程名稱</label><input v-model="courseForm.name" class="input-line" placeholder="例如：星期五 羽球 (大班~12歲)">
                             </div>
 
-                            <!-- 營隊專屬拆分輸入區塊 -->
-                            <div v-if="courseForm.type === '多日營隊'" class="col-span-1 sm:col-span-2 bg-green-50 border border-green-200 rounded-lg p-4 mb-2">
-                                <div class="text-sm font-bold text-green-800 mb-3"><i class="fas fa-campground mr-1"></i> 營隊專屬命名格式 (系統將自動組合)</div>
+                            <!-- 營隊 - 單筆編輯模式 (只能修改獨立資訊) -->
+                            <div v-if="courseForm.type === '多日營隊' && isEditingCourse" class="col-span-1 sm:col-span-2 bg-green-50 border border-green-200 rounded-lg p-4 mb-2">
+                                <div class="text-sm font-bold text-green-800 mb-3"><i class="fas fa-campground mr-1"></i> 單筆營隊編輯模式</div>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div><label class="label-line text-green-700 text-xs">1. 營隊大主題</label><input v-model="campTheme" class="input-line border-green-300" placeholder="如: XX夏令營"></div>
-                                    <div><label class="label-line text-green-700 text-xs">2. 梯次名稱 (含日期)</label><input v-model="campBatch" class="input-line border-green-300" placeholder="如: 第一梯次 (07/06~07/10)"></div>
-                                    <div><label class="label-line text-green-700 text-xs">3. 上課項目</label><input v-model="campItem" class="input-line border-green-300" placeholder="如: 籃球特訓營"></div>
+                                    <div><label class="label-line text-green-700 text-xs">大主題</label><input v-model="campTheme" class="input-line border-green-300"></div>
+                                    <div><label class="label-line text-green-700 text-xs">梯次名稱</label><input v-model="campBatch" class="input-line border-green-300"></div>
+                                    <div><label class="label-line text-green-700 text-xs">上課項目</label><input v-model="campItem" class="input-line border-green-300"></div>
                                 </div>
                                 <div class="mt-3 text-xs text-gray-500 bg-white p-2 rounded border border-green-100 shadow-sm">
                                     預覽顯示名稱：<span class="font-bold text-gray-800">{{ campTheme || '主題' }} - {{ campBatch || '梯次' }} - {{ campItem || '項目' }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 營隊 - 批次新增模式 (可建立無限矩陣) -->
+                            <div v-if="courseForm.type === '多日營隊' && !isEditingCourse" class="col-span-1 sm:col-span-2 space-y-4">
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <label class="label-line text-green-800 font-bold">1. 營隊大主題</label>
+                                    <input v-model="campTheme" class="input-line border-green-300" placeholder="如: 2026 運動島聯名夏令營">
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <label class="font-bold text-gray-800"><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> 2. 梯次設定</label>
+                                        <button type="button" @click="campBatches.push({name:'', startDate:'', endDate:''})" class="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full font-bold"><i class="fas fa-plus mr-1"></i>新增梯次</button>
+                                    </div>
+                                    <div v-for="(b, idx) in campBatches" :key="'b'+idx" class="flex flex-wrap gap-2 items-end mb-3 pb-3 border-b border-gray-100 last:border-0 last:mb-0 last:pb-0">
+                                        <div class="flex-1 min-w-[150px]"><label class="text-[10px] text-gray-500">梯次名稱</label><input v-model="b.name" class="input-line text-sm" placeholder="如: 第一梯次 (07/06~07/10)"></div>
+                                        <div class="w-32"><label class="text-[10px] text-gray-500">開始日期</label><input v-model="b.startDate" type="date" class="input-line text-sm text-gray-600"></div>
+                                        <div class="w-32"><label class="text-[10px] text-gray-500">結束日期</label><input v-model="b.endDate" type="date" class="input-line text-sm text-gray-600"></div>
+                                        <button type="button" @click="campBatches.splice(idx, 1)" v-if="campBatches.length > 1" class="text-red-400 p-2 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <label class="font-bold text-gray-800"><i class="fas fa-running text-orange-500 mr-1"></i> 3. 課程項目設定</label>
+                                        <button type="button" @click="campItems.push({name:'', price:0, capacity:0})" class="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full font-bold"><i class="fas fa-plus mr-1"></i>新增項目</button>
+                                    </div>
+                                    <div v-for="(item, idx) in campItems" :key="'i'+idx" class="flex flex-wrap gap-2 items-end mb-3 pb-3 border-b border-gray-100 last:border-0 last:mb-0 last:pb-0">
+                                        <div class="flex-1 min-w-[150px]"><label class="text-[10px] text-gray-500">項目名稱</label><input v-model="item.name" class="input-line text-sm" placeholder="如: 籃球特訓營"></div>
+                                        <div class="w-24"><label class="text-[10px] text-gray-500">單價</label><input v-model="item.price" type="number" class="input-line text-sm font-bold text-[#06C755]"></div>
+                                        <div class="w-20"><label class="text-[10px] text-gray-500">名額</label><input v-model="item.capacity" type="number" class="input-line text-sm"></div>
+                                        <button type="button" @click="campItems.splice(idx, 1)" v-if="campItems.length > 1" class="text-red-400 p-2 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-yellow-50 text-yellow-700 text-xs p-3 rounded border border-yellow-200 mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i> 系統將會為您自動交叉組合並建立 <b>{{ campBatches.length * campItems.length }}</b> 堂獨立的營隊課程。
                                 </div>
                             </div>
                             
@@ -1231,10 +1267,12 @@
                                 </select></div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div><label class="label-line">開始日期</label><input v-model="courseForm.startDate" type="date"
-                                    class="input-line"></div>
-                            <div><label class="label-line">結束日期</label><input v-model="courseForm.endDate" type="date"
-                                    class="input-line"></div>
+                            <template v-if="courseForm.type !== '多日營隊' || isEditingCourse">
+                                <div><label class="label-line">開始日期</label><input v-model="courseForm.startDate" type="date"
+                                        class="input-line"></div>
+                                <div><label class="label-line">結束日期</label><input v-model="courseForm.endDate" type="date"
+                                        class="input-line"></div>
+                            </template>
                             <div><label class="label-line">開始時間</label><input v-model="courseForm.startTime" type="time"
                                     class="input-line"></div>
                             <div><label class="label-line">結束時間</label><input v-model="courseForm.endTime" type="time"
@@ -1251,11 +1289,13 @@
                     <div class="w-full md:w-1/2 p-4 md:p-6 md:overflow-y-auto bg-[#fafafa] flex-shrink-0">
                         <div class="section-header">費用與設定</div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div><label class="label-line">原價</label><input v-model="courseForm.price" type="number"
-                                    class="input-line font-bold text-[#06C755]"></div>
-                            <div><label class="label-line">總名額</label><input v-model="courseForm.capacity" type="number"
-                                    class="input-line"></div>
-                            <div><label class="label-line">總堂數 (計算請假用)</label><input v-model="courseForm.totalSessions"
+                            <template v-if="courseForm.type !== '多日營隊' || isEditingCourse">
+                                <div><label class="label-line">原價</label><input v-model="courseForm.price" type="number"
+                                        class="input-line font-bold text-[#06C755]"></div>
+                                <div><label class="label-line">總名額</label><input v-model="courseForm.capacity" type="number"
+                                        class="input-line"></div>
+                            </template>
+                            <div :class="{'sm:col-span-2': courseForm.type === '多日營隊' && !isEditingCourse}"><label class="label-line">總堂數 (計算請假用)</label><input v-model="courseForm.totalSessions"
                                     type="number" class="input-line"></div>
                         </div>
                         <div class="settings-box">
@@ -1306,8 +1346,12 @@
                 </div>
                 <div
                     class="h-16 border-t px-8 flex justify-end items-center gap-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
-                    <button @click="showCourseModal=false" class="btn-white px-8">取消</button><button @click="saveCourse"
-                        :disabled="isLoading" class="btn-green px-12">{{ isLoading ? '儲存中...' : '確認儲存' }}</button>
+                    <button @click="showCourseModal=false" class="btn-white px-8" :disabled="isLoading || createProgress.isCreating">取消</button>
+                    <button @click="saveCourse" :disabled="isLoading || createProgress.isCreating" class="btn-green px-12">
+                        <span v-if="createProgress.isCreating"><i class="fas fa-spinner fa-spin mr-1"></i> 建立中 ({{createProgress.current}}/{{createProgress.total}})</span>
+                        <span v-else-if="isLoading">儲存中...</span>
+                        <span v-else>確認儲存</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1468,10 +1512,13 @@
 
                 const courseSortOrder = ref('');
 
-                // 新增：營隊專屬輸入變數
+                // 營隊專屬輸入變數與進度條
                 const campTheme = ref('');
-                const campBatch = ref('');
-                const campItem = ref('');
+                const campBatch = ref(''); 
+                const campItem = ref('');  
+                const campBatches = ref([{ name: '', startDate: '', endDate: '' }]);
+                const campItems = ref([{ name: '', price: 0, capacity: 0 }]);
+                const createProgress = ref({ current: 0, total: 0, isCreating: false });
 
                 const showCourseModal = ref(false), isEditingCourse = ref(false), courseForm = ref({}), courseEquipments = ref([]);
                 const showMemberModal = ref(false), editingMember = ref({});
@@ -1570,7 +1617,6 @@
                     return { mainName: name, subName: '' };
                 };
 
-                // 新增：專門解析營隊名稱的函式
                 const parseCampName = (name) => {
                     if (!name) return { theme: '', batch: '', item: '' };
                     const parts = String(name).split(/\s*-\s*/);
@@ -1693,7 +1739,11 @@
                     isEditingCourse.value = false; 
                     courseForm.value = { id: '', name: '', startDate: '', endDate: '', price: 0, capacity: 0, totalSessions: 1, type: '單日課程', timeSlotType: '全日', earlyBirdPrice: 0, earlyBirdDate: '', equipmentJson: '[]', image: '' }; 
                     courseEquipments.value = []; 
-                    campTheme.value = ''; campBatch.value = ''; campItem.value = '';
+                    campTheme.value = '';
+                    campBatch.value = '';
+                    campItem.value = '';
+                    campBatches.value = [{ name: '', startDate: '', endDate: '' }];
+                    campItems.value = [{ name: '', price: 0, capacity: 0 }];
                     showCourseModal.value = true; 
                 };
 
@@ -1722,10 +1772,14 @@
                     if (c.type === '多日營隊') {
                         const p = parseCampName(c.name);
                         campTheme.value = p.theme === '其他營隊' ? '' : p.theme;
-                        campBatch.value = p.batch;
-                        campItem.value = p.item + ' (複製)';
+                        campBatches.value = [{ name: p.batch, startDate: fmtDate(c.startDate), endDate: fmtDate(c.endDate) }];
+                        campItems.value = [{ name: p.item + ' (複製)', price: c.price, capacity: c.capacity }];
                     } else {
-                        campTheme.value = ''; campBatch.value = ''; campItem.value = '';
+                        campTheme.value = '';
+                        campBatch.value = '';
+                        campItem.value = '';
+                        campBatches.value = [{ name: '', startDate: '', endDate: '' }];
+                        campItems.value = [{ name: '', price: 0, capacity: 0 }];
                     }
                     try { 
                         courseEquipments.value = JSON.parse(c.equipmentJson || '[]'); 
@@ -1739,27 +1793,85 @@
                 const removeEquipment = (i) => { courseEquipments.value.splice(i, 1); };
                 
                 const saveCourse = async () => { 
-                    if (courseForm.value.type === '多日營隊') {
-                        if (!campTheme.value || !campBatch.value || !campItem.value) {
-                            alert('營隊的「大主題」、「梯次名稱」、「上課項目」皆為必填！');
-                            return;
+                    if (isEditingCourse.value) {
+                        if (courseForm.value.type === '多日營隊') {
+                            if (!campTheme.value || !campBatch.value || !campItem.value) {
+                                alert('營隊的「大主題」、「梯次名稱」、「上課項目」皆為必填！');
+                                return;
+                            }
+                            courseForm.value.name = `${String(campTheme.value).trim()} - ${String(campBatch.value).trim()} - ${String(campItem.value).trim()}`;
                         }
-                        courseForm.value.name = `${String(campTheme.value).trim()} - ${String(campBatch.value).trim()} - ${String(campItem.value).trim()}`;
-                    }
-
-                    isLoading.value = true; 
-                    try { 
+                        isLoading.value = true; 
+                        try { 
+                            courseForm.value.equipmentJson = JSON.stringify(courseEquipments.value); 
+                            await callApi('ADMIN_UPDATE_COURSE', courseForm.value); 
+                            alert('編輯成功！'); 
+                            showCourseModal.value = false; 
+                            fetchData(); 
+                        } catch (e) { 
+                            alert('失敗'); 
+                        } finally { 
+                            isLoading.value = false; 
+                        } 
+                    } else {
                         courseForm.value.equipmentJson = JSON.stringify(courseEquipments.value); 
-                        const act = isEditingCourse.value ? 'ADMIN_UPDATE_COURSE' : 'ADMIN_ADD_COURSE'; 
-                        await callApi(act, courseForm.value); 
-                        alert('成功'); 
-                        showCourseModal.value = false; 
-                        fetchData(); 
-                    } catch (e) { 
-                        alert('失敗'); 
-                    } finally { 
-                        isLoading.value = false; 
-                    } 
+                        
+                        if (courseForm.value.type === '多日營隊') {
+                            if (!campTheme.value) return alert('請填寫營隊大主題');
+                            for (let b of campBatches.value) {
+                                if (!b.name || !b.startDate || !b.endDate) return alert('梯次資訊不完整');
+                            }
+                            for (let i of campItems.value) {
+                                if (!i.name || !i.price || !i.capacity) return alert('課程項目資訊不完整');
+                            }
+
+                            const totalToCreate = campBatches.value.length * campItems.value.length;
+                            if (!confirm(`即將一次建立 ${totalToCreate} 堂營隊課程，確定嗎？`)) return;
+
+                            createProgress.value = { current: 0, total: totalToCreate, isCreating: true };
+                            isLoading.value = true;
+
+                            try {
+                                for (let b of campBatches.value) {
+                                    for (let item of campItems.value) {
+                                        const newId = 'CAMP-' + Date.now().toString().slice(-4) + Math.floor(Math.random() * 10000);
+                                        const payload = {
+                                            ...courseForm.value,
+                                            id: newId,
+                                            name: `${String(campTheme.value).trim()} - ${String(b.name).trim()} - ${String(item.name).trim()}`,
+                                            startDate: b.startDate,
+                                            endDate: b.endDate,
+                                            price: item.price,
+                                            capacity: item.capacity
+                                        };
+                                        await callApi('ADMIN_ADD_COURSE', payload);
+                                        createProgress.value.current++;
+                                    }
+                                }
+                                alert('全部批次建立成功！');
+                                showCourseModal.value = false;
+                                fetchData();
+                            } catch (e) {
+                                alert('建立過程中發生錯誤');
+                            } finally {
+                                isLoading.value = false;
+                                createProgress.value.isCreating = false;
+                            }
+                        } else {
+                            isLoading.value = true;
+                            try {
+                                courseForm.value.id = 'C' + Date.now().toString().slice(-5) + Math.floor(Math.random()*1000);
+                                await callApi('ADMIN_ADD_COURSE', courseForm.value);
+                                alert('新增成功！');
+                                showCourseModal.value = false;
+                                fetchData();
+                            } catch (e) {
+                                alert('失敗');
+                            } finally {
+                                isLoading.value = false;
+                            }
+                        }
+                    }
                 };
 
                 const openMember = (u) => { 
@@ -1958,7 +2070,7 @@
                     isLoggedIn, password, isLoading, error, currentTab, tabName, courses, orders, users,
                     searchTerm, searchMemberTerm, searchCourseTerm, filteredOrders, filteredUsers, filteredCourses, filterStatus, filterCourse,
                     dashboardStats, courseStats, getCourseName, splitCourseName, parseCampName,
-                    campTheme, campBatch, campItem,
+                    campTheme, campBatch, campItem, campBatches, campItems, createProgress, 
                     showCourseModal, isEditingCourse, courseForm, courseEquipments,
                     showMemberModal, editingMember, showOrderModal, editingOrder, showRelativeModal, editingRelative,
                     showEnrollmentModal, selectedCourseEnrollment, currentViewingCourseName,
