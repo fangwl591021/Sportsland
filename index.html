@@ -87,11 +87,10 @@
         <header class="bg-[#06C755] text-white p-3 sticky top-0 z-30 flex items-center justify-between shadow-md">
             <h1 class="text-[16px] font-black tracking-widest truncate pl-1">運動島綜合運動體能館</h1>
             <div class="flex items-center bg-white/20 pl-1 pr-3 py-1 rounded-full shrink-0 shadow-inner">
-                <img v-if="userProfile?.pictureUrl" :src="userProfile.pictureUrl"
+                <img v-if="userProfile && userProfile.pictureUrl" :src="userProfile.pictureUrl"
                     class="w-7 h-7 rounded-full object-cover mr-2 border border-white/50 shadow-sm">
                 <i v-else class="fas fa-user text-sm mr-2 ml-2"></i>
-                <span class="text-[12px] font-bold truncate max-w-[80px]">{{ userInfo?.name || userProfile?.displayName
-                    || '載入中...' }}</span>
+                <span class="text-[12px] font-bold truncate max-w-[80px]">{{ (userInfo && userInfo.name) || (userProfile && userProfile.displayName) || '載入中...' }}</span>
             </div>
         </header>
 
@@ -116,7 +115,7 @@
                     <div class="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
                 </div>
 
-                <!-- 橫式功能操作列 (動態依照是否為管理員切換欄數) -->
+                <!-- 橫式功能操作列 -->
                 <div
                     class="bg-white px-3 py-4 shadow-[0_4px_15px_rgba(0,0,0,0.04)] grid gap-2 border-b sticky top-0 z-20"
                     :class="isAdmin ? 'grid-cols-4' : 'grid-cols-3'">
@@ -124,15 +123,13 @@
                         class="bg-green-50 text-[#06C755] border border-green-100 rounded-xl py-2.5 flex flex-col items-center justify-center transition shadow-sm relative">
                         <i class="fas fa-user-edit text-xl mb-1"></i>
                         <span class="text-[10px] font-bold">基本資料</span>
-                        <div v-if="isAuthLoading" class="absolute inset-0 bg-white/50 rounded-xl cursor-not-allowed">
-                        </div>
+                        <div v-if="isAuthLoading" class="absolute inset-0 bg-white/50 rounded-xl cursor-not-allowed"></div>
                     </button>
                     <button @click="goToMyOrders" :class="{'opacity-50 cursor-not-allowed': isAuthLoading}"
                         class="bg-blue-50 text-blue-600 border border-blue-100 rounded-xl py-2.5 flex flex-col items-center justify-center transition shadow-sm relative">
                         <i class="fas fa-history text-xl mb-1"></i>
                         <span class="text-[10px] font-bold">報名紀錄</span>
-                        <div v-if="isAuthLoading" class="absolute inset-0 bg-white/50 rounded-xl cursor-not-allowed">
-                        </div>
+                        <div v-if="isAuthLoading" class="absolute inset-0 bg-white/50 rounded-xl cursor-not-allowed"></div>
                     </button>
                     <a href="https://lin.ee/Y0FKXqD" target="_blank"
                         class="bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl py-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-sm">
@@ -140,7 +137,6 @@
                         <span class="text-[10px] font-bold">客服小幫手</span>
                     </a>
                     
-                    <!-- 管理員專屬的切換後台按鈕 -->
                     <button v-if="isAdmin" @click="goToAdmin"
                         class="bg-gray-800 text-white border border-gray-700 rounded-xl py-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-sm">
                         <i class="fas fa-cogs text-xl mb-1"></i>
@@ -154,7 +150,6 @@
                         <h2 class="text-lg font-black text-gray-800 border-l-4 border-[#06C755] pl-2 leading-none">
                             選擇活動類型</h2>
                         
-                        <!-- 手動更新課程按鈕，突破 LINE 快取 -->
                         <button @click="loadCourses" :disabled="isCoursesLoading"
                             class="flex items-center text-[11px] text-gray-600 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition font-bold">
                             <i class="fas fa-sync-alt mr-1.5 text-[#06C755]" :class="{'fa-spin': isCoursesLoading}"></i> {{ isCoursesLoading ? '同步中' : '更新課程' }}
@@ -211,7 +206,7 @@
                                                     class="text-[13px] text-gray-500 mt-1 font-bold bg-gray-50 inline-block px-2 py-0.5 rounded">
                                                     {{ splitCourseName(c.name).subName }}</div>
                                             </div>
-                                            <!-- 早鳥價顯示邏輯 -->
+                                            <!-- 早鳥價顯示 -->
                                             <div class="flex flex-col items-end shrink-0">
                                                 <span v-if="isEarlyBird(c)" class="text-[11px] text-gray-400 line-through mb-0.5">原價 ${{ c.price }}</span>
                                                 <span class="text-[#06C755] font-black text-xl">
@@ -242,26 +237,22 @@
                                     </div>
                                 </div>
 
-                                <!-- [2] 營隊課程呈現方式 (三層漏斗選單 + 豐富視覺) -->
+                                <!-- [2] 營隊課程呈現方式 -->
                                 <div v-if="cat.id === '多日營隊'">
                                     
-                                    <!-- A. 正規三層營隊 (解析成功的) -->
                                     <div v-for="(themeData, themeName) in groupedCampCourses" :key="themeName" class="bg-white border rounded-2xl shadow-sm hover:shadow-md transition relative overflow-hidden mb-5">
                                         
                                         <!-- 頂部圖片與標題 -->
                                         <div class="relative h-36 bg-gray-200">
-                                            <img v-if="getCampBaseInfo(themeName)?.image" :src="getCampBaseInfo(themeName).image" class="w-full h-full object-cover">
+                                            <img v-if="getCampBaseInfo(themeName) && getCampBaseInfo(themeName).image" :src="getCampBaseInfo(themeName).image" class="w-full h-full object-cover">
                                             <div v-else class="w-full h-full flex items-center justify-center text-gray-400 bg-[#e6f4ea]"><i class="fas fa-campground text-4xl text-[#06C755]/50"></i></div>
                                             
-                                            <!-- 漸層遮罩讓文字清楚 (加深以確保白字明顯) -->
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                                             
-                                            <!-- 標題與標籤 -->
                                             <div class="absolute bottom-3 left-4 right-4 flex justify-between items-end gap-2">
                                                 <h3 class="font-black text-xl text-white leading-tight drop-shadow-md flex-1">{{ themeName }}</h3>
                                                 <div class="flex flex-col items-end">
                                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#06C755] text-white shadow-sm shrink-0 mb-1 inline-block">主題營隊</span>
-                                                    <!-- 新增：第一層顯示營隊最低起價 -->
                                                     <span class="text-white font-black text-lg drop-shadow-md leading-none">${{ getCampThemeMinPrice(themeName) }}<span class="text-[10px] font-medium ml-0.5 opacity-90">起</span></span>
                                                 </div>
                                             </div>
@@ -270,12 +261,11 @@
                                         <div class="p-4">
                                             <!-- 營隊基本資訊列 -->
                                             <div class="flex gap-4 text-xs text-gray-500 mb-3 font-medium px-1">
-                                                <span v-if="getCampBaseInfo(themeName)?.location"><i class="fas fa-map-marker-alt text-gray-400 w-3 text-center mr-1"></i>{{ getCampBaseInfo(themeName).location }}</span>
-                                                <span v-if="getCampBaseInfo(themeName)?.instructor"><i class="fas fa-user-tie text-gray-400 w-3 text-center mr-1"></i>{{ getCampBaseInfo(themeName).instructor }}</span>
+                                                <span v-if="getCampBaseInfo(themeName) && getCampBaseInfo(themeName).location"><i class="fas fa-map-marker-alt text-gray-400 w-3 text-center mr-1"></i>{{ getCampBaseInfo(themeName).location }}</span>
+                                                <span v-if="getCampBaseInfo(themeName) && getCampBaseInfo(themeName).instructor"><i class="fas fa-user-tie text-gray-400 w-3 text-center mr-1"></i>{{ getCampBaseInfo(themeName).instructor }}</span>
                                             </div>
 
-                                            <!-- 營隊簡介預覽 -->
-                                            <p v-if="getCampBaseInfo(themeName)?.description" class="text-[13px] text-gray-600 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                            <p v-if="getCampBaseInfo(themeName) && getCampBaseInfo(themeName).description" class="text-[13px] text-gray-600 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
                                                 {{ getCampBaseInfo(themeName).description }}
                                             </p>
 
@@ -289,7 +279,7 @@
                                                     </select>
                                                 </div>
 
-                                                <div v-if="campSelections[themeName].batch" class="animate-fade-in pt-1">
+                                                <div v-if="campSelections[themeName] && campSelections[themeName].batch" class="animate-fade-in pt-1">
                                                     <label class="text-xs text-[#06C755] font-black mb-1.5 block pl-1"><i class="fas fa-running mr-1"></i> 2. 選擇該梯次上課項目</label>
                                                     <select v-model="campSelections[themeName].item" class="w-full bg-white border-2 border-green-100 text-gray-700 p-3 rounded-xl focus:border-[#06C755] focus:ring-0 outline-none transition text-[15px] font-bold shadow-sm">
                                                         <option value="">-- 點擊選擇課程項目 --</option>
@@ -300,13 +290,11 @@
                                                 </div>
                                             </div>
 
-                                            <!-- 當梯次與項目都選好後，顯示詳情與報名按鈕 -->
                                             <div v-if="getCampSelectedCourse(themeName)" class="mt-5 pt-4 border-t border-gray-100 px-1 animate-fade-in">
                                                 <div class="flex justify-between items-center mb-4">
                                                     <div class="text-xs text-gray-500 font-medium">
                                                         日期：{{ getCampSelectedCourse(themeName).startDate }} ~ {{ getCampSelectedCourse(themeName).endDate }}
                                                     </div>
-                                                    <!-- 早鳥價顯示邏輯 -->
                                                     <div class="flex flex-col items-end">
                                                         <span v-if="isEarlyBird(getCampSelectedCourse(themeName))" class="text-[11px] text-gray-400 line-through mb-0.5">原價 ${{ getCampSelectedCourse(themeName).price }}</span>
                                                         <span class="text-[#06C755] font-black text-2xl leading-none">
@@ -327,7 +315,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- B. 格式不符標準三段式命名的營隊 (做為防呆備用，維持單卡顯示) -->
                                     <div v-for="c in unparsedCampCourses" :key="c.id"
                                         class="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition relative overflow-hidden mb-4">
                                         <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400"></div>
@@ -339,7 +326,6 @@
                                                 <h3 class="font-bold text-[17px] text-gray-800 leading-tight">{{
                                                     splitCourseName(c.name).mainName }}</h3>
                                             </div>
-                                            <!-- 早鳥價顯示邏輯 -->
                                             <div class="flex flex-col items-end shrink-0">
                                                 <span v-if="isEarlyBird(c)" class="text-[11px] text-gray-400 line-through mb-0.5">原價 ${{ c.price }}</span>
                                                 <span class="text-[#06C755] font-black text-xl">
@@ -379,10 +365,10 @@
             <!-- View 2: Register & Profile Edit -->
             <div v-else-if="view === 'register'" class="p-6 animate-fade-in pb-10">
                 <div class="flex items-center mb-6">
-                    <button v-if="userInfo?.name" @click="view='course_list'"
+                    <button v-if="userInfo && userInfo.name" @click="view='course_list'"
                         class="mr-3 w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition"><i
                             class="fas fa-arrow-left"></i></button>
-                    <h2 class="text-2xl font-black text-gray-800">{{ userInfo?.name ? '修改個人與子女資料' : '新會員註冊' }}</h2>
+                    <h2 class="text-2xl font-black text-gray-800">{{ (userInfo && userInfo.name) ? '修改個人與子女資料' : '新會員註冊' }}</h2>
                 </div>
                 <form @submit.prevent="submitMemberRegister" class="space-y-4">
                     <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 space-y-3 shadow-inner">
@@ -394,7 +380,7 @@
                             <label class="form-label">身分證字號 <span
                                     class="text-gray-500 font-normal text-[11px] ml-1">(辦理保險用)</span></label>
                             <input type="text" v-model="regForm.nationalId" required
-                                class="form-input uppercase shadow-sm" :readonly="!!userInfo?.nationalId">
+                                class="form-input uppercase shadow-sm" :readonly="!!(userInfo && userInfo.nationalId)">
                         </div>
                         <div><label class="form-label">出生年月日</label><input type="date" v-model="regForm.birthday"
                                 required class="form-input shadow-sm"></div>
@@ -419,11 +405,11 @@
                         <div v-for="(m, i) in regForm.familyMembers" :key="i"
                             class="bg-white p-3 rounded-xl mb-2 border flex justify-between items-center shadow-sm">
                             <div>
-                                <span class="font-bold text-gray-800">{{m?.name}} <span
-                                        class="text-xs text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded ml-1">{{m?.relation}}</span></span>
+                                <span class="font-bold text-gray-800">{{m.name}} <span
+                                        class="text-xs text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded ml-1">{{m.relation}}</span></span>
                                 <div class="text-[10px] text-gray-400 mt-1">
-                                    ID: {{m?.nationalId}} | 生日: {{m?.birthday}}
-                                    <span v-if="m?.school"><br>學校: {{m?.school}} {{m?.grade}}</span>
+                                    ID: {{m.nationalId}} | 生日: {{m.birthday}}
+                                    <span v-if="m.school"><br>學校: {{m.school}} {{m.grade}}</span>
                                 </div>
                             </div>
                             <div class="flex gap-1">
@@ -439,7 +425,7 @@
                             class="text-center py-6 text-xs text-orange-400 italic">您尚未建立任何子女資料</div>
                     </div>
                     <button type="submit" :disabled="isSubmitting"
-                        class="btn-primary w-full shadow-lg mt-2 py-4 text-lg">{{ userInfo?.name ? '確認儲存更新' : '完成註冊並進入'
+                        class="btn-primary w-full shadow-lg mt-2 py-4 text-lg">{{ (userInfo && userInfo.name) ? '確認儲存更新' : '完成註冊並進入'
                         }}</button>
                 </form>
             </div>
@@ -457,12 +443,12 @@
                     <div class="absolute right-0 top-0 text-[#06C755] opacity-10 text-6xl"><i
                             class="fas fa-clipboard-check"></i></div>
                     <h3 class="font-black text-green-900 text-lg text-center relative z-10">{{
-                        splitCourseName(selectedCourse?.name).mainName }}</h3>
-                    <div v-if="splitCourseName(selectedCourse?.name).subName"
+                        splitCourseName(selectedCourse ? selectedCourse.name : '').mainName }}</h3>
+                    <div v-if="splitCourseName(selectedCourse ? selectedCourse.name : '').subName"
                         class="text-[13px] text-green-800 text-center font-bold relative z-10 mb-2">{{
-                        splitCourseName(selectedCourse?.name).subName }}</div>
-                    <p class="text-green-700 text-sm text-center font-medium relative z-10">{{ selectedCourse?.startDate
-                        }} - {{ selectedCourse?.endDate }}</p>
+                        splitCourseName(selectedCourse ? selectedCourse.name : '').subName }}</div>
+                    <p class="text-green-700 text-sm text-center font-medium relative z-10">{{ selectedCourse ? selectedCourse.startDate : ''
+                        }} - {{ selectedCourse ? selectedCourse.endDate : '' }}</p>
                 </div>
                 <form @submit.prevent="submitRegistration" class="space-y-6">
                     <div>
@@ -470,23 +456,23 @@
                         <div class="space-y-2">
                             <label
                                 class="flex items-center p-3 border rounded-xl bg-white cursor-pointer transition shadow-sm"
-                                :class="{'border-[#06C755] bg-green-50': selectedAttendee?.nationalId === userInfo?.nationalId}">
+                                :class="{'border-[#06C755] bg-green-50': (selectedAttendee && selectedAttendee.nationalId) === (userInfo && userInfo.nationalId)}">
                                 <input type="radio" :value="userInfo" v-model="selectedAttendee" class="hidden">
                                 <div class="w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition"
-                                    :class="selectedAttendee?.nationalId === userInfo?.nationalId ? 'border-green-500 bg-green-500' : 'border-gray-300'">
-                                    <div v-if="selectedAttendee?.nationalId === userInfo?.nationalId"
+                                    :class="(selectedAttendee && selectedAttendee.nationalId) === (userInfo && userInfo.nationalId) ? 'border-green-500 bg-green-500' : 'border-gray-300'">
+                                    <div v-if="(selectedAttendee && selectedAttendee.nationalId) === (userInfo && userInfo.nationalId)"
                                         class="w-2 h-2 bg-white rounded-full"></div>
                                 </div>
-                                <span class="font-bold text-gray-800">{{ userInfo?.name }} <span
+                                <span class="font-bold text-gray-800">{{ userInfo && userInfo.name }} <span
                                         class="text-[10px] text-gray-500 ml-1 font-normal">(本人)</span></span>
                             </label>
-                            <label v-for="fam in userInfo?.familyMembers" :key="fam.nationalId"
+                            <label v-for="fam in (userInfo && userInfo.familyMembers)" :key="fam.nationalId"
                                 class="flex items-center p-3 border rounded-xl bg-white cursor-pointer transition shadow-sm"
-                                :class="{'border-[#06C755] bg-green-50': selectedAttendee?.nationalId === fam.nationalId}">
+                                :class="{'border-[#06C755] bg-green-50': (selectedAttendee && selectedAttendee.nationalId) === fam.nationalId}">
                                 <input type="radio" :value="fam" v-model="selectedAttendee" class="hidden">
                                 <div class="w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition"
-                                    :class="selectedAttendee?.nationalId === fam.nationalId ? 'border-green-500 bg-green-500' : 'border-gray-300'">
-                                    <div v-if="selectedAttendee?.nationalId === fam.nationalId"
+                                    :class="(selectedAttendee && selectedAttendee.nationalId) === fam.nationalId ? 'border-green-500 bg-green-500' : 'border-gray-300'">
+                                    <div v-if="(selectedAttendee && selectedAttendee.nationalId) === fam.nationalId"
                                         class="w-2 h-2 bg-white rounded-full"></div>
                                 </div>
                                 <span class="font-bold text-gray-800">{{ fam.name }} <span
@@ -518,10 +504,9 @@
                         </div>
                     </div>
 
-                    <div v-if="selectedCourse?.type === '多日營隊'" class="border-t border-gray-200 pt-5">
+                    <div v-if="selectedCourse && selectedCourse.type === '多日營隊'" class="border-t border-gray-200 pt-5">
                         <h3 class="font-bold text-gray-800 mb-2 flex items-center"><i
                                 class="far fa-calendar-times mr-2 text-red-500 text-lg"></i> 請假扣款 (最多 1 天)</h3>
-                        <!-- 帶有捲動軸的區域以適應可能產生的長日期列表，並顯示為 MMDD (週幾) 格式 -->
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 max-h-56 overflow-y-auto pr-2 pb-2">
                             <div v-for="d in generatedDates" :key="d.val" class="checkbox-wrapper text-sm mb-0 shadow-sm"
                                 :class="{'active': excludedDates.includes(d.val)}" @click="toggleDate(d.val)">
@@ -533,7 +518,6 @@
 
                     <div
                         class="fixed bottom-0 left-0 w-full bg-white border-t p-4 z-30 flex justify-between items-center shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-                        <!-- 結帳明細區塊 -->
                         <div class="flex flex-col">
                             <span class="text-[11px] text-gray-500 font-bold mb-0.5 whitespace-nowrap">
                                 <span v-if="isEarlyBird(selectedCourse)" class="text-red-500 mr-1">早鳥價</span>課程 ${{ baseCoursePrice }}
@@ -593,13 +577,11 @@
                             <span class="font-black text-[#06C755] text-2xl">${{ o.amount }}</span>
                         </div>
                         <div class="pl-2 space-y-3 mt-2">
-                            <!-- PENDING + 尚未回填 → 修改報名與回填 -->
                             <button v-if="o.status === 'PENDING' && !o.remittance" @click="openOrderDetail(o)"
                                 class="text-[15px] bg-blue-500 hover:bg-blue-600 text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-md active:scale-95 transition flex justify-center items-center gap-2 tracking-wide">
                                 <i class="fas fa-edit"></i> 填寫匯款後五碼
                             </button>
                             
-                            <!-- PENDING + 已回填，或其他已付款狀態 → 確認資料與申請退款 -->
                             <button v-else-if="!['CANCELLED', 'REFUNDED', 'REFUND_REQUESTED'].includes(o.status)"
                                 @click="openOrderInfo(o)"
                                 class="text-[15px] bg-gray-100 text-gray-700 px-4 py-3.5 rounded-xl font-bold w-full border border-gray-200 shadow-sm active:scale-95 transition flex justify-center items-center gap-2 hover:bg-gray-200 tracking-wide">
@@ -611,7 +593,6 @@
             </div>
 
             <!-- View 5: 修改報名與回填 (PENDING 狀態) -->
-            <!-- 加大 pb-40 讓畫面底部有足夠空間被推上去 -->
             <div v-else-if="view === 'order_detail'" class="p-4 animate-fade-in pb-40">
                 <div class="flex items-center mb-4">
                     <button @click="view='my_orders'"
@@ -620,18 +601,17 @@
                     <h2 class="text-xl font-bold">{{ remittanceConfirmed ? '報名詳情' : '修改報名與回填' }}</h2>
                 </div>
                 <div class="bg-blue-50 p-5 rounded-2xl mb-6 border border-blue-100 shadow-inner">
-                    <h3 class="font-black text-blue-900 text-lg">{{ splitCourseName(editingOrder?.courseName).mainName
+                    <h3 class="font-black text-blue-900 text-lg">{{ splitCourseName(editingOrder ? editingOrder.courseName : '').mainName
                         }}</h3>
-                    <div v-if="splitCourseName(editingOrder?.courseName).subName"
+                    <div v-if="splitCourseName(editingOrder ? editingOrder.courseName : '').subName"
                         class="text-[13px] text-blue-800 font-bold mb-2">{{
-                        splitCourseName(editingOrder?.courseName).subName }}</div>
-                    <p class="text-blue-700 text-xs mb-3 font-medium">{{ editingOrder?.courseDate }} ~ {{
-                        editingOrder?.courseEndDate }}</p>
+                        splitCourseName(editingOrder ? editingOrder.courseName : '').subName }}</div>
+                    <p class="text-blue-700 text-xs mb-3 font-medium">{{ editingOrder ? editingOrder.courseDate : '' }} ~ {{
+                        editingOrder ? editingOrder.courseEndDate : '' }}</p>
                     <div class="text-sm text-gray-700 bg-white p-2.5 rounded-lg inline-block border shadow-sm">學員：<span
-                            class="font-bold mr-2">{{ editingOrder?.name }}</span></div>
+                            class="font-bold mr-2">{{ editingOrder && editingOrder.name }}</span></div>
                 </div>
 
-                <!-- 已確認後的鎖定提示 -->
                 <div v-if="remittanceConfirmed"
                     class="mb-4 bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
                     <i class="fas fa-lock text-green-600 text-lg"></i>
@@ -642,7 +622,6 @@
                 </div>
 
                 <form @submit.prevent="submitEditOrder" class="space-y-6">
-                    <!-- 設備加購修改 (確認後鎖定) -->
                     <div v-if="editEquipmentList.length > 0" class="border-t border-gray-200 pt-5"
                         :class="{'opacity-40 pointer-events-none': remittanceConfirmed}">
                         <h3 class="font-bold text-gray-800 mb-3"><i
@@ -657,8 +636,7 @@
                         </div>
                     </div>
 
-                    <!-- 請假修改 (事後可修改，解除鎖定) -->
-                    <div v-if="editingOrder?.courseType === '多日營隊'" class="border-t border-gray-200 pt-5">
+                    <div v-if="editingOrder && editingOrder.courseType === '多日營隊'" class="border-t border-gray-200 pt-5">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="far fa-calendar-times mr-2 text-red-500 text-lg"></i> 請假扣款修改 (最多 1 天)</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-2 pb-2 mt-3">
@@ -669,7 +647,6 @@
                         </div>
                         <p v-if="editGeneratedDates.length > 9" class="text-[10px] text-gray-400 mt-2 text-center"><i class="fas fa-hand-pointer mr-1"></i>上下滑動查看更多日期</p>
                         
-                        <!-- 獨立儲存請假變更按鈕 (當日期被事後修改且不在未回填的狀態下顯示) -->
                         <div v-if="remittanceConfirmed && isLeaveDateChanged" class="mt-4 text-center">
                             <button @click="updateLeaveDateOnly" type="button" :disabled="isSubmitting" class="w-full bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition border border-red-200">
                                 <i class="fas fa-save mr-1"></i> 立即儲存請假變更
@@ -677,18 +654,15 @@
                         </div>
                     </div>
 
-                    <!-- 匯款回填 -->
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
-                        <!-- 加上 @focus 捲動事件，並加入 inputmode="numeric" 喚醒數字鍵盤 -->
                         <input v-model="tempRemittance" :readonly="remittanceConfirmed" @focus="scrollToInput"
                             class="form-input text-center font-mono text-3xl tracking-[0.3em] shadow-inner py-5"
                             :class="{'bg-gray-100 text-gray-500': remittanceConfirmed}" maxlength="5"
                             placeholder="00000" inputmode="numeric">
                         <p class="text-[11px] text-gray-400 mt-2 text-center">請於 24 小時內完成匯款並回填，確保名額。</p>
                         
-                        <!-- 確認回填後五碼按鈕 -->
                         <button v-if="!remittanceConfirmed" type="button" @click="confirmRemittance"
                             :disabled="tempRemittance.length !== 5"
                             class="mt-4 w-full py-4 bg-blue-500 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-[15px] tracking-wide">
@@ -701,7 +675,6 @@
                         </div>
                     </div>
 
-                    <!-- 鎖定後提示聯繫客服，不開放直接按退費 -->
                     <div v-if="remittanceConfirmed" class="mt-6 pb-6 text-center">
                         <div class="bg-gray-100 rounded-xl p-4 border border-gray-200">
                             <i class="fas fa-headset text-gray-400 text-2xl mb-2"></i>
@@ -714,9 +687,8 @@
                         </div>
                     </div>
                     
-                    <!-- 未鎖定：取消報名按鈕滿版框線樣式 -->
                     <div v-else class="mt-6 text-center pb-6">
-                        <button v-if="editingOrder?.status === 'PENDING'" @click="cancelOrder" type="button"
+                        <button v-if="editingOrder && editingOrder.status === 'PENDING'" @click="cancelOrder" type="button"
                             class="w-full py-4 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 text-[15px]">
                             <i class="fas fa-trash-alt mr-1.5"></i> 取消此筆報名紀錄
                         </button>
@@ -730,7 +702,6 @@
                             </span>
                             <span class="text-2xl font-black text-[#06C755] leading-none">${{ editOrderTotal }}</span>
                         </div>
-                        <!-- 鎖定後底部按鈕改為返回 -->
                         <button v-if="remittanceConfirmed" type="button" @click="view='my_orders'"
                             class="btn-secondary w-[45%] shadow-md text-lg border-gray-300">返回紀錄</button>
                         <button v-else type="submit" :disabled="isSubmitting || tempExcludedDates.length > 1"
@@ -749,19 +720,18 @@
                     <h2 class="text-xl font-bold">查看報名詳情</h2>
                 </div>
                 <div class="bg-purple-50 p-5 rounded-2xl mb-6 border border-purple-100 shadow-inner">
-                    <h3 class="font-black text-purple-900 text-lg">{{ splitCourseName(editingOrder?.courseName).mainName
+                    <h3 class="font-black text-purple-900 text-lg">{{ splitCourseName(editingOrder ? editingOrder.courseName : '').mainName
                         }}</h3>
-                    <div v-if="splitCourseName(editingOrder?.courseName).subName"
+                    <div v-if="splitCourseName(editingOrder ? editingOrder.courseName : '').subName"
                         class="text-[13px] text-purple-800 font-bold mb-2">{{
-                        splitCourseName(editingOrder?.courseName).subName }}</div>
-                    <p class="text-purple-700 text-xs mb-3 font-medium">{{ editingOrder?.courseDate }} ~ {{
-                        editingOrder?.courseEndDate }}</p>
+                        splitCourseName(editingOrder ? editingOrder.courseName : '').subName }}</div>
+                    <p class="text-purple-700 text-xs mb-3 font-medium">{{ editingOrder ? editingOrder.courseDate : '' }} ~ {{
+                        editingOrder ? editingOrder.courseEndDate : '' }}</p>
                     <div class="text-sm text-gray-700 bg-white p-2.5 rounded-lg inline-block border shadow-sm">學員：<span
-                            class="font-bold mr-2">{{ editingOrder?.name }}</span></div>
+                            class="font-bold mr-2">{{ editingOrder && editingOrder.name }}</span></div>
                 </div>
 
                 <div class="space-y-6">
-                    <!-- 設備資訊 (唯讀) -->
                     <div v-if="editEquipmentList.length > 0" class="border-t border-gray-200 pt-5">
                         <h3 class="font-bold text-gray-800 mb-3"><i
                                 class="fas fa-table-tennis mr-2 text-blue-500 text-lg"></i> 設備租用調整</h3>
@@ -776,8 +746,7 @@
                         </div>
                     </div>
 
-                    <!-- 請假資訊 (事後可修改，解除鎖定) -->
-                    <div v-if="editingOrder?.courseType === '多日營隊'" class="border-t border-gray-200 pt-5">
+                    <div v-if="editingOrder && editingOrder.courseType === '多日營隊'" class="border-t border-gray-200 pt-5">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="far fa-calendar-times mr-2 text-red-500 text-lg"></i> 請假與退費 (最多 1 天)</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-2 pb-2">
@@ -788,7 +757,6 @@
                         </div>
                         <p v-if="editGeneratedDates.length > 9" class="text-[10px] text-gray-400 mt-2 text-center"><i class="fas fa-hand-pointer mr-1"></i>上下滑動查看更多日期</p>
                         
-                        <!-- 獨立儲存請假變更按鈕 -->
                         <div v-if="isLeaveDateChanged" class="mt-4 text-center">
                             <button @click="updateLeaveDateOnly" type="button" :disabled="isSubmitting" class="w-full bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition border border-red-200">
                                 <i class="fas fa-save mr-1"></i> 立即儲存請假變更
@@ -796,18 +764,15 @@
                         </div>
                     </div>
 
-                    <!-- 匯款後五碼 (唯讀) -->
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-3 flex items-center"><i
                                 class="fas fa-money-check-alt mr-2 text-[#06C755] text-lg"></i> 匯款後五碼</h3>
-                        <!-- 唯讀框也放大字體 -->
                         <div
                             class="form-input text-center font-mono text-3xl tracking-[0.3em] bg-gray-100 text-gray-500 py-5 rounded-lg border">
-                            {{ editingOrder?.remittance || '尚未回填' }}
+                            {{ (editingOrder && editingOrder.remittance) || '尚未回填' }}
                         </div>
                     </div>
 
-                    <!-- 變更與退費說明 (取代原本的申請退款) -->
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="font-bold text-gray-800 mb-4 flex items-center"><i
                                 class="fas fa-headset mr-2 text-indigo-500 text-lg"></i> 變更與退費說明</h3>
@@ -827,7 +792,7 @@
                 <div
                     class="fixed bottom-0 left-0 w-full bg-white border-t p-4 z-30 flex justify-between items-center shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
                     <div class="flex flex-col"><span class="text-xs text-gray-500">已確認繳費金額</span><span
-                            class="text-2xl font-black text-[#06C755]">${{ editingOrder?.amount }}</span></div>
+                            class="text-2xl font-black text-[#06C755]">${{ editingOrder ? editingOrder.amount : '' }}</span></div>
                     <button @click="view='my_orders'" type="button"
                         class="btn-secondary w-[60%] shadow-md text-lg border-gray-300">返回紀錄</button>
                 </div>
@@ -893,7 +858,7 @@
                 class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 shadow-2xl">
                 <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
                     <div class="h-48 bg-gray-100 relative shrink-0">
-                        <img v-if="detailCourse?.image" :src="detailCourse.image" class="w-full h-full object-cover">
+                        <img v-if="detailCourse && detailCourse.image" :src="detailCourse.image" class="w-full h-full object-cover">
                         <div v-else class="w-full h-full flex items-center justify-center text-gray-300"><i
                                 class="fas fa-image text-4xl"></i></div>
                         <button @click="showDetailModal=false"
@@ -903,35 +868,35 @@
                     <div class="p-6 overflow-y-auto">
                         <div class="flex items-center gap-2 mb-2"><span
                                 class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">{{
-                                detailCourse?.type }}</span></div>
+                                detailCourse && detailCourse.type }}</span></div>
 
                         <h3 class="text-xl font-black text-gray-800 leading-tight">{{
-                            splitCourseName(detailCourse?.name).mainName }}</h3>
-                        <div v-if="splitCourseName(detailCourse?.name).subName"
+                            splitCourseName(detailCourse ? detailCourse.name : '').mainName }}</h3>
+                        <div v-if="splitCourseName(detailCourse ? detailCourse.name : '').subName"
                             class="text-sm text-gray-600 font-bold mb-3 mt-1">{{
-                            splitCourseName(detailCourse?.name).subName }}</div>
+                            splitCourseName(detailCourse ? detailCourse.name : '').subName }}</div>
 
                         <div
                             class="space-y-2 mb-4 text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <p v-if="detailCourse?.instructor"><i
+                            <p v-if="detailCourse && detailCourse.instructor"><i
                                     class="fas fa-user-tie w-4 text-center mr-1 text-gray-400"></i> 教練: <span
-                                    class="font-bold text-gray-700">{{ detailCourse?.instructor }}</span></p>
-                            <p v-if="detailCourse?.location"><i
+                                    class="font-bold text-gray-700">{{ detailCourse.instructor }}</span></p>
+                            <p v-if="detailCourse && detailCourse.location"><i
                                     class="fas fa-map-marker-alt w-4 text-center mr-1 text-gray-400"></i> 地點: <span
-                                    class="font-bold text-gray-700">{{ detailCourse?.location }}</span></p>
+                                    class="font-bold text-gray-700">{{ detailCourse.location }}</span></p>
                             <p><i class="far fa-clock w-4 text-center mr-1 text-gray-400"></i> 時間: <span
-                                    class="font-bold text-gray-700">{{ fmtTime(detailCourse?.startTime) }} - {{
-                                    fmtTime(detailCourse?.endTime) || '依公告' }}</span></p>
+                                    class="font-bold text-gray-700">{{ fmtTime(detailCourse ? detailCourse.startTime : '') }} - {{
+                                    fmtTime(detailCourse ? detailCourse.endTime : '') || '依公告' }}</span></p>
                         </div>
                         <h4 class="font-bold text-sm mb-1 text-gray-800">課程說明</h4>
                         <div class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{{
-                            detailCourse?.description || '目前無詳細說明' }}</div>
+                            (detailCourse && detailCourse.description) || '目前無詳細說明' }}</div>
                     </div>
                     <div class="p-4 border-t bg-white shrink-0">
                         <button @click="selectCourse(detailCourse); showDetailModal=false"
-                            :disabled="detailCourse?.enrolled >= detailCourse?.capacity"
+                            :disabled="(detailCourse ? detailCourse.enrolled : 0) >= (detailCourse ? detailCourse.capacity : 0)"
                             class="bg-red-500 text-white w-full shadow-lg text-lg py-3 rounded-xl font-bold active:scale-95 transition disabled:bg-gray-300 disabled:active:scale-100 disabled:shadow-none">
-                            {{ detailCourse?.enrolled >= detailCourse?.capacity ? '名額已滿' : '立即報名此課程' }}
+                            {{ (detailCourse ? detailCourse.enrolled : 0) >= (detailCourse ? detailCourse.capacity : 0) ? '名額已滿' : '立即報名此課程' }}
                         </button>
                     </div>
                 </div>
@@ -961,7 +926,6 @@
                 const courses = ref([]);
                 const myOrders = ref([]);
                 
-                // 儲存營隊三層選單的選擇狀態
                 const campSelections = ref({});
 
                 const regForm = ref({ name: '', nationalId: '', birthday: '', phone: '', address: '', identity: '家長', gender: '男', familyMembers: [] });
@@ -991,7 +955,7 @@
                 ];
 
                 const callApi = async (act, pl = {}) => {
-                    const res = await fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: act, userProfile: { userId: userProfile.value?.userId }, payload: pl }) });
+                    const res = await fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: act, userProfile: { userId: userProfile.value ? userProfile.value.userId : '' }, payload: pl }) });
                     const json = await res.json();
                     if (json.status !== 'success') throw new Error(json.message);
                     return json.data;
@@ -1002,7 +966,6 @@
                     try {
                         const fetchedCourses = await callApi('GET_COURSES');
                         
-                        // 【防呆保護】預先初始化營隊的下拉選單變數，避免畫面渲染崩潰
                         const newSelections = { ...campSelections.value };
                         fetchedCourses.filter(c => c.type === '多日營隊').forEach(c => {
                             const parts = c.name.split(/\s*-\s*/);
@@ -1037,17 +1000,16 @@
                         userProfile.value = await liff.getProfile();
 
                         const data = await callApi('CHECK_USER');
-                        if (data?.registered) {
+                        if (data && data.registered) {
                             userInfo.value = data.info;
                             isAuthLoading.value = false;
                             loadCourses();
                         } else {
-                            regForm.value.name = userProfile.value?.displayName || '';
+                            regForm.value.name = (userProfile.value && userProfile.value.displayName) || '';
                             isAuthLoading.value = false;
                             view.value = 'register';
                         }
                     } catch (err) {
-                        // 解決常見的 code_verifier 錯誤，通常發生在重複登入導向
                         if (err.message && err.message.includes('code_verifier')) {
                             const newUrl = window.location.href.split('?')[0];
                             window.history.replaceState({}, document.title, newUrl);
@@ -1080,7 +1042,7 @@
                     try {
                         const info = userInfo.value ? JSON.parse(JSON.stringify(userInfo.value)) : {};
                         regForm.value = {
-                            name: info.name || userProfile.value?.displayName || '',
+                            name: info.name || (userProfile.value && userProfile.value.displayName) || '',
                             nationalId: info.nationalId || '',
                             birthday: info.birthday ? info.birthday.substring(0, 10) : '',
                             phone: info.phone || '',
@@ -1101,7 +1063,7 @@
                 const submitMemberRegister = async () => {
                     isSubmitting.value = true;
                     try {
-                        await callApi('REGISTER_USER', { userId: userProfile.value?.userId, ...regForm.value });
+                        await callApi('REGISTER_USER', { userId: userProfile.value ? userProfile.value.userId : '', ...regForm.value });
                         alert('資料儲存成功！');
                         const data = await callApi('CHECK_USER');
                         userInfo.value = data.info;
@@ -1115,12 +1077,10 @@
                     else expandedCategory.value = catId;
                 };
 
-                // 過濾非營隊的一般課程
                 const filteredCourses = computed(() => {
                     return courses.value.filter(c => c.type === expandedCategory.value && c.type !== '多日營隊');
                 });
                 
-                // 將營隊資料解析並群組化 (三層選單邏輯)
                 const groupedCampCourses = computed(() => {
                     const groups = {};
                     courses.value.filter(c => c.type === '多日營隊').forEach(c => {
@@ -1148,7 +1108,6 @@
                     return groups;
                 });
                 
-                // 找出未符合「主題-梯次-項目」命名規則的營隊，做為防呆顯示
                 const unparsedCampCourses = computed(() => {
                     return courses.value.filter(c => c.type === '多日營隊' && c.name.split(/\s*-\s*/).length < 3);
                 });
@@ -1166,7 +1125,6 @@
                     return batchCourses ? batchCourses.find(c => c.id === sel.item) : null;
                 };
 
-                // --- 取得營隊的基礎介紹資訊 (從第一筆資料抓取) ---
                 const getCampBaseInfo = (themeName) => {
                     const batches = groupedCampCourses.value[themeName];
                     if (!batches) return null;
@@ -1176,7 +1134,6 @@
                     return firstItem || null;
                 };
 
-                // --- 新增：早鳥價判斷邏輯 ---
                 const isEarlyBird = (c) => {
                     if (!c || !c.earlyBirdPrice || !c.earlyBirdDate) return false;
                     const ebDate = new Date(c.earlyBirdDate);
@@ -1191,7 +1148,6 @@
                     return isEarlyBird(c) ? c.earlyBirdPrice : c.price;
                 };
 
-                // --- 新增：計算營隊起價 ---
                 const getCampThemeMinPrice = (themeName) => {
                     const batches = groupedCampCourses.value[themeName];
                     if (!batches) return 0;
@@ -1302,10 +1258,10 @@
 
                         const pl = {
                             courseId: selectedCourse.value.id,
-                            userId: userProfile.value.userId,
+                            userId: userProfile.value ? userProfile.value.userId : '',
                             name: selectedAttendee.value.name,
                             nationalId: selectedAttendee.value.nationalId,
-                            phone: selectedAttendee.value.phone || userInfo.value.phone,
+                            phone: selectedAttendee.value.phone || (userInfo.value && userInfo.value.phone),
                             excludedDates: excludedDates.value,
                             equipments: selectedEquipments.value,
                             note: registrationNote.value
@@ -1320,8 +1276,8 @@
                 const openOrderDetail = (o) => {
                     editingOrder.value = o;
                     tempRemittance.value = o.remittance || '';
-                    tempExcludedDates.value = [...(o.extraData?.excludedDates || [])];
-                    tempSelectedEquipments.value = [...(o.extraData?.equipments || [])];
+                    tempExcludedDates.value = [...(o.extraData && o.extraData.excludedDates ? o.extraData.excludedDates : [])];
+                    tempSelectedEquipments.value = [...(o.extraData && o.extraData.equipments ? o.extraData.equipments : [])];
                     remittanceConfirmed.value = false; 
                     view.value = 'order_detail';
                 };
@@ -1329,8 +1285,8 @@
                 const openOrderInfo = (o) => {
                     editingOrder.value = o;
                     tempRemittance.value = o.remittance || '';
-                    tempExcludedDates.value = [...(o.extraData?.excludedDates || [])];
-                    tempSelectedEquipments.value = [...(o.extraData?.equipments || [])];
+                    tempExcludedDates.value = [...(o.extraData && o.extraData.excludedDates ? o.extraData.excludedDates : [])];
+                    tempSelectedEquipments.value = [...(o.extraData && o.extraData.equipments ? o.extraData.equipments : [])];
                     if (o.status === 'PENDING') {
                         remittanceConfirmed.value = true;
                         view.value = 'order_detail';
@@ -1447,7 +1403,7 @@
                 };
 
                 const cancelOrder = async () => {
-                    if (editingOrder.value.status !== 'PENDING') {
+                    if (editingOrder.value && editingOrder.value.status !== 'PENDING') {
                         return alert('只有「待付款」的訂單可以直接取消。若需退費請聯繫客服人員辦理。');
                     }
                     if (!confirm('確定要取消此筆報名嗎？\n取消後名額將被釋出，此操作無法復原。')) return;
@@ -1472,26 +1428,27 @@
                     return s;
                 };
 
-                const equipmentList = computed(() => { if (!selectedCourse.value?.equipmentJson) return []; try { return JSON.parse(selectedCourse.value.equipmentJson); } catch (e) { return []; } });
+                const equipmentList = computed(() => { if (!selectedCourse.value || !selectedCourse.value.equipmentJson) return []; try { return JSON.parse(selectedCourse.value.equipmentJson); } catch (e) { return []; } });
                 
-                const getWeekday = (dateStr) => {
-                    const d = new Date(dateStr);
-                    const days = ['日', '一', '二', '三', '四', '五', '六'];
-                    return `(${days[d.getDay()]})`;
-                };
-
+                // 完全避開 iOS 的 toLocaleDateString() Bug，手動填充並格式化
                 const generatedDates = computed(() => {
                     if (!selectedCourse.value || selectedCourse.value.type !== '多日營隊') return [];
-                    const s = new Date(selectedCourse.value.startDate), e = new Date(selectedCourse.value.endDate), l = [];
+                    const s = new Date(selectedCourse.value.startDate);
+                    const e = new Date(selectedCourse.value.endDate);
+                    const l = [];
                     if (isNaN(s.getTime()) || isNaN(e.getTime())) return [];
                     let safety = 0; 
                     let curr = new Date(s);
+                    const days = ['日', '一', '二', '三', '四', '五', '六'];
                     while (curr <= e && safety < 60) { 
-                        const dateStr = curr.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-                        const mmdd = dateStr.substring(5); 
+                        const yyyy = curr.getFullYear();
+                        const mm = String(curr.getMonth() + 1).padStart(2, '0');
+                        const dd = String(curr.getDate()).padStart(2, '0');
+                        const dateStr = `${yyyy}-${mm}-${dd}`;
+                        const mmdd = `${mm}/${dd}`;
                         l.push({
                             val: dateStr,
-                            display: `${mmdd} ${getWeekday(dateStr)}`
+                            display: `${mmdd} (${days[curr.getDay()]})`
                         });
                         curr.setDate(curr.getDate() + 1); 
                         safety++; 
@@ -1501,16 +1458,22 @@
                 
                 const editGeneratedDates = computed(() => {
                     if (!editingOrder.value) return [];
-                    const s = new Date(editingOrder.value.courseDate), e = new Date(editingOrder.value.courseEndDate), l = [];
+                    const s = new Date(editingOrder.value.courseDate);
+                    const e = new Date(editingOrder.value.courseEndDate);
+                    const l = [];
                     if (isNaN(s.getTime()) || isNaN(e.getTime())) return [];
                     let safety = 0; 
                     let curr = new Date(s);
+                    const days = ['日', '一', '二', '三', '四', '五', '六'];
                     while (curr <= e && safety < 60) { 
-                        const dateStr = curr.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-                        const mmdd = dateStr.substring(5);
+                        const yyyy = curr.getFullYear();
+                        const mm = String(curr.getMonth() + 1).padStart(2, '0');
+                        const dd = String(curr.getDate()).padStart(2, '0');
+                        const dateStr = `${yyyy}-${mm}-${dd}`;
+                        const mmdd = `${mm}/${dd}`;
                         l.push({
                             val: dateStr,
-                            display: `${mmdd} ${getWeekday(dateStr)}`
+                            display: `${mmdd} (${days[curr.getDay()]})`
                         });
                         curr.setDate(curr.getDate() + 1); 
                         safety++; 
@@ -1540,10 +1503,10 @@
                     return Math.max(0, baseCoursePrice.value + totalEquipmentPrice.value - leaveDeduction.value);
                 });
 
-                const editEquipmentList = computed(() => { if (!editingOrder.value?.courseEquipmentJson) return []; try { return JSON.parse(editingOrder.value.courseEquipmentJson); } catch (e) { return []; } });
+                const editEquipmentList = computed(() => { if (!editingOrder.value || !editingOrder.value.courseEquipmentJson) return []; try { return JSON.parse(editingOrder.value.courseEquipmentJson); } catch (e) { return []; } });
                 
                 const editOrderTotal = computed(() => {
-                    if (!editingOrder.value?.extraData) return editingOrder.value?.amount || 0;
+                    if (!editingOrder.value || !editingOrder.value.extraData) return (editingOrder.value ? editingOrder.value.amount : 0);
                     const ex = editingOrder.value.extraData;
                     let t = ex.basePrice || 0;
                     const per = Math.round(t / (ex.totalSessions || 1));
@@ -1554,19 +1517,23 @@
                 });
 
                 const isAdmin = computed(() => {
-                    return userInfo.value?.adminMark?.toUpperCase() === 'OK';
+                    return userInfo.value && userInfo.value.adminMark && userInfo.value.adminMark.toUpperCase() === 'OK';
                 });
 
                 const goToAdmin = () => {
-                    localStorage.setItem('sportIsland_sso_uid', userProfile.value?.userId);
+                    try {
+                        localStorage.setItem('sportIsland_sso_uid', userProfile.value ? userProfile.value.userId : '');
+                    } catch(e) {}
                     window.location.href = 'admin.html';
                 };
 
                 onMounted(() => {
-                    const ssoUid = localStorage.getItem('sportIsland_sso_uid');
-                    if (ssoUid) {
-                        loginSSO(ssoUid);
-                    }
+                    try {
+                        const ssoUid = localStorage.getItem('sportIsland_sso_uid');
+                        if (ssoUid) {
+                            loginSSO(ssoUid);
+                        }
+                    } catch(e) {}
                     init();
                 });
 
@@ -1587,7 +1554,7 @@
                     isLeaveDateChanged, updateLeaveDateOnly,
                     
                     campSelections, groupedCampCourses, unparsedCampCourses, resetCampItem, getCampSelectedCourse,
-                    isEarlyBird, getActualPrice, getCampBaseInfo, getCampThemeMinPrice, // 新增匯出 getCampThemeMinPrice
+                    isEarlyBird, getActualPrice, getCampBaseInfo, getCampThemeMinPrice,
 
                     equipmentList, generatedDates, calculatedTotal, baseCoursePrice, totalEquipmentPrice, leaveDeduction,
                     editEquipmentList, editGeneratedDates, editOrderTotal,
